@@ -1,0 +1,13 @@
+# Credenciales: NUNCA se suben. Se sube api/config.example.php
+api/config.php
+.env
+.env.*
+
+# Dependencias y build del frontend
+node_modules/
+frontend/dist/
+
+# Sistema y editores
+.DS_Store
+Thumbs.db
+*.log

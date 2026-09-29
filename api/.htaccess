@@ -1,0 +1,5 @@
+# Redirige todas las peticiones de /api/... a index.php y bloquea el acceso directo al resto
+RewriteEngine On
+RewriteRule ^((lib|http|services|repositories)/|config\.php$) - [F,L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [QSA,L]
