@@ -1,26 +1,22 @@
-import { Link, Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
+import Banner from './Banner.jsx';
+import Header from './Header.jsx';
+import Footer from './Footer.jsx';
 
-/**
- * Layout base (fase 0). B lo sustituirá por sus componentes de cabecera y pie.
- */
+/** Layout común: banner de prototipo + cabecera fijos arriba, contenido y pie. */
 export default function Layout() {
   return (
     <>
-      <header>
-        <nav>
-          <Link to="/">Inicio</Link> · <Link to="/catalogo">Catálogo</Link> ·{' '}
-          <Link to="/carrito">Carrito</Link> · <Link to="/soporte">Soporte</Link> ·{' '}
-          <Link to="/admin">Administración</Link>
-        </nav>
-      </header>
+      <div className="site-top">
+        <Banner />
+        <Header />
+      </div>
 
       <main>
         <Outlet />
       </main>
 
-      <footer>
-        <p>Prototipo académico – sin actividad comercial real</p>
-      </footer>
+      <Footer />
     </>
   );
 }
