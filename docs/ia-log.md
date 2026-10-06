@@ -16,6 +16,22 @@ Apuntad aquí cada uso importante de IA. De este fichero sale el anexo de IA de 
 - **Qué falló o hubo que corregir:** la primera versión incluía cosas que no eran de la fase 0 (carrito completo, cliente de la API, rutas pendientes de B y C, estilos). Le pedí que lo recortara a la estructura mínima.
 - **Cómo lo validé:** `php -l` en los ficheros PHP, petición a `/api/health` con el servidor de PHP y `npm run build` sin errores.
 
+## 2026-09-29 · César (C) · Claude Code
+- **Qué pedí:** revisar la fase 0 frente a los contratos del plan de trabajo, preparar mi entorno local (Node, PHP 8 con `pdo_mysql`, MySQL, rama `feature/admin`), proponer el plan de mi módulo (administración, estados, soporte, eventos y seguridad) y crear los ficheros vacíos con los que voy a trabajar.
+- **Qué falló o hubo que corregir:**
+  - Configuró `php.ini` con la ruta completa de las extensiones; como mi carpeta de usuario lleva tilde, PHP no cargaba `pdo_mysql`. Se corrigió usando la ruta corta de Windows (sin tildes).
+  - Creó la rama `feature/admin` siguiendo a `origin/main`, con lo que un `push` podía apuntar a `main`. Se quitó ese seguimiento.
+  - Una prueba con `php -r` falló por cómo PowerShell trata las comillas; se hizo con un script aparte.
+  - El prompt inicial pedía Node 18, pero Vite 8 necesita Node 20.19 o superior: la IA lo detectó y se instaló la LTS actual.
+- **Cambios hechos por mí:** decidí seguir el formato de este diario, esperar al grupo en lo que depende de A y B (`schema.sql`/`seed.sql`, subrutas `admin/*` en `App.jsx`, cabecera `X-Session-Id`) y dejar las pantallas sin maquetar hasta conocer la temática. Corregí el usuario de MySQL local que había indicado.
+- **Cómo lo validé:** `php -m` muestra `pdo_mysql`; `/api/health` responde `{"status":"ok"}` directo y a través del proxy de Vite; la conexión PDO a la base de datos local funciona; `git check-ignore` confirma que `api/config.php` no se sube; `php -l` sin errores en los ficheros nuevos y `npm run build` correcto.
+
+## 2026-10-05 · César (C) · Claude Code
+- **Qué pedí:** revisar las ramas del grupo para ver si se podían mergear y mergear mi PR #1 en `develop`.
+- **Qué falló o hubo que corregir:** la IA hizo merges locales de `feature/catalogo` y `feature/admin` directamente en `develop`, saltándose el flujo de PR acordado. No llegaron a subirse y se deshicieron.
+- **Cambios hechos por mí:** decidí integrar solo mi rama mediante el PR #1 (aprobado por Celia) y dejar a cada compañero su propio merge.
+- **Cómo lo validé:** simulación de merge con `git merge-tree` sin conflictos, `npm run build` y `php -l` correctos, y PR en estado MERGED en GitHub.
+
 ## 2026-10-01 · José (B) · Claude Code
 - **Qué pedí:** el sistema de estilo y los componentes base (prompt del apartado 9 del plan): `theme.css` con variables, `global.css`, hook `useReveal`, cabecera, pie, botón, tarjeta de producto, banner del aviso de prototipo y una página de muestra.
 - **Qué falló o hubo que corregir:** al revisarlo con el grupo salieron varios fallos. La tarjeta mostraba el precio sin IVA mientras que el carrito lo mostrará con IVA, así que ahora usa `price_with_tax` calculado por la API. Un producto sin imagen salía con la imagen rota (ahora usa `placeholder.svg`). Los lectores de pantalla leían el nombre del producto dos veces. Había variables y clases sin usar (`--color-accent-hover`, `--space-7`, `.section--tight`).- **Cómo lo validé:** revisión del código y de la accesibilidad (contraste, `alt`, foco con teclado, vista móvil) y revisión del PR por los compañeros.
@@ -39,3 +55,4 @@ Apuntad aquí cada uso importante de IA. De este fichero sale el anexo de IA de 
 - **Qué pedí:** un resumen de todos los cambios aplicados y el texto de declaración de uso de IA para la memoria (punto de partida del proyecto), además de completar este diario con el trabajo anterior.
 - **Qué falló o hubo que corregir:** la herramienta no sabe si se usó una plantilla de terceros ni cómo se montó la fase 0, así que no los inventó y hubo que completarlos con lo que consta en el repositorio y en la entrada de Celia de este diario.
 - **Cómo lo validé:** contrasté el resumen con los ficheros y los commits reales del repositorio.
+
