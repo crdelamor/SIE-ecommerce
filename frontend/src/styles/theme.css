@@ -57,6 +57,11 @@
   /* Foco visible */
   --focus-ring: 3px solid var(--color-accent);
   --focus-offset: 3px;
+
+  /* Panel lateral del carrito */
+  --color-overlay: rgb(17 17 17 / 0.45);
+  --shadow-panel: -12px 0 32px rgb(17 17 17 / 0.08);
+  --drawer-width: 420px;
 }
 
 /* En pantallas medias y grandes se ensancha el margen lateral */
