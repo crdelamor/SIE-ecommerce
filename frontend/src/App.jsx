@@ -7,6 +7,7 @@ import CartPage from './pages/cart/CartPage.jsx';
 import CheckoutPage from './pages/checkout/CheckoutPage.jsx';
 import AdminPage from './pages/admin/AdminPage.jsx';
 import SupportPage from './pages/support/SupportPage.jsx';
+import StylePreviewPage from './pages/home/StylePreviewPage.jsx';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <Route path="checkout" element={<CheckoutPage />} />
         <Route path="admin" element={<AdminPage />} />
         <Route path="soporte" element={<SupportPage />} />
+        <Route path="muestra" element={<StylePreviewPage />} />
       </Route>
     </Routes>
   );
