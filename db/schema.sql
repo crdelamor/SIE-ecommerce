@@ -1,24 +1,25 @@
 -- ============================================================
--- schema.sql - Modelo de datos del eCommerce
+-- schema.sql - Modelo de datos del eCommerce (tienda de cartas coleccionables)
 -- Asignatura: Soluciones Informáticas para la Empresa (SIE)
 -- Práctica 1
 -- Autor: José Gómez Reinaldos (alumno)
+-- Nombres de tablas y columnas en inglés (contrato del plan, apartado 2.1)
 -- ============================================================
 
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Borramos tablas para poder reimportar el fichero
-DROP TABLE IF EXISTS eventos;
-DROP TABLE IF EXISTS tickets_soporte;
-DROP TABLE IF EXISTS historial_estados_pedido;
-DROP TABLE IF EXISTS pagos;
-DROP TABLE IF EXISTS lineas_pedido;
-DROP TABLE IF EXISTS pedidos;
-DROP TABLE IF EXISTS usuarios;
-DROP TABLE IF EXISTS clientes;
-DROP TABLE IF EXISTS productos;
-DROP TABLE IF EXISTS categorias;
+DROP TABLE IF EXISTS events;
+DROP TABLE IF EXISTS support_tickets;
+DROP TABLE IF EXISTS order_status_history;
+DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS customers;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS categories;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -26,129 +27,142 @@ SET FOREIGN_KEY_CHECKS = 1;
 -- DATOS MAESTROS
 -- ------------------------------------------------------------
 
-CREATE TABLE categorias (
-    id      INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    nombre  VARCHAR(100) NOT NULL,
-    slug    VARCHAR(100) NOT NULL,
+-- Cada juego es una categoría: Magic, Riftbound, Pokémon, Yu-Gi-Oh!
+CREATE TABLE categories (
+    id    INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name  VARCHAR(100) NOT NULL,
+    slug  VARCHAR(100) NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_categorias_slug (slug)
+    UNIQUE KEY uq_categories_slug (slug)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE productos (
-    id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    categoria_id  INT UNSIGNED NOT NULL,
-    nombre        VARCHAR(150) NOT NULL,
-    descripcion   TEXT NULL,
-    precio        DECIMAL(10,2) NOT NULL,               -- sin IVA
-    tasa_iva      DECIMAL(4,2)  NOT NULL DEFAULT 21.00, -- 21.00, 10.00 o 4.00
-    stock         INT UNSIGNED  NOT NULL DEFAULT 0,
-    imagen_url    VARCHAR(255) NULL,
-    activo        TINYINT(1) NOT NULL DEFAULT 1,
+-- La misma carta en distinto estado, idioma o foil es un producto distinto
+-- (cada uno con su precio y su stock), así carrito y pedidos no cambian.
+CREATE TABLE products (
+    id              INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    category_id     INT UNSIGNED NOT NULL,
+    name            VARCHAR(150) NOT NULL,
+    description     TEXT NULL,
+    price           DECIMAL(10,2) NOT NULL,               -- sin IVA
+    tax_rate        DECIMAL(4,2)  NOT NULL DEFAULT 21.00, -- 21.00, 10.00 o 4.00
+    stock           INT UNSIGNED  NOT NULL DEFAULT 0,
+    image_url       VARCHAR(255) NULL,
+    active          TINYINT(1) NOT NULL DEFAULT 1,
+    product_type    ENUM('single','booster') NOT NULL DEFAULT 'single', -- carta suelta / sobre
+    set_name        VARCHAR(100) NULL,                    -- edición o set
+    card_condition  ENUM('NM','LP','MP') NULL,            -- NULL en sobres (van precintados)
+    language        VARCHAR(30) NULL,                     -- Español, Inglés, Japonés...
+    illustrator     VARCHAR(100) NULL,                    -- NULL en sobres
+    is_foil         TINYINT(1) NOT NULL DEFAULT 0,        -- 0 en sobres
     PRIMARY KEY (id),
-    KEY idx_productos_categoria (categoria_id),
-    KEY idx_productos_activo (activo),
-    CONSTRAINT fk_productos_categoria
-        FOREIGN KEY (categoria_id) REFERENCES categorias (id)
+    KEY idx_products_category (category_id),
+    KEY idx_products_active (active),
+    KEY idx_products_type (product_type),
+    KEY idx_products_set (set_name),
+    CONSTRAINT fk_products_category
+        FOREIGN KEY (category_id) REFERENCES categories (id)
         ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT chk_productos_precio   CHECK (precio >= 0),
-    CONSTRAINT chk_productos_tasa_iva CHECK (tasa_iva IN (21.00, 10.00, 4.00))
+    CONSTRAINT chk_products_price    CHECK (price >= 0),
+    CONSTRAINT chk_products_tax_rate CHECK (tax_rate IN (21.00, 10.00, 4.00)),
+    -- Un sobre no tiene estado de conservación ni foil
+    CONSTRAINT chk_products_booster  CHECK (product_type = 'single' OR (card_condition IS NULL AND is_foil = 0))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE clientes (
+CREATE TABLE customers (
+    id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name         VARCHAR(120) NOT NULL,
+    email        VARCHAR(150) NOT NULL,
+    phone        VARCHAR(30) NULL,
+    address      VARCHAR(200) NOT NULL,
+    city         VARCHAR(100) NULL,
+    postal_code  CHAR(5) NOT NULL,
+    PRIMARY KEY (id),
+    KEY idx_customers_email (email)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE users (
     id             INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    nombre         VARCHAR(120) NOT NULL,
     email          VARCHAR(150) NOT NULL,
-    telefono       VARCHAR(30) NULL,
-    direccion      VARCHAR(200) NOT NULL,
-    ciudad         VARCHAR(100) NULL,
-    codigo_postal  CHAR(5) NOT NULL,
+    password_hash  VARCHAR(255) NOT NULL,                 -- password_hash() de PHP
+    role           ENUM('admin') NOT NULL DEFAULT 'admin',
     PRIMARY KEY (id),
-    KEY idx_clientes_email (email)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE usuarios (
-    id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    email            VARCHAR(150) NOT NULL,
-    hash_contrasena  VARCHAR(255) NOT NULL,             -- password_hash() de PHP
-    rol              ENUM('admin') NOT NULL DEFAULT 'admin',
-    PRIMARY KEY (id),
-    UNIQUE KEY uq_usuarios_email (email)
+    UNIQUE KEY uq_users_email (email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
 -- DATOS TRANSACCIONALES
 -- ------------------------------------------------------------
 
-CREATE TABLE pedidos (
-    id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    codigo      VARCHAR(20) NOT NULL,                   -- PED-000123
-    cliente_id  INT UNSIGNED NOT NULL,
-    estado      ENUM('pendiente_pago','pagado','en_preparacion',
-                     'enviado','entregado','cancelado','incidencia')
-                NOT NULL DEFAULT 'pendiente_pago',
-    subtotal    DECIMAL(10,2) NOT NULL,                 -- sin IVA, antes de descuento
-    descuento   DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-    envio       DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-    iva         DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-    total       DECIMAL(10,2) NOT NULL,
-    creado_en   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE orders (
+    id           INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    code         VARCHAR(20) NOT NULL,                    -- PED-000123
+    customer_id  INT UNSIGNED NOT NULL,
+    status       ENUM('pendiente_pago','pagado','en_preparacion',
+                      'enviado','entregado','cancelado','incidencia')
+                 NOT NULL DEFAULT 'pendiente_pago',
+    subtotal     DECIMAL(10,2) NOT NULL,                  -- sin IVA, antes de descuento
+    discount     DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    shipping     DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    tax          DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+    total        DECIMAL(10,2) NOT NULL,
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_pedidos_codigo (codigo),
-    KEY idx_pedidos_cliente (cliente_id),
-    KEY idx_pedidos_estado (estado),
-    KEY idx_pedidos_creado (creado_en),
-    CONSTRAINT fk_pedidos_cliente
-        FOREIGN KEY (cliente_id) REFERENCES clientes (id)
+    UNIQUE KEY uq_orders_code (code),
+    KEY idx_orders_customer (customer_id),
+    KEY idx_orders_status (status),
+    KEY idx_orders_created (created_at),
+    CONSTRAINT fk_orders_customer
+        FOREIGN KEY (customer_id) REFERENCES customers (id)
         ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Se guarda copia de nombre, precio e IVA: el pedido no cambia si el producto se edita
-CREATE TABLE lineas_pedido (
-    id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    pedido_id        INT UNSIGNED NOT NULL,
-    producto_id      INT UNSIGNED NOT NULL,
-    nombre_producto  VARCHAR(150) NOT NULL,
-    precio_unitario  DECIMAL(10,2) NOT NULL,
-    tasa_iva         DECIMAL(4,2)  NOT NULL,
-    cantidad         INT UNSIGNED  NOT NULL,
-    total_linea      DECIMAL(10,2) NOT NULL,
+CREATE TABLE order_items (
+    id            INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    order_id      INT UNSIGNED NOT NULL,
+    product_id    INT UNSIGNED NOT NULL,
+    product_name  VARCHAR(150) NOT NULL,
+    unit_price    DECIMAL(10,2) NOT NULL,
+    tax_rate      DECIMAL(4,2)  NOT NULL,
+    quantity      INT UNSIGNED  NOT NULL,
+    line_total    DECIMAL(10,2) NOT NULL,
     PRIMARY KEY (id),
-    KEY idx_lineas_pedido (pedido_id),
-    KEY idx_lineas_producto (producto_id),
-    CONSTRAINT fk_lineas_pedido
-        FOREIGN KEY (pedido_id) REFERENCES pedidos (id)
+    KEY idx_order_items_order (order_id),
+    KEY idx_order_items_product (product_id),
+    CONSTRAINT fk_order_items_order
+        FOREIGN KEY (order_id) REFERENCES orders (id)
         ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT fk_lineas_producto
-        FOREIGN KEY (producto_id) REFERENCES productos (id)
+    CONSTRAINT fk_order_items_product
+        FOREIGN KEY (product_id) REFERENCES products (id)
         ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT chk_lineas_cantidad CHECK (cantidad > 0)
+    CONSTRAINT chk_order_items_quantity CHECK (quantity > 0)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE pagos (
+CREATE TABLE payments (
     id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    pedido_id   INT UNSIGNED NOT NULL,
-    metodo      VARCHAR(30) NOT NULL,                   -- tarjeta_simulada, bizum_simulado
-    estado      ENUM('aprobado','rechazado') NOT NULL,
-    importe     DECIMAL(10,2) NOT NULL,
-    referencia  VARCHAR(50) NULL,
-    creado_en   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    order_id    INT UNSIGNED NOT NULL,
+    method      VARCHAR(30) NOT NULL,                     -- tarjeta_simulada, bizum_simulado
+    status      ENUM('approved','rejected') NOT NULL,
+    amount      DECIMAL(10,2) NOT NULL,
+    reference   VARCHAR(50) NULL,
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    KEY idx_pagos_pedido (pedido_id),
-    CONSTRAINT fk_pagos_pedido
-        FOREIGN KEY (pedido_id) REFERENCES pedidos (id)
+    KEY idx_payments_order (order_id),
+    CONSTRAINT fk_payments_order
+        FOREIGN KEY (order_id) REFERENCES orders (id)
         ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE historial_estados_pedido (
-    id               INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    pedido_id        INT UNSIGNED NOT NULL,
-    estado_origen    VARCHAR(30) NULL,                  -- NULL en el alta del pedido
-    estado_destino   VARCHAR(30) NOT NULL,
-    cambiado_en      DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE order_status_history (
+    id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    order_id    INT UNSIGNED NOT NULL,
+    from_status VARCHAR(30) NULL,                         -- NULL en el alta del pedido
+    to_status   VARCHAR(30) NOT NULL,
+    changed_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    KEY idx_historial_pedido (pedido_id),
-    CONSTRAINT fk_historial_pedido
-        FOREIGN KEY (pedido_id) REFERENCES pedidos (id)
+    KEY idx_status_history_order (order_id),
+    CONSTRAINT fk_status_history_order
+        FOREIGN KEY (order_id) REFERENCES orders (id)
         ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -156,40 +170,40 @@ CREATE TABLE historial_estados_pedido (
 -- SOPORTE Y EVENTOS
 -- ------------------------------------------------------------
 
-CREATE TABLE tickets_soporte (
-    id         INT UNSIGNED NOT NULL AUTO_INCREMENT,
-    pedido_id  INT UNSIGNED NULL,                       -- opcional
-    nombre     VARCHAR(120) NOT NULL,
-    email      VARCHAR(150) NOT NULL,
-    asunto     VARCHAR(200) NOT NULL,
-    mensaje    TEXT NOT NULL,
-    estado     ENUM('abierta','en_curso','cerrada') NOT NULL DEFAULT 'abierta',
-    creado_en  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE support_tickets (
+    id          INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    order_id    INT UNSIGNED NULL,                        -- opcional
+    name        VARCHAR(120) NOT NULL,
+    email       VARCHAR(150) NOT NULL,
+    subject     VARCHAR(200) NOT NULL,
+    message     TEXT NOT NULL,
+    status      ENUM('abierta','en_curso','cerrada') NOT NULL DEFAULT 'abierta',
+    created_at  DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    KEY idx_tickets_pedido (pedido_id),
-    KEY idx_tickets_estado (estado),
-    CONSTRAINT fk_tickets_pedido
-        FOREIGN KEY (pedido_id) REFERENCES pedidos (id)
+    KEY idx_tickets_order (order_id),
+    KEY idx_tickets_status (status),
+    CONSTRAINT fk_tickets_order
+        FOREIGN KEY (order_id) REFERENCES orders (id)
         ON UPDATE CASCADE ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- tipo: product.viewed, cart.item_added, checkout.started, order.created,
+-- type: product.viewed, cart.item_added, checkout.started, order.created,
 --       payment.simulated, support.requested ...
 
-CREATE TABLE eventos (
-    id            BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    tipo          VARCHAR(50) NOT NULL,
-    tipo_entidad  VARCHAR(30) NULL,                     -- producto, pedido, ticket...
-    entidad_id    INT UNSIGNED NULL,
-    datos         JSON NULL,
-    sesion_id     VARCHAR(64) NULL,
-    creado_en     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+CREATE TABLE events (
+    id           BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    type         VARCHAR(50) NOT NULL,
+    entity_type  VARCHAR(30) NULL,                        -- product, order, ticket...
+    entity_id    INT UNSIGNED NULL,
+    payload      JSON NULL,
+    session_id   VARCHAR(64) NULL,
+    created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    KEY idx_eventos_tipo (tipo),
-    KEY idx_eventos_entidad (tipo_entidad, entidad_id),
-    KEY idx_eventos_creado (creado_en)
+    KEY idx_events_type (type),
+    KEY idx_events_entity (entity_type, entity_id),
+    KEY idx_events_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ------------------------------------------------------------
--- Fin del esquema - 
+-- Fin del esquema
 -- ------------------------------------------------------------
