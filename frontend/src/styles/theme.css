@@ -37,7 +37,7 @@
   --space-5: 2.5rem;
   --space-6: 4rem;
   --gutter: 1rem;
-  --container-max: 72rem;
+  --container-max: none; /* ancho completo: el contenido solo deja el margen lateral (--gutter) */
 
   /* Radios */
   --radius-sm: 4px;
@@ -57,11 +57,16 @@
   /* Foco visible */
   --focus-ring: 3px solid var(--color-accent);
   --focus-offset: 3px;
+
+  /* Panel lateral del carrito */
+  --color-overlay: rgb(17 17 17 / 0.45);
+  --shadow-panel: -12px 0 32px rgb(17 17 17 / 0.08);
+  --drawer-width: 420px;
 }
 
 /* En pantallas medias y grandes se ensancha el margen lateral */
 @media (min-width: 48em) {
   :root {
-    --gutter: 2rem;
+    --gutter: 4rem; /* 64 px a cada lado */
   }
 }
