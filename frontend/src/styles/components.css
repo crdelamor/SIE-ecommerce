@@ -1,5 +1,18 @@
 /* components.css — estilos de los componentes de src/components. Solo variables de theme.css. */
 
+/* Página a toda la altura: el pie queda siempre abajo aunque haya poco contenido */
+.site {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* Contenido de cada página, con aire arriba y abajo para los títulos */
+.site-main {
+  flex: 1;
+  padding-block: var(--space-5);
+}
+
 /* Banner + cabecera quedan fijos arriba juntos */
 .site-top {
   position: sticky;
@@ -22,6 +35,9 @@
   margin-inline: auto;
   padding-inline: var(--gutter);
 }
+
+/* Un contenedor dentro de otro no vuelve a sumar el margen lateral */
+.container .container { padding-inline: 0; }
 
 .section { padding-block: var(--space-6); }
 .section--alt { background: var(--color-surface); }
@@ -47,6 +63,8 @@
   font-weight: var(--font-weight-bold);
   letter-spacing: var(--letter-spacing-tight);
 }
+
+.header__logo-accent { color: var(--color-accent); }
 
 .header__nav {
   display: flex;
@@ -191,9 +209,11 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
+  align-items: center;
   gap: var(--space-3);
 }
 
+.footer__inner p { margin: 0; }
 .footer__links { display: flex; gap: var(--space-4); }
 
 /* Muestra */
