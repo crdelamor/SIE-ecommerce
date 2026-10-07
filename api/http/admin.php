@@ -53,17 +53,69 @@ $router->post('/auth/logout', function (): void {
     jsonResponse(['status' => 'ok']);
 });
 
-// ?status=pagado (opcional)  ->  200 { "orders": [ { id, code, created_at, customer_name, total, status } ] }
+/** Parámetro de la URL como texto; null si no viene o está vacío. Un array (?x[]=) es un 400. */
+function queryParam(string $name): ?string
+{
+    $value = $_GET[$name] ?? null;
+    if ($value !== null && !is_string($value)) {
+        jsonError("El parámetro '$name' no es válido", 400);
+    }
+    $value = $value === null ? null : trim($value);
+
+    return $value === '' ? null : $value;
+}
+
+/** Fecha 'AAAA-MM-DD' real (rechaza '2026-02-30' o '30/09/2026'); responde 400 si no lo es. */
+function queryDate(string $name): ?string
+{
+    $value = queryParam($name);
+    if ($value === null) {
+        return null;
+    }
+    $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
+    if ($date === false || $date->format('Y-m-d') !== $value) {
+        jsonError("La fecha '$name' debe tener el formato AAAA-MM-DD", 400);
+    }
+
+    return $value;
+}
+
+const ORDERS_PER_PAGE = 20;
+
+// Parámetros opcionales: ?status=pagado&from=2026-09-01&to=2026-09-30&q=PED-0001&page=2
+// -> 200 { "orders": [ { id, code, created_at, customer_name, total, status } ], "total", "page", "per_page" }
 $router->get('/admin/orders', function (): void {
     AuthService::requireAdmin();
 
-    $status = $_GET['status'] ?? null;
-    if ($status === '') {
-        $status = null; // ?status= vacío = todos
-    }
-    if ($status !== null && (!is_string($status) || !OrderStatusService::isValidStatus($status))) {
+    $filters = [
+        'status' => queryParam('status'),
+        'from'   => queryDate('from'),
+        'to'     => queryDate('to'),
+        'q'      => queryParam('q'),
+    ];
+
+    if ($filters['status'] !== null && !OrderStatusService::isValidStatus($filters['status'])) {
         jsonError('Estado no válido', 400);
     }
+    // Las dos fechas tienen el mismo formato, así que se pueden comparar como texto
+    if ($filters['from'] !== null && $filters['to'] !== null && $filters['from'] > $filters['to']) {
+        jsonError("La fecha 'from' no puede ser posterior a 'to'", 400);
+    }
+    if ($filters['q'] !== null && mb_strlen($filters['q']) > 100) {
+        jsonError('La búsqueda no puede tener más de 100 caracteres', 400);
+    }
 
-    jsonResponse(['orders' => (new AdminOrderRepository())->findAll($status)]);
+    $page = queryParam('page') ?? '1';
+    if (!ctype_digit($page) || (int) $page < 1 || (int) $page > 100000) {
+        jsonError('Página no válida', 400);
+    }
+    $page = (int) $page;
+
+    $result = (new AdminOrderRepository())->findPage(
+        array_filter($filters, fn ($value) => $value !== null),
+        ORDERS_PER_PAGE,
+        ($page - 1) * ORDERS_PER_PAGE
+    );
+
+    jsonResponse($result + ['page' => $page, 'per_page' => ORDERS_PER_PAGE]);
 });

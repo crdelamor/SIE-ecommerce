@@ -41,3 +41,17 @@ export async function login(email, password) {
 export function logout() {
   return request('/auth/logout', { method: 'POST' });
 }
+
+/**
+ * Una página de pedidos, del más reciente al más antiguo.
+ * Filtros opcionales: { status, from, to, q, page } (los vacíos no se envían).
+ * Devuelve { orders, total, page, per_page }.
+ */
+export function getOrders(filters = {}) {
+  const params = new URLSearchParams();
+  for (const [name, value] of Object.entries(filters)) {
+    if (value) params.set(name, value);
+  }
+  const query = params.toString();
+  return request(`/admin/orders${query ? `?${query}` : ''}`);
+}

@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import Button from '../../components/Button.jsx';
 import { Section } from '../../components/Container.jsx';
 import LoginPage from './LoginPage.jsx';
+import OrdersPage from './OrdersPage.jsx';
 import { logout } from './adminApi.js';
 import './admin.css';
 
@@ -30,11 +31,20 @@ function saveUser(user) {
 /** Entrada a la administración: muestra el login o el panel según haya sesión. */
 export default function AdminPage() {
   const [user, setUser] = useState(loadUser);
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   function handleLogin(loggedUser) {
     saveUser(loggedUser);
     setUser(loggedUser);
+    setSessionExpired(false);
   }
+
+  // La API respondió 401: la sesión del servidor ya no existe (caducó o se reinició PHP)
+  const handleUnauthorized = useCallback(() => {
+    saveUser(null);
+    setUser(null);
+    setSessionExpired(true);
+  }, []);
 
   async function handleLogout() {
     try {
@@ -47,7 +57,12 @@ export default function AdminPage() {
   }
 
   if (!user) {
-    return <LoginPage onLogin={handleLogin} />;
+    return (
+      <LoginPage
+        onLogin={handleLogin}
+        notice={sessionExpired ? 'Tu sesión ha caducado. Vuelve a iniciar sesión.' : ''}
+      />
+    );
   }
 
   return (
@@ -63,7 +78,7 @@ export default function AdminPage() {
           </Button>
         </div>
       </div>
-      <p>Aquí irán los pedidos, las incidencias y el visor de eventos.</p>
+      <OrdersPage onUnauthorized={handleUnauthorized} />
     </Section>
   );
 }

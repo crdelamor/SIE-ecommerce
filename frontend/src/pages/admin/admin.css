@@ -60,3 +60,94 @@
 .admin-bar__user p {
   margin: 0;
 }
+
+.admin-notice {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border-left: 4px solid var(--color-accent);
+}
+
+/* Lista de pedidos: filtros en una fila que se reparte en varias en pantallas estrechas */
+.admin-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.admin-filters .admin-form__field {
+  flex: 1 1 10rem;
+}
+
+.admin-filters .admin-filters__search {
+  flex: 2 1 14rem;
+}
+
+.admin-table.is-loading {
+  opacity: 0.5;
+}
+
+.admin-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+/* En móvil la tabla se desplaza en horizontal dentro de su caja, sin mover la página */
+.admin-table-wrap {
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.admin-table th,
+.admin-table td {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-table th {
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-table .admin-table__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Estado del pedido: el texto siempre dice el estado; el color solo lo refuerza */
+.admin-status {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-text-muted);
+  border-radius: var(--radius-pill);
+}
+
+.admin-status--incidencia {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-status--cancelado {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}

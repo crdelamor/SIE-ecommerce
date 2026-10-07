@@ -8,7 +8,7 @@ import './admin.css';
  * Formulario de acceso del administrador. La comprobación real la hace la API;
  * aquí solo se evita enviar campos vacíos.
  */
-export default function LoginPage({ onLogin }) {
+export default function LoginPage({ onLogin, notice = '' }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -34,6 +34,11 @@ export default function LoginPage({ onLogin }) {
       <div className="admin-login">
         <h1>Acceso de administración</h1>
         <p className="text-muted">Solo para el personal de la tienda.</p>
+        {notice && (
+          <p className="admin-notice" role="status">
+            {notice}
+          </p>
+        )}
 
         <form className="admin-form" onSubmit={handleSubmit}>
           <div className="admin-form__field">
