@@ -120,15 +120,20 @@ $router->get('/admin/orders', function (): void {
     jsonResponse($result + ['page' => $page, 'per_page' => ORDERS_PER_PAGE]);
 });
 
-// -> 200 { "order": { ..., customer, items, payments, history, allowed_transitions } } · 404 si no existe
-$router->get('/admin/orders/{id}', function (array $params): void {
-    AuthService::requireAdmin();
-
+/** Id del pedido de la ruta como entero positivo; responde 400 si no lo es. */
+function routeOrderId(array $params): int
+{
     if (!ctype_digit($params['id']) || (int) $params['id'] < 1) {
         jsonError('Identificador de pedido no válido', 400);
     }
 
-    $order = (new AdminOrderRepository())->findById((int) $params['id']);
+    return (int) $params['id'];
+}
+
+/** Responde con la ficha completa del pedido y las transiciones que permite su estado. */
+function respondWithOrder(int $id): void
+{
+    $order = (new AdminOrderRepository())->findById($id);
     if ($order === null) {
         jsonError('Pedido no encontrado', 404);
     }
@@ -137,4 +142,31 @@ $router->get('/admin/orders/{id}', function (array $params): void {
     $order['allowed_transitions'] = OrderStatusService::allowedTransitions($order['status']);
 
     jsonResponse(['order' => $order]);
+}
+
+// -> 200 { "order": { ..., customer, items, payments, history, allowed_transitions } } · 404 si no existe
+$router->get('/admin/orders/{id}', function (array $params): void {
+    AuthService::requireAdmin();
+    respondWithOrder(routeOrderId($params));
+});
+
+// Body: { "status": "enviado" }  ->  200 { "order": { ... } } con el estado ya cambiado
+// 400 body no válido · 404 no existe · 409 transición no permitida · 422 estado inexistente
+$router->patch('/admin/orders/{id}/status', function (array $params): void {
+    $admin = AuthService::requireAdmin();
+    $id = routeOrderId($params);
+
+    $body = readJsonBody();
+    $status = $body['status'] ?? null;
+    if (!is_string($status) || trim($status) === '') {
+        jsonError("Falta el nuevo estado ('status')", 400);
+    }
+
+    try {
+        (new OrderStatusService())->changeStatus($id, trim($status), (int) $admin['id']);
+    } catch (OrderStatusException $e) {
+        jsonError($e->getMessage(), $e->getCode());
+    }
+
+    respondWithOrder($id);
 });

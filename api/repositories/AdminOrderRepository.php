@@ -171,6 +171,34 @@ final class AdminOrderRepository
         ], $stmt->fetchAll());
     }
 
+    /**
+     * Lee el estado del pedido y lo BLOQUEA hasta el final de la transacción
+     * (SELECT ... FOR UPDATE): otro cambio simultáneo del mismo pedido espera a este.
+     * Devuelve ['code', 'status'] o null si el pedido no existe.
+     */
+    public function lockForStatusChange(int $id): ?array
+    {
+        $stmt = db()->prepare('SELECT code, status FROM orders WHERE id = :id FOR UPDATE');
+        $stmt->execute(['id' => $id]);
+
+        return $stmt->fetch() ?: null;
+    }
+
+    public function updateStatus(int $id, string $status): void
+    {
+        $stmt = db()->prepare('UPDATE orders SET status = :status WHERE id = :id');
+        $stmt->execute(['status' => $status, 'id' => $id]);
+    }
+
+    public function addStatusHistory(int $id, string $fromStatus, string $toStatus): void
+    {
+        $stmt = db()->prepare(
+            'INSERT INTO order_status_history (order_id, from_status, to_status, changed_at)
+             VALUES (:order_id, :from_status, :to_status, NOW())'
+        );
+        $stmt->execute(['order_id' => $id, 'from_status' => $fromStatus, 'to_status' => $toStatus]);
+    }
+
     /** Historial de estados, del más antiguo al más reciente. */
     private function findHistory(int $orderId): array
     {
