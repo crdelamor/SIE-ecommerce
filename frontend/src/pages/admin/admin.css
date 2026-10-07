@@ -88,6 +88,12 @@
   opacity: 0.5;
 }
 
+/* Código del pedido: enlace a la ficha, siempre subrayado para que se vea que se puede pulsar */
+.admin-table__code {
+  font-weight: var(--font-weight-bold);
+  background-size: 100% 1px;
+}
+
 .admin-pagination {
   display: flex;
   flex-wrap: wrap;
@@ -150,4 +156,131 @@
 .admin-status--cancelado {
   color: var(--color-text-muted);
   text-decoration: line-through;
+}
+
+/* Ficha del pedido */
+.admin-back {
+  display: inline-block;
+  margin-bottom: var(--space-3);
+}
+
+.admin-detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.admin-detail-header h2 {
+  margin: 0;
+}
+
+.admin-detail-header p {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.admin-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.admin-card {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.admin-card h3 {
+  margin-bottom: var(--space-2);
+}
+
+/* Lista de datos en dos columnas: etiqueta a la izquierda, valor a la derecha */
+.admin-dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+
+.admin-dl dt {
+  color: var(--color-text-muted);
+}
+
+.admin-dl dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-dl--amounts dd {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-dl .admin-dl__total {
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-detail-block {
+  margin-bottom: var(--space-5);
+}
+
+.admin-note {
+  margin-top: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+/* En las tablas de la ficha, el nombre del producto es la cabecera de su fila */
+.admin-table tbody th {
+  color: var(--color-text);
+}
+
+.admin-table abbr {
+  text-decoration: underline dotted;
+  cursor: help;
+}
+
+.admin-payment--rejected {
+  color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Historial: línea de tiempo vertical */
+.admin-timeline {
+  margin: 0;
+  padding: 0 0 0 var(--space-3);
+  list-style: none;
+  border-left: 2px solid var(--color-border);
+}
+
+.admin-timeline li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding-block: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.admin-timeline time {
+  min-width: 8rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
 }

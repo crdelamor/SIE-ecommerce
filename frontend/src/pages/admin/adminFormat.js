@@ -11,6 +11,23 @@ export const STATUS_LABELS = {
   incidencia: 'Incidencia',
 };
 
+// Estado de conservación de una carta (los sobres no tienen)
+export const CONDITION_LABELS = {
+  NM: 'Near Mint (casi nueva)',
+  LP: 'Lightly Played (poco uso)',
+  MP: 'Moderately Played (uso moderado)',
+};
+
+export const PAYMENT_METHOD_LABELS = {
+  tarjeta_simulada: 'Tarjeta (simulada)',
+  bizum_simulado: 'Bizum (simulado)',
+};
+
+export const PAYMENT_STATUS_LABELS = {
+  approved: 'Aprobado',
+  rejected: 'Rechazado',
+};
+
 const dateTimeFormat = new Intl.DateTimeFormat('es-ES', { dateStyle: 'short', timeStyle: 'short' });
 const priceFormat = new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' });
 

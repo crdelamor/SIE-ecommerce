@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Button from '../../components/Button.jsx';
 import { getOrders } from './adminApi.js';
 import { STATUS_LABELS, formatDateTime, formatPrice, toIsoDateTime } from './adminFormat.js';
@@ -78,6 +78,13 @@ export default function OrdersPage({ onUnauthorized }) {
       else params.delete('pagina');
       return params;
     });
+  }
+
+  /** Enlace a la ficha que conserva los filtros actuales, para volver a la misma lista. */
+  function orderLink(id) {
+    const params = new URLSearchParams(searchParams);
+    params.set('pedido', String(id));
+    return `?${params.toString()}`;
   }
 
   function clearFilters() {
@@ -210,7 +217,11 @@ export default function OrdersPage({ onUnauthorized }) {
             <tbody>
               {orders.map((order) => (
                 <tr key={order.id}>
-                  <td>{order.code}</td>
+                  <td>
+                    <Link to={orderLink(order.id)} className="link admin-table__code">
+                      {order.code}
+                    </Link>
+                  </td>
                   <td>
                     <time dateTime={toIsoDateTime(order.created_at)}>{formatDateTime(order.created_at)}</time>
                   </td>

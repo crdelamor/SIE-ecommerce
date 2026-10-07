@@ -55,3 +55,9 @@ export function getOrders(filters = {}) {
   const query = params.toString();
   return request(`/admin/orders${query ? `?${query}` : ''}`);
 }
+
+/** Ficha completa de un pedido (cliente, líneas, pagos, historial y transiciones permitidas). */
+export async function getOrder(id) {
+  const data = await request(`/admin/orders/${encodeURIComponent(id)}`);
+  return data.order;
+}

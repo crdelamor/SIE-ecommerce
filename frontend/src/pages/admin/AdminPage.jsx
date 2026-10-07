@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Button from '../../components/Button.jsx';
 import { Section } from '../../components/Container.jsx';
 import LoginPage from './LoginPage.jsx';
+import OrderDetailPage from './OrderDetailPage.jsx';
 import OrdersPage from './OrdersPage.jsx';
 import { logout } from './adminApi.js';
 import './admin.css';
@@ -28,8 +30,14 @@ function saveUser(user) {
   }
 }
 
-/** Entrada a la administración: muestra el login o el panel según haya sesión. */
+/**
+ * Entrada a la administración: muestra el login o el panel según haya sesión.
+ * Mientras el grupo no añada subrutas admin/* en App.jsx, la vista se elige con la
+ * URL: #/admin (lista de pedidos) o #/admin?pedido=ID (ficha de un pedido).
+ */
 export default function AdminPage() {
+  const [searchParams] = useSearchParams();
+  const orderId = searchParams.get('pedido');
   const [user, setUser] = useState(loadUser);
   const [sessionExpired, setSessionExpired] = useState(false);
 
@@ -78,7 +86,11 @@ export default function AdminPage() {
           </Button>
         </div>
       </div>
-      <OrdersPage onUnauthorized={handleUnauthorized} />
+      {orderId ? (
+        <OrderDetailPage orderId={orderId} onUnauthorized={handleUnauthorized} />
+      ) : (
+        <OrdersPage onUnauthorized={handleUnauthorized} />
+      )}
     </Section>
   );
 }
