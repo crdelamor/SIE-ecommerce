@@ -7,4 +7,19 @@ declare(strict_types=1);
  */
 final class OrderStatusService
 {
+    /** Estados del pedido del contrato (mismos valores que el ENUM de orders.status). */
+    public const STATUSES = [
+        'pendiente_pago',
+        'pagado',
+        'en_preparacion',
+        'enviado',
+        'entregado',
+        'cancelado',
+        'incidencia',
+    ];
+
+    public static function isValidStatus(string $status): bool
+    {
+        return in_array($status, self::STATUSES, true);
+    }
 }

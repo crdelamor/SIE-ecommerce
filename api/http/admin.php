@@ -14,7 +14,9 @@ declare(strict_types=1);
 
 // index.php solo carga lib/ y http/: los servicios y repositorios se cargan aquí
 require_once __DIR__ . '/../repositories/UserRepository.php';
+require_once __DIR__ . '/../repositories/AdminOrderRepository.php';
 require_once __DIR__ . '/../services/AuthService.php';
+require_once __DIR__ . '/../services/OrderStatusService.php';
 
 /** Lee el cuerpo JSON de la petición; responde 400 si no es un objeto JSON válido. */
 function readJsonBody(): array
@@ -49,4 +51,19 @@ $router->post('/auth/login', function (): void {
 $router->post('/auth/logout', function (): void {
     (new AuthService())->logout();
     jsonResponse(['status' => 'ok']);
+});
+
+// ?status=pagado (opcional)  ->  200 { "orders": [ { id, code, created_at, customer_name, total, status } ] }
+$router->get('/admin/orders', function (): void {
+    AuthService::requireAdmin();
+
+    $status = $_GET['status'] ?? null;
+    if ($status === '') {
+        $status = null; // ?status= vacío = todos
+    }
+    if ($status !== null && (!is_string($status) || !OrderStatusService::isValidStatus($status))) {
+        jsonError('Estado no válido', 400);
+    }
+
+    jsonResponse(['orders' => (new AdminOrderRepository())->findAll($status)]);
 });

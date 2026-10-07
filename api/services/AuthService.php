@@ -59,6 +59,31 @@ final class AuthService
         session_destroy();
     }
 
+    /**
+     * Guard de las rutas /admin/*: corta la petición con 401 si no hay sesión y con
+     * 403 si el usuario no es administrador. Si todo va bien, devuelve el usuario.
+     */
+    public static function requireAdmin(): array
+    {
+        self::startSession();
+        $user = [
+            'id'    => $_SESSION['user_id'] ?? null,
+            'email' => $_SESSION['email'] ?? null,
+            'role'  => $_SESSION['role'] ?? null,
+        ];
+        // Solo se lee la sesión: se libera ya para no bloquear otras peticiones del mismo navegador
+        session_write_close();
+
+        if ($user['id'] === null) {
+            jsonError('Tienes que iniciar sesión', 401);
+        }
+        if ($user['role'] !== 'admin') {
+            jsonError('No tienes permiso para acceder a la administración', 403);
+        }
+
+        return $user;
+    }
+
     /** Arranca la sesión con una cookie que JavaScript no puede leer y que no se envía desde otras webs. */
     public static function startSession(): void
     {
