@@ -24,21 +24,24 @@ final class OrderStatusService
     ];
 
     /**
-     * Transiciones válidas del contrato: estado actual => estados a los que puede pasar.
-     * entregado y cancelado son finales. Las de incidencia están pendientes de acordar
-     * con el grupo: hasta entonces no puede salir de ese estado.
+     * Transiciones válidas: estado actual => estados a los que puede pasar.
+     * Las del contrato, más las de incidencia acordadas por el grupo: en una tienda de
+     * cartas la incidencia suele aparecer al recibir el pedido (peor estado, otro idioma,
+     * carta dañada), así que también se llega desde enviado y entregado. Se sale de ella
+     * según cómo se resuelva: reenvío (en_preparacion), reembolso (cancelado) o sin
+     * reenvío (entregado). Solo cancelado es final.
      */
     private const TRANSITIONS = [
         'pendiente_pago' => ['pagado', 'cancelado', 'incidencia'],
         'pagado'         => ['en_preparacion', 'cancelado', 'incidencia'],
         'en_preparacion' => ['enviado', 'cancelado', 'incidencia'],
-        'enviado'        => ['entregado'],
-        'entregado'      => [],
+        'enviado'        => ['entregado', 'incidencia'],
+        'entregado'      => ['incidencia'],
         'cancelado'      => [],
-        'incidencia'     => [], // TODO(grupo): transiciones desde incidencia
+        'incidencia'     => ['en_preparacion', 'cancelado', 'entregado'],
     ];
 
-    // Propuesta de nombre del evento, pendiente de confirmar con el grupo
+    // Nombre del evento acordado por el grupo (el contrato no lo fijaba)
     private const EVENT_TYPE = 'order.status_changed';
 
     public function __construct(private AdminOrderRepository $orders = new AdminOrderRepository())

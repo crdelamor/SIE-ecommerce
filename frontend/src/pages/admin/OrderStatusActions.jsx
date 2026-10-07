@@ -77,13 +77,7 @@ export default function OrderStatusActions({ order, onChanged, onUnauthorized })
         </p>
       )}
 
-      {transitions.length === 0 && (
-        <p className="text-muted">
-          {order.status === 'incidencia'
-            ? 'Las salidas de "Incidencia" están pendientes de acordar.'
-            : 'Estado final: este pedido ya no cambia.'}
-        </p>
-      )}
+      {transitions.length === 0 && <p className="text-muted">Estado final: este pedido ya no cambia.</p>}
 
       {transitions.length > 0 && target && (
         <div className="admin-confirm">
