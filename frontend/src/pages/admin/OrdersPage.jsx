@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Button from '../../components/Button.jsx';
+import StatusBadge from './StatusBadge.jsx';
 import { getOrders } from './adminApi.js';
 import { STATUS_LABELS, formatDateTime, formatPrice, toIsoDateTime } from './adminFormat.js';
 
@@ -228,9 +229,7 @@ export default function OrdersPage({ onUnauthorized }) {
                   <td>{order.customer_name}</td>
                   <td className="admin-table__num">{formatPrice(order.total)}</td>
                   <td>
-                    <span className={`admin-status admin-status--${order.status}`}>
-                      {STATUS_LABELS[order.status] ?? order.status}
-                    </span>
+                    <StatusBadge status={order.status} />
                   </td>
                 </tr>
               ))}

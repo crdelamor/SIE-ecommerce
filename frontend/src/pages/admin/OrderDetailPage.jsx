@@ -1,19 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import OrderStatusActions from './OrderStatusActions.jsx';
+import StatusBadge from './StatusBadge.jsx';
 import { getOrder } from './adminApi.js';
 import {
   CONDITION_LABELS,
   PAYMENT_METHOD_LABELS,
   PAYMENT_STATUS_LABELS,
-  STATUS_LABELS,
   formatDateTime,
   formatPrice,
   toIsoDateTime,
 } from './adminFormat.js';
-
-function StatusBadge({ status }) {
-  return <span className={`admin-status admin-status--${status}`}>{STATUS_LABELS[status] ?? status}</span>;
-}
 
 function DateTime({ value }) {
   return <time dateTime={toIsoDateTime(value)}>{formatDateTime(value)}</time>;
@@ -30,6 +27,7 @@ export default function OrderDetailPage({ orderId, onUnauthorized }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const titleRef = useRef(null);
+  const focusedOrderId = useRef(null);
 
   // Enlace de vuelta: los mismos filtros de la lista, sin el pedido
   const backParams = new URLSearchParams(searchParams);
@@ -59,9 +57,13 @@ export default function OrderDetailPage({ orderId, onUnauthorized }) {
     };
   }, [orderId, onUnauthorized]);
 
-  // Al abrir la ficha, el foco va al título: el lector de pantalla anuncia el cambio de vista
+  // Al abrir la ficha, el foco va al título: el lector de pantalla anuncia el cambio de vista.
+  // Solo la primera vez por pedido, no cada vez que se actualiza tras cambiar el estado.
   useEffect(() => {
-    if (order) titleRef.current?.focus();
+    if (order && focusedOrderId.current !== order.id) {
+      focusedOrderId.current = order.id;
+      titleRef.current?.focus();
+    }
   }, [order]);
 
   const backLink = (
@@ -147,27 +149,7 @@ export default function OrderDetailPage({ orderId, onUnauthorized }) {
           </dl>
         </section>
 
-        <section className="admin-card" aria-labelledby="next-title">
-          <h3 id="next-title">Siguiente estado</h3>
-          {order.allowed_transitions.length > 0 ? (
-            <>
-              <p className="text-muted">Puede pasar a:</p>
-              <ul className="admin-chips">
-                {order.allowed_transitions.map((status) => (
-                  <li key={status}>
-                    <StatusBadge status={status} />
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : (
-            <p className="text-muted">
-              {order.status === 'incidencia'
-                ? 'Las salidas de "Incidencia" están pendientes de acordar.'
-                : 'Estado final: este pedido ya no cambia.'}
-            </p>
-          )}
-        </section>
+        <OrderStatusActions order={order} onChanged={setOrder} onUnauthorized={onUnauthorized} />
       </div>
 
       <section aria-labelledby="items-title" className="admin-detail-block">

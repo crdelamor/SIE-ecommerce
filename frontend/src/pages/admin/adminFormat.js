@@ -11,6 +11,16 @@ export const STATUS_LABELS = {
   incidencia: 'Incidencia',
 };
 
+// Texto del botón que lleva el pedido a cada estado
+export const STATUS_ACTIONS = {
+  pagado: 'Marcar como pagado',
+  en_preparacion: 'Pasar a En preparación',
+  enviado: 'Marcar como enviado',
+  entregado: 'Marcar como entregado',
+  cancelado: 'Cancelar pedido',
+  incidencia: 'Marcar incidencia',
+};
+
 // Estado de conservación de una carta (los sobres no tienen)
 export const CONDITION_LABELS = {
   NM: 'Near Mint (casi nueva)',

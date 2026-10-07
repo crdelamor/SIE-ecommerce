@@ -61,3 +61,12 @@ export async function getOrder(id) {
   const data = await request(`/admin/orders/${encodeURIComponent(id)}`);
   return data.order;
 }
+
+/** Cambia el estado del pedido. El servidor valida la transición (409 si no se permite). */
+export async function changeOrderStatus(id, status) {
+  const data = await request(`/admin/orders/${encodeURIComponent(id)}/status`, {
+    method: 'PATCH',
+    body: { status },
+  });
+  return data.order;
+}
