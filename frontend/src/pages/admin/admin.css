@@ -1,0 +1,62 @@
+/* admin.css — pantallas de administración (C). Solo usa variables de theme.css. */
+
+/* Login */
+.admin-login {
+  max-width: 26rem;
+}
+
+.admin-form {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.admin-form__field {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.admin-form__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-form__input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  /* Borde oscuro: los campos tienen que distinguirse del fondo (contraste ≥ 3:1) */
+  border: 1px solid var(--color-text-muted);
+  border-radius: var(--radius-sm);
+}
+
+.admin-form__error {
+  margin: 0;
+  color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Barra superior del panel */
+.admin-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.admin-bar h1 {
+  margin: 0;
+}
+
+.admin-bar__user {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.admin-bar__user p {
+  margin: 0;
+}
