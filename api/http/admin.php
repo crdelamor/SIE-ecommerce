@@ -119,3 +119,22 @@ $router->get('/admin/orders', function (): void {
 
     jsonResponse($result + ['page' => $page, 'per_page' => ORDERS_PER_PAGE]);
 });
+
+// -> 200 { "order": { ..., customer, items, payments, history, allowed_transitions } } · 404 si no existe
+$router->get('/admin/orders/{id}', function (array $params): void {
+    AuthService::requireAdmin();
+
+    if (!ctype_digit($params['id']) || (int) $params['id'] < 1) {
+        jsonError('Identificador de pedido no válido', 400);
+    }
+
+    $order = (new AdminOrderRepository())->findById((int) $params['id']);
+    if ($order === null) {
+        jsonError('Pedido no encontrado', 404);
+    }
+
+    // Lo decide el servidor: la pantalla solo enseña botones para estas transiciones
+    $order['allowed_transitions'] = OrderStatusService::allowedTransitions($order['status']);
+
+    jsonResponse(['order' => $order]);
+});

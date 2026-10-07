@@ -18,8 +18,29 @@ final class OrderStatusService
         'incidencia',
     ];
 
+    /**
+     * Transiciones válidas del contrato: estado actual => estados a los que puede pasar.
+     * entregado y cancelado son finales. Las de incidencia están pendientes de acordar
+     * con el grupo: hasta entonces no puede salir de ese estado.
+     */
+    private const TRANSITIONS = [
+        'pendiente_pago' => ['pagado', 'cancelado', 'incidencia'],
+        'pagado'         => ['en_preparacion', 'cancelado', 'incidencia'],
+        'en_preparacion' => ['enviado', 'cancelado', 'incidencia'],
+        'enviado'        => ['entregado'],
+        'entregado'      => [],
+        'cancelado'      => [],
+        'incidencia'     => [], // TODO(grupo): transiciones desde incidencia
+    ];
+
     public static function isValidStatus(string $status): bool
     {
         return in_array($status, self::STATUSES, true);
+    }
+
+    /** Estados a los que puede pasar un pedido que está en $status. */
+    public static function allowedTransitions(string $status): array
+    {
+        return self::TRANSITIONS[$status] ?? [];
     }
 }

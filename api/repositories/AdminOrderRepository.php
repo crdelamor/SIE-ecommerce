@@ -77,4 +77,109 @@ final class AdminOrderRepository
 
         return ['orders' => $orders, 'total' => $total];
     }
+
+    /** Pedido completo para la ficha de administración, o null si no existe. */
+    public function findById(int $id): ?array
+    {
+        $stmt = db()->prepare(
+            'SELECT o.id, o.code, o.status, o.subtotal, o.discount, o.shipping, o.tax, o.total, o.created_at,
+                    c.name, c.email, c.phone, c.address, c.city, c.postal_code
+             FROM orders o
+             JOIN customers c ON c.id = o.customer_id
+             WHERE o.id = :id'
+        );
+        $stmt->execute(['id' => $id]);
+        $row = $stmt->fetch();
+        if ($row === false) {
+            return null;
+        }
+
+        return [
+            'id'         => (int) $row['id'],
+            'code'       => $row['code'],
+            'status'     => $row['status'],
+            'created_at' => $row['created_at'],
+            'subtotal'   => (float) $row['subtotal'],
+            'discount'   => (float) $row['discount'],
+            'shipping'   => (float) $row['shipping'],
+            'tax'        => (float) $row['tax'],
+            'total'      => (float) $row['total'],
+            'customer'   => [
+                'name'        => $row['name'],
+                'email'       => $row['email'],
+                'phone'       => $row['phone'],
+                'address'     => $row['address'],
+                'city'        => $row['city'],
+                'postal_code' => $row['postal_code'],
+            ],
+            'items'      => $this->findItems($id),
+            'payments'   => $this->findPayments($id),
+            'history'    => $this->findHistory($id),
+        ];
+    }
+
+    /**
+     * Líneas del pedido. Nombre, precio, IVA y cantidad son la copia guardada al comprar;
+     * los datos TCG (juego, set, estado, idioma, foil) se leen del producto ACTUAL porque
+     * order_items no los guarda (pendiente con el grupo).
+     */
+    private function findItems(int $orderId): array
+    {
+        $stmt = db()->prepare(
+            'SELECT oi.id, oi.product_id, oi.product_name, oi.unit_price, oi.tax_rate, oi.quantity, oi.line_total,
+                    cat.name AS game, p.product_type, p.set_name, p.card_condition, p.language, p.is_foil
+             FROM order_items oi
+             LEFT JOIN products p ON p.id = oi.product_id
+             LEFT JOIN categories cat ON cat.id = p.category_id
+             WHERE oi.order_id = :order_id
+             ORDER BY oi.id'
+        );
+        $stmt->execute(['order_id' => $orderId]);
+
+        return array_map(fn (array $row): array => [
+            'id'             => (int) $row['id'],
+            'product_id'     => (int) $row['product_id'],
+            'product_name'   => $row['product_name'],
+            'unit_price'     => (float) $row['unit_price'],
+            'tax_rate'       => (float) $row['tax_rate'],
+            'quantity'       => (int) $row['quantity'],
+            'line_total'     => (float) $row['line_total'],
+            'game'           => $row['game'],
+            'product_type'   => $row['product_type'],
+            'set_name'       => $row['set_name'],
+            'card_condition' => $row['card_condition'],
+            'language'       => $row['language'],
+            'is_foil'        => $row['is_foil'] === null ? null : (bool) $row['is_foil'],
+        ], $stmt->fetchAll());
+    }
+
+    private function findPayments(int $orderId): array
+    {
+        $stmt = db()->prepare(
+            'SELECT id, method, status, amount, reference, created_at
+             FROM payments WHERE order_id = :order_id ORDER BY created_at, id'
+        );
+        $stmt->execute(['order_id' => $orderId]);
+
+        return array_map(fn (array $row): array => [
+            'id'         => (int) $row['id'],
+            'method'     => $row['method'],
+            'status'     => $row['status'],
+            'amount'     => (float) $row['amount'],
+            'reference'  => $row['reference'],
+            'created_at' => $row['created_at'],
+        ], $stmt->fetchAll());
+    }
+
+    /** Historial de estados, del más antiguo al más reciente. */
+    private function findHistory(int $orderId): array
+    {
+        $stmt = db()->prepare(
+            'SELECT from_status, to_status, changed_at
+             FROM order_status_history WHERE order_id = :order_id ORDER BY changed_at, id'
+        );
+        $stmt->execute(['order_id' => $orderId]);
+
+        return $stmt->fetchAll();
+    }
 }
