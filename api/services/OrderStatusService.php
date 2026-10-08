@@ -60,20 +60,38 @@ final class OrderStatusService
     }
 
     /**
+     * Primera fila del historial de un pedido recién creado (de nada a pendiente_pago).
+     * No registra order.status_changed: el alta ya la registra el evento order.created.
+     * Se llama dentro de la transacción que crea el pedido.
+     */
+    public function recordCreated(int $orderId): void
+    {
+        $this->orders->addStatusHistory($orderId, null, 'pendiente_pago');
+    }
+
+    /**
      * Cambia el estado del pedido si la transición es válida. En una sola transacción:
-     * actualiza orders.status, añade la fila al historial y registra el evento.
-     * Si algo falla, no se guarda nada.
+     * actualiza orders.status, añade la fila al historial, devuelve el stock si se
+     * cancela y registra el evento. Si algo falla, no se guarda nada.
+     *
+     * $adminId es null cuando el cambio no lo hace un administrador (p. ej. el pago
+     * simulado de la tienda). Si ya hay una transacción abierta (la del pago), el cambio
+     * se hace dentro de ella y es quien la abrió el que hace commit o rollback.
      *
      * @throws OrderStatusException 422 estado inexistente · 404 pedido inexistente · 409 transición no permitida
      */
-    public function changeStatus(int $orderId, string $newStatus, int $adminId): void
+    public function changeStatus(int $orderId, string $newStatus, ?int $adminId = null): void
     {
         if (!self::isValidStatus($newStatus)) {
             throw new OrderStatusException("El estado '$newStatus' no existe", 422);
         }
 
         $pdo = db();
-        $pdo->beginTransaction();
+        // PDO no admite transacciones anidadas: solo se abre una si no hay ya otra
+        $ownTransaction = !$pdo->inTransaction();
+        if ($ownTransaction) {
+            $pdo->beginTransaction();
+        }
         try {
             // Bloquea el pedido: la transición se valida contra el estado real en este momento
             $order = $this->orders->lockForStatusChange($orderId);
@@ -88,16 +106,28 @@ final class OrderStatusService
 
             $this->orders->updateStatus($orderId, $newStatus);
             $this->orders->addStatusHistory($orderId, $fromStatus, $newStatus);
+
+            // El stock se resta al crear el pedido: al cancelarlo, venga de donde venga, se devuelve
+            $restocked = $newStatus === 'cancelado';
+            if ($restocked) {
+                $this->orders->restockOrderItems($orderId);
+            }
+
             logEvent(self::EVENT_TYPE, 'order', $orderId, [
-                'code'     => $order['code'],
-                'from'     => $fromStatus,
-                'to'       => $newStatus,
-                'admin_id' => $adminId,
+                'code'      => $order['code'],
+                'from'      => $fromStatus,
+                'to'        => $newStatus,
+                'admin_id'  => $adminId,
+                'restocked' => $restocked,
             ]);
 
-            $pdo->commit();
+            if ($ownTransaction) {
+                $pdo->commit();
+            }
         } catch (Throwable $e) {
-            $pdo->rollBack();
+            if ($ownTransaction) {
+                $pdo->rollBack();
+            }
             throw $e;
         }
     }

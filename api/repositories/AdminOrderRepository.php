@@ -190,13 +190,31 @@ final class AdminOrderRepository
         $stmt->execute(['status' => $status, 'id' => $id]);
     }
 
-    public function addStatusHistory(int $id, string $fromStatus, string $toStatus): void
+    /** $fromStatus es null en la primera fila del pedido (alta en pendiente_pago). */
+    public function addStatusHistory(int $id, ?string $fromStatus, string $toStatus): void
     {
         $stmt = db()->prepare(
             'INSERT INTO order_status_history (order_id, from_status, to_status, changed_at)
              VALUES (:order_id, :from_status, :to_status, NOW())'
         );
         $stmt->execute(['order_id' => $id, 'from_status' => $fromStatus, 'to_status' => $toStatus]);
+    }
+
+    /**
+     * Devuelve al stock las unidades de todas las líneas del pedido. Se suman antes por
+     * producto: si un producto aparece en dos líneas, un UPDATE con JOIN directo solo
+     * sumaría una de ellas.
+     */
+    public function restockOrderItems(int $orderId): void
+    {
+        $stmt = db()->prepare(
+            'UPDATE products p
+             JOIN (SELECT product_id, SUM(quantity) AS units
+                   FROM order_items WHERE order_id = :order_id
+                   GROUP BY product_id) AS sold ON sold.product_id = p.id
+             SET p.stock = p.stock + sold.units'
+        );
+        $stmt->execute(['order_id' => $orderId]);
     }
 
     /** Historial de estados, del más antiguo al más reciente. */
