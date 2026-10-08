@@ -11,6 +11,13 @@ export const STATUS_LABELS = {
   incidencia: 'Incidencia',
 };
 
+// Estados de una incidencia de soporte
+export const TICKET_STATUS_LABELS = {
+  abierta: 'Abierta',
+  en_curso: 'En curso',
+  cerrada: 'Cerrada',
+};
+
 // Texto del botón que lleva el pedido a cada estado
 export const STATUS_ACTIONS = {
   pagado: 'Marcar como pagado',

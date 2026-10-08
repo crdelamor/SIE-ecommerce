@@ -1,12 +1,21 @@
 import { useCallback, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import Button from '../../components/Button.jsx';
 import { Section } from '../../components/Container.jsx';
+import EventsPage from './EventsPage.jsx';
 import LoginPage from './LoginPage.jsx';
 import OrderDetailPage from './OrderDetailPage.jsx';
 import OrdersPage from './OrdersPage.jsx';
+import SupportTicketsPage from './SupportTicketsPage.jsx';
 import { logout } from './adminApi.js';
 import './admin.css';
+
+// Secciones del panel: valor de ?seccion= (vacío = pedidos) y texto del menú
+const SECTIONS = [
+  ['', 'Pedidos'],
+  ['incidencias', 'Incidencias'],
+  ['eventos', 'Eventos'],
+];
 
 // Solo recuerda qué administrador ha entrado para mostrarlo al recargar la página.
 // No da acceso a nada: la API comprueba la cookie de sesión en cada petición y,
@@ -32,12 +41,17 @@ function saveUser(user) {
 
 /**
  * Entrada a la administración: muestra el login o el panel según haya sesión.
- * Mientras el grupo no añada subrutas admin/* en App.jsx, la vista se elige con la
- * URL: #/admin (lista de pedidos) o #/admin?pedido=ID (ficha de un pedido).
+ * Sin tocar App.jsx, la vista se elige con la URL:
+ *   #/admin                         lista de pedidos
+ *   #/admin?seccion=incidencias     incidencias de soporte
+ *   #/admin?seccion=eventos         visor de eventos
+ *   ...&pedido=ID                   ficha de un pedido (vuelve a la sección de la que vino)
  */
 export default function AdminPage() {
   const [searchParams] = useSearchParams();
   const orderId = searchParams.get('pedido');
+  const knownSection = SECTIONS.some(([value]) => value && value === searchParams.get('seccion'));
+  const section = knownSection ? searchParams.get('seccion') : '';
   const [user, setUser] = useState(loadUser);
   const [sessionExpired, setSessionExpired] = useState(false);
 
@@ -86,8 +100,30 @@ export default function AdminPage() {
           </Button>
         </div>
       </div>
+      {/* Al cambiar de sección se quitan los filtros: cada lista tiene los suyos */}
+      <nav className="admin-nav" aria-label="Secciones de la administración">
+        {SECTIONS.map(([value, label]) => (
+          <Link
+            key={label}
+            to={value ? `?seccion=${value}` : '?'}
+            className="admin-nav__link"
+            aria-current={section === value ? 'page' : undefined}
+          >
+            {label}
+          </Link>
+        ))}
+      </nav>
+
       {orderId ? (
-        <OrderDetailPage orderId={orderId} onUnauthorized={handleUnauthorized} />
+        <OrderDetailPage
+          orderId={orderId}
+          onUnauthorized={handleUnauthorized}
+          backLabel={section === 'incidencias' ? 'Volver a incidencias' : 'Volver a pedidos'}
+        />
+      ) : section === 'incidencias' ? (
+        <SupportTicketsPage onUnauthorized={handleUnauthorized} />
+      ) : section === 'eventos' ? (
+        <EventsPage />
       ) : (
         <OrdersPage onUnauthorized={handleUnauthorized} />
       )}

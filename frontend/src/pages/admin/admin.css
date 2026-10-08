@@ -292,3 +292,83 @@
   color: var(--color-text-muted);
   font-variant-numeric: tabular-nums;
 }
+
+/* Navegación del panel: pestañas con la sección actual marcada */
+.admin-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-nav__link {
+  padding-block: var(--space-2);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-nav__link:hover {
+  color: var(--color-text);
+}
+
+.admin-nav__link[aria-current='page'] {
+  color: var(--color-text);
+  border-bottom-color: var(--color-accent);
+}
+
+/* Incidencias */
+.admin-tickets {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-tickets.is-loading {
+  opacity: 0.5;
+}
+
+.admin-ticket__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.admin-ticket__header h3 {
+  margin: 0;
+  font-size: var(--font-size-base);
+}
+
+.admin-ticket__meta {
+  margin: var(--space-1) 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+/* El mensaje del cliente respeta sus saltos de línea */
+.admin-ticket__message {
+  margin-bottom: var(--space-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.admin-ticket__order {
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+
+.admin-ticket-status--abierta {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-ticket-status--cerrada {
+  color: var(--color-text-muted);
+}
