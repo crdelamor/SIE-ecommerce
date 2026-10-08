@@ -24,6 +24,9 @@ final class SupportService
         'otro'                => 'Otro',
     ];
 
+    /** Estados de una incidencia (mismos valores que el ENUM de support_tickets.status). */
+    public const TICKET_STATUSES = ['abierta', 'en_curso', 'cerrada'];
+
     public function __construct(private SupportTicketRepository $tickets = new SupportTicketRepository())
     {
     }

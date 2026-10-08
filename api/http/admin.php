@@ -15,8 +15,10 @@ declare(strict_types=1);
 // index.php solo carga lib/ y http/: los servicios y repositorios se cargan aquí
 require_once __DIR__ . '/../repositories/UserRepository.php';
 require_once __DIR__ . '/../repositories/AdminOrderRepository.php';
+require_once __DIR__ . '/../repositories/SupportTicketRepository.php';
 require_once __DIR__ . '/../services/AuthService.php';
 require_once __DIR__ . '/../services/OrderStatusService.php';
+require_once __DIR__ . '/../services/SupportService.php';
 
 /** Lee el cuerpo JSON de la petición; responde 400 si no es un objeto JSON válido. */
 function readJsonBody(): array
@@ -80,7 +82,19 @@ function queryDate(string $name): ?string
     return $value;
 }
 
-const ORDERS_PER_PAGE = 20;
+/** Número de página de ?page= (1 si no viene); responde 400 si no es un entero de 1 a 100000. */
+function queryPage(): int
+{
+    $page = queryParam('page') ?? '1';
+    if (!ctype_digit($page) || (int) $page < 1 || (int) $page > 100000) {
+        jsonError('Página no válida', 400);
+    }
+
+    return (int) $page;
+}
+
+// Elementos por página en las listas de la administración
+const ADMIN_PER_PAGE = 20;
 
 // Parámetros opcionales: ?status=pagado&from=2026-09-01&to=2026-09-30&q=PED-0001&page=2
 // -> 200 { "orders": [ { id, code, created_at, customer_name, total, status } ], "total", "page", "per_page" }
@@ -105,19 +119,14 @@ $router->get('/admin/orders', function (): void {
         jsonError('La búsqueda no puede tener más de 100 caracteres', 400);
     }
 
-    $page = queryParam('page') ?? '1';
-    if (!ctype_digit($page) || (int) $page < 1 || (int) $page > 100000) {
-        jsonError('Página no válida', 400);
-    }
-    $page = (int) $page;
-
+    $page = queryPage();
     $result = (new AdminOrderRepository())->findPage(
         array_filter($filters, fn ($value) => $value !== null),
-        ORDERS_PER_PAGE,
-        ($page - 1) * ORDERS_PER_PAGE
+        ADMIN_PER_PAGE,
+        ($page - 1) * ADMIN_PER_PAGE
     );
 
-    jsonResponse($result + ['page' => $page, 'per_page' => ORDERS_PER_PAGE]);
+    jsonResponse($result + ['page' => $page, 'per_page' => ADMIN_PER_PAGE]);
 });
 
 /** Id del pedido de la ruta como entero positivo; responde 400 si no lo es. */
@@ -169,4 +178,20 @@ $router->patch('/admin/orders/{id}/status', function (array $params): void {
     }
 
     respondWithOrder($id);
+});
+
+// ?status=abierta&page=2 (opcionales)
+// -> 200 { "tickets": [ { id, created_at, name, email, subject, message, status, order: { id, code } | null } ], "total", "page", "per_page" }
+$router->get('/admin/support', function (): void {
+    AuthService::requireAdmin();
+
+    $status = queryParam('status');
+    if ($status !== null && !in_array($status, SupportService::TICKET_STATUSES, true)) {
+        jsonError('Estado no válido', 400);
+    }
+
+    $page = queryPage();
+    $result = (new SupportTicketRepository())->findPage($status, ADMIN_PER_PAGE, ($page - 1) * ADMIN_PER_PAGE);
+
+    jsonResponse($result + ['page' => $page, 'per_page' => ADMIN_PER_PAGE]);
 });
