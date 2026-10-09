@@ -111,3 +111,52 @@ Apuntad aquí cada uso importante de IA. De este fichero sale el anexo de IA de 
   - Cada endpoint con `curl`: casos correctos y de error (400, 401, 404, 409, 422), inyecciones SQL en el login, los filtros y el id, y la cookie de sesión `HttpOnly` y `SameSite=Strict`.
   - Atomicidad del cambio de estado: con la tabla `events` renombrada a propósito, la API devolvió 500 y el pedido no cambió ni se añadió historial.
   - Todas las pantallas en el navegador (`npm run dev` + `php -S localhost:8000`) y `npm run build` sin errores. Tras las pruebas, la base de datos local se restauró con `schema.sql` y `seed.sql`.
+
+## 2026-10-05 · Celia (A) · Revisión de las PR de José y César
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** revisar las ramas `feature/catalogo`, `feature/db-schema`, `feature/catalogo-estilo`, `feature/footer-sin-admin` y `feature/admin` comparándolas con el plan de trabajo y el enunciado, y preparar los comentarios de las PR.
+- **Partes asistidas por IA:** las revisiones y el texto de los comentarios que dejé en las PR, que redactó la IA en mi nombre.
+- **Errores detectados en la IA:**
+  - La primera revisión mezclaba lo que pide el plan de trabajo con lo que exige el enunciado. Le pedí separarlo para saber qué era obligatorio de verdad.
+- **Cambios hechos por mí:** decidí qué puntos llevar a cada PR, pasé el tema de la tienda (cartas TCG) para que José añadiera los campos al esquema y acordé con César cómo encajar su parte con la mía (`readJsonBody()` común, historial al pagar, stock al cancelar).
+- **Cómo lo validé:** simulación de los merges con `git merge-tree`, `npm run build` de cada rama y comparación con los dos PDF.
+
+## 2026-10-06 · Celia (A) · Integración con develop, estilo común y nombre de la tienda
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** actualizar mi rama con `develop` resolviendo los conflictos con el estilo de José, poner el pie siempre abajo, márgenes laterales, espacio en los títulos y nombre a la tienda.
+- **Partes asistidas por IA:** la resolución de conflictos del rebase, `Layout.jsx`, `Header.jsx`, `CartPanel.jsx` y `.css`, `Icons.jsx`, `theme.css`, `components.css`, `Footer.jsx` e `index.html`.
+- **Errores detectados en la IA:**
+  - Al integrar, el CSS del panel del carrito usaba 15 variables de mi tema antiguo que no existían en el de José.
+  - El panel quedaba por debajo de la cabecera fija de José y hubo que subirlo.
+- **Cambios hechos por mí:**
+  - Me quedé con el `theme.css` de José y con su botón del carrito; mi commit de estilos generales se quitó.
+  - Pedí el pie siempre abajo, márgenes de 64 px y más espacio en los títulos. En el móvil dejé 16 px.
+  - La IA propuso el nombre "La Bóveda TCG" y lo acepté.
+- **Cómo lo validé:** `npm run build` y prueba en el navegador con `npm run dev`. Hice yo el commit de los ajustes.
+
+## 2026-10-09 · Celia (A) · Entorno local y API del flujo de compra (pasos 1 a 4)
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:**
+  1. Instalar PHP 8.3 y MariaDB 11.8 en local, crear la base de datos con `schema.sql` y `seed.sql` y el `api/config.php`.
+  2. Mover `readJsonBody()` a `api/lib/request.php` (acordado con César).
+  3. `POST /api/events` para los eventos del carrito y del checkout.
+  4. `PriceCalculator` y `POST /api/checkout/quote`.
+  5. `OrderService` y `POST /api/orders`.
+- **Partes asistidas por IA:** `api/lib/request.php`, `api/index.php`, `api/http/admin.php` (solo quitar `readJsonBody()`), `api/http/orders.php`, `api/services/PriceCalculator.php`, `api/services/OrderService.php`, `api/repositories/OrderRepository.php` y la limpieza de comentarios de `CartContext.jsx`, `events.js` y `CartPanel.jsx`.
+- **Errores detectados en la IA:**
+  - La instalación de MariaDB falló (código 1603) porque no pedía permisos de administrador. Se repitió pidiéndolos.
+  - Escribía comentarios y mensajes de commit demasiado largos, con mucha pinta de IA. Le pedí escribir más sencillo y simplificar los comentarios del carrito.
+  - Dejaba este diario para el final en vez de ir apuntando cada paso. Se lo tuve que recordar.
+  - `createOrder()` devolvía solo el código del pedido y hacía falta también el id para el historial y el evento.
+  - En una prueba llamó a la ruta de cancelar sin `/status` y dio 404. Era un fallo de la prueba, no del código.
+- **Cambios hechos por mí:**
+  - Elegí las reglas de envío e IVA del `seed.sql` de José (envío gratis desde 50 € sin IVA, el envío no lleva IVA) para que los pedidos de ejemplo cuadren.
+  - Decidí ir paso a paso: un commit cada vez y probarlo antes de seguir.
+  - Acordé con César reutilizar su `OrderStatusService` para el historial y que él devuelva el stock al cancelar.
+- **Cómo lo validé:**
+  - `php -l` en todos los ficheros y pruebas con `curl` contra la base de datos local. Las ejecutó la IA y revisé los resultados.
+  - El presupuesto da los mismos totales que los 4 pedidos del seed (15,72 / 27,93 / 62,32 / 20,46) y un precio inventado desde el navegador se ignora.
+  - Al crear un pedido se guardan el cliente, las líneas, el historial y el evento `order.created`, y baja el stock. Si hay un error (email, código postal, stock) no se guarda nada.
+  - Cancelándolo desde la administración de César, el stock vuelve.
+  - Los eventos `cart.item_added` y `checkout.started` ya se guardan en la tabla `events` (lo que quedaba pendiente el 29-09).
+  - Al terminar, la base de datos se restauró con `schema.sql` y `seed.sql`.
