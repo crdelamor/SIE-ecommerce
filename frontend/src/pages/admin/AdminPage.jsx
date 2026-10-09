@@ -11,6 +11,9 @@ import { logout } from './adminApi.js';
 import './admin.css';
 
 // Secciones del panel: valor de ?seccion= (vacío = pedidos) y texto del menú
+// Texto del enlace de vuelta en la ficha del pedido, según la sección desde la que se abrió
+const BACK_LABELS = { '': 'Volver a pedidos', incidencias: 'Volver a incidencias', eventos: 'Volver a eventos' };
+
 const SECTIONS = [
   ['', 'Pedidos'],
   ['incidencias', 'Incidencias'],
@@ -118,12 +121,12 @@ export default function AdminPage() {
         <OrderDetailPage
           orderId={orderId}
           onUnauthorized={handleUnauthorized}
-          backLabel={section === 'incidencias' ? 'Volver a incidencias' : 'Volver a pedidos'}
+          backLabel={BACK_LABELS[section]}
         />
       ) : section === 'incidencias' ? (
         <SupportTicketsPage onUnauthorized={handleUnauthorized} />
       ) : section === 'eventos' ? (
-        <EventsPage />
+        <EventsPage onUnauthorized={handleUnauthorized} />
       ) : (
         <OrdersPage onUnauthorized={handleUnauthorized} />
       )}

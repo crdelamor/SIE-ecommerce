@@ -372,3 +372,50 @@
 .admin-ticket-status--cerrada {
   color: var(--color-text-muted);
 }
+
+/* Visor de eventos */
+.admin-export {
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.admin-code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.admin-events td {
+  vertical-align: top;
+}
+
+/* La columna de datos sí puede partir líneas: el payload puede ser largo */
+.admin-events td:last-child {
+  min-width: 18rem;
+  white-space: normal;
+}
+
+.admin-payload {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0;
+}
+
+.admin-payload div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+}
+
+.admin-payload dt {
+  color: var(--color-text-muted);
+}
+
+.admin-payload dt::after {
+  content: ':';
+}
+
+.admin-payload dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
