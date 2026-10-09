@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../repositories/OrderRepository.php';
 require_once __DIR__ . '/../services/PriceCalculator.php';
+require_once __DIR__ . '/../services/OrderService.php';
 
 // Lee el carrito del body: [{ "product_id": 3, "quantity": 2 }, ...] -> [3 => 2, ...]
 function readCartItems(array $body): array
@@ -82,4 +83,19 @@ $router->post('/checkout/quote', function (): void {
     } catch (CheckoutException $e) {
         jsonError($e->getMessage(), $e->getCode());
     }
+});
+
+// POST /orders  { "items": [...], "coupon": "...", "customer": { "name", "email", "phone", "address", "city", "postal_code" } }
+$router->post('/orders', function (): void {
+    $body = readJsonBody();
+    $cart = readCartItems($body);
+    $coupon = readCoupon($body);
+    $customer = is_array($body['customer'] ?? null) ? $body['customer'] : [];
+
+    try {
+        $order = (new OrderService())->create($cart, $coupon, $customer);
+    } catch (CheckoutException $e) {
+        jsonError($e->getMessage(), $e->getCode());
+    }
+    jsonResponse(['order' => $order], 201);
 });
