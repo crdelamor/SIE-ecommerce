@@ -47,9 +47,9 @@ Apuntad aquí cada uso importante de IA. De este fichero sale el anexo de IA de 
   - Con el carrito vacío, el botón "Ver el catálogo" se estiraba hasta ocupar toda la altura del panel.
   - La página tenía un ancho máximo de 1200 px en lugar de ocupar toda la pantalla.
   - En la revisión final encontró tres fallos en su propio código:
-    - El panel se anunciaba como modal, pero con Tab se podía salir a la página de detrás.
-    - El botón del carrito se leía como "1 productos".
-    - `checkout.started` se enviaba aunque el carrito estuviera vacío.
+  - El panel se anunciaba como modal, pero con Tab se podía salir a la página de detrás.
+  - El botón del carrito se leía como "1 productos".
+  - `checkout.started` se enviaba aunque el carrito estuviera vacío.
 - **Cambios hechos por mí:**
   - El carrito es un panel que sale por la derecha y se controla con `?isCartOpened=1`, en lugar de una página `#/carrito`.
   - Con el carrito vacío solo se muestra "Carrito vacío" y el botón "Ver el catálogo".
@@ -65,26 +65,20 @@ Apuntad aquí cada uso importante de IA. De este fichero sale el anexo de IA de 
 - **Cambios hechos por mí:** decidí integrar solo mi rama mediante el PR #1 (aprobado por Celia) y dejar a cada compañero su propio merge.
 - **Cómo lo validé:** simulación de merge con `git merge-tree` sin conflictos, `npm run build` y `php -l` correctos, y PR en estado MERGED en GitHub.
 
-## 2026-10-01 · José (B) · Claude Code
-- **Qué pedí:** el sistema de estilo y los componentes base (prompt del apartado 9 del plan): `theme.css` con variables, `global.css`, hook `useReveal`, cabecera, pie, botón, tarjeta de producto, banner del aviso de prototipo y una página de muestra.
-- **Qué falló o hubo que corregir:** al revisarlo con el grupo salieron varios fallos. La tarjeta mostraba el precio sin IVA mientras que el carrito lo mostrará con IVA, así que ahora usa `price_with_tax` calculado por la API. Un producto sin imagen salía con la imagen rota (ahora usa `placeholder.svg`). Los lectores de pantalla leían el nombre del producto dos veces. Había variables y clases sin usar (`--color-accent-hover`, `--space-7`, `.section--tight`).- **Cómo lo validé:** revisión del código y de la accesibilidad (contraste, `alt`, foco con teclado, vista móvil) y revisión del PR por los compañeros.
-
-## 2026-10-02 · José (B) · Claude Code
-- **Qué pedí:** preparar los commits y el pull request con el trabajo de estilo, y redactar la descripción del PR (primero en general y luego en primera persona, como alumno del grupo).
-- **Qué falló o hubo que corregir:** pedí hacer el PR hacia `feature/parteB`, pero esa rama no existe en GitHub y el plan asigna a B la rama `feature/catalogo`, así que se usó esa. La herramienta no tiene la CLI `gh`, por lo que el PR hay que abrirlo desde la web de GitHub. Se creó una rama nueva, `feature/catalogo-estilo`, con un único commit y mi autoría, y se subió sin forzar nada; la rama antigua `feature/catalogo` queda sin usar. También avisé de que la rama sale de `feature/db-schema`, así que el PR puede incluir el commit del schema.
-- **Cómo lo validé:** comprobé con `git log` el autor del commit y que la rama se subió a GitHub. La descripción del PR la revisé yo antes de pegarla.
-
-## 2026-10-06 · José (B) · Claude Code
+## 2026-10-06 · José (B) · Añade db/schema.sql con el esquema de la base de datos
+Claude Code
 - **Qué pedí:** pasar `schema.sql` a los nombres en inglés del contrato del plan y añadir a `products` los campos del catálogo de cartas (tipo de producto, edición, estado de conservación, idioma, ilustrador y foil).
 - **Qué falló o hubo que corregir:** la columna `condition` que proponíamos es palabra reservada de MySQL y habría dado error, así que se llama `card_condition`. Los estados de pago estaban como `aprobado`/`rechazado` y el plan dice `approved`/`rejected`. Los estados del pedido se dejaron en castellano porque así los fija el plan.
 - **Cómo lo validé:** comprobé a mano que los nombres coinciden con la tabla 2.1 del plan y con `logEvent()` (`events`, `entity_type`, `payload`...).
 
-## 2026-10-06 · José (B) · Claude Code
+## 2026-10-06 · José (B) · Feature/catalogo
+Claude Code
 - **Qué pedí:** el `seed.sql` con 4 categorías (una por juego), 11 productos, un administrador de prueba y 4 pedidos de ejemplo en distintos estados, con clientes, líneas, pagos e historial, y totales que cuadren con las reglas del plan.
 - **Qué falló o hubo que corregir:** el script para calcular los totales se hizo primero en Python, que no estaba instalado, y se rehízo en PHP con importes en céntimos para evitar errores de redondeo. Los nombres de cartas, ediciones, ilustradores y precios son orientativos y hay que contrastarlos con fuentes reales. Para Riftbound solo hay un sobre porque no tenía datos fiables de cartas sueltas. Las imágenes son un placeholder porque las ilustraciones reales tienen derechos de autor.
 - **Cómo lo validé:** recalculé a mano los totales de los 4 pedidos (IVA 21 %, envío de 4,95 € gratis desde 50 €, cupón BIENVENIDA10) y coinciden con el script; comprobé con `password_verify()` de PHP que el hash corresponde a la contraseña del README.
 
-## 2026-10-06 · José (B) · Claude Code
+## 2026-10-06 · José (B) · Feature/catalogo estilo - CORRECIONES
+Claude Code
 - **Qué pedí:** un resumen de todos los cambios aplicados y el texto de declaración de uso de IA para la memoria (punto de partida del proyecto), además de completar este diario con el trabajo anterior.
 - **Qué falló o hubo que corregir:** la herramienta no sabe si se usó una plantilla de terceros ni cómo se montó la fase 0, así que no los inventó y hubo que completarlos con lo que consta en el repositorio y en la entrada de Celia de este diario.
 - **Cómo lo validé:** contrasté el resumen con los ficheros y los commits reales del repositorio.
@@ -111,3 +105,9 @@ Apuntad aquí cada uso importante de IA. De este fichero sale el anexo de IA de 
   - Cada endpoint con `curl`: casos correctos y de error (400, 401, 404, 409, 422), inyecciones SQL en el login, los filtros y el id, y la cookie de sesión `HttpOnly` y `SameSite=Strict`.
   - Atomicidad del cambio de estado: con la tabla `events` renombrada a propósito, la API devolvió 500 y el pedido no cambió ni se añadió historial.
   - Todas las pantallas en el navegador (`npm run dev` + `php -S localhost:8000`) y `npm run build` sin errores. Tras las pruebas, la base de datos local se restauró con `schema.sql` y `seed.sql`.
+
+## 2026-10-08 · José (B) · Quitar enlace público a Administración del pie
+Claude Code
+- **Qué pedí:** ayuda para revisar el PR de Celia (carrito) y el de César (administración), redactar mis comentarios en ellos y, a petición de César, quitar del pie (`Footer.jsx`) el enlace público "Administración", de modo que se entre directamente por `#/admin`.
+- **Qué falló o hubo que corregir:** en la revisión de los PR la herramienta solo leyó el código y no pudo ejecutarlo (sin Node en su entorno), así que las pruebas con `npm run dev` las hago yo. En el cambio del pie, la primera edición unió dos líneas porque el fichero usa saltos de línea CRLF y hubo que corregirla. También detectó que el contenedor del `Layout` y el `Container` de mis páginas se duplican, y que `order_items` no guarda estado, idioma ni foil; decidí no cambiar la tabla porque cada variante de carta es un producto distinto.
+- **Cómo lo validé:** con `git diff`, comprobando que el único cambio funcional es la eliminación del enlace y que la ruta `/admin` sigue en `App.jsx`.
