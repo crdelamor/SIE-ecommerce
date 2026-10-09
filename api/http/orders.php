@@ -3,6 +3,40 @@ declare(strict_types=1);
 
 // Rutas del flujo de compra (A)
 
+require_once __DIR__ . '/../repositories/OrderRepository.php';
+require_once __DIR__ . '/../services/PriceCalculator.php';
+
+// Lee el carrito del body: [{ "product_id": 3, "quantity": 2 }, ...] -> [3 => 2, ...]
+function readCartItems(array $body): array
+{
+    $items = $body['items'] ?? null;
+    if (!is_array($items) || count($items) === 0 || count($items) > 50) {
+        jsonError('El carrito está vacío o no es válido', 400);
+    }
+
+    $cart = [];
+    foreach ($items as $item) {
+        $id = $item['product_id'] ?? null;
+        $quantity = $item['quantity'] ?? null;
+        if (!is_int($id) || $id < 1 || !is_int($quantity) || $quantity < 1 || $quantity > 99) {
+            jsonError('Hay un producto del carrito que no es válido', 400);
+        }
+        $cart[$id] = ($cart[$id] ?? 0) + $quantity;
+    }
+    return $cart;
+}
+
+// Cupón opcional: null si no viene o está vacío
+function readCoupon(array $body): ?string
+{
+    $coupon = $body['coupon'] ?? null;
+    if ($coupon !== null && !is_string($coupon)) {
+        jsonError('El cupón no es válido', 400);
+    }
+    $coupon = $coupon === null ? '' : trim($coupon);
+    return $coupon === '' ? null : $coupon;
+}
+
 // Eventos que puede mandar el navegador. Los demás (order.created, payment.simulated)
 // solo los registra el servidor.
 const BROWSER_EVENTS = [
@@ -35,4 +69,17 @@ $router->post('/events', function (): void {
 
     logEvent($type, $entityType, $entityId, $payload);
     jsonResponse(['status' => 'ok'], 201);
+});
+
+// POST /checkout/quote  { "items": [{ "product_id": 3, "quantity": 2 }], "coupon": "BIENVENIDA10" }
+$router->post('/checkout/quote', function (): void {
+    $body = readJsonBody();
+    $cart = readCartItems($body);
+    $coupon = readCoupon($body);
+
+    try {
+        jsonResponse((new PriceCalculator())->quote($cart, $coupon));
+    } catch (CheckoutException $e) {
+        jsonError($e->getMessage(), $e->getCode());
+    }
 });
