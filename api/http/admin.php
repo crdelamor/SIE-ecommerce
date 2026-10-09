@@ -18,17 +18,6 @@ require_once __DIR__ . '/../repositories/AdminOrderRepository.php';
 require_once __DIR__ . '/../services/AuthService.php';
 require_once __DIR__ . '/../services/OrderStatusService.php';
 
-/** Lee el cuerpo JSON de la petición; responde 400 si no es un objeto JSON válido. */
-function readJsonBody(): array
-{
-    $data = json_decode(file_get_contents('php://input') ?: '', true);
-    if (!is_array($data)) {
-        jsonError('El cuerpo de la petición debe ser un JSON válido', 400);
-    }
-
-    return $data;
-}
-
 // Body: { "email": "...", "password": "..." }  ->  200 { "user": { id, email, role } }
 $router->post('/auth/login', function (): void {
     $body = readJsonBody();
