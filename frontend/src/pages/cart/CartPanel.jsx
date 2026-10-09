@@ -4,17 +4,14 @@ import Button from '../../components/Button.jsx';
 import { CloseIcon } from '../../components/Icons.jsx';
 import './CartPanel.css';
 
-/**
- * Panel lateral del carrito. Se abre cuando la URL lleva ?isCartOpened=1 (lo controla Layout).
- * Se cierra con el botón, con Escape o haciendo clic fuera del panel.
- */
+// Panel lateral del carrito (se abre con ?isCartOpened=1, lo controla Layout)
 export default function CartPanel({ open, onClose }) {
   const { items, itemCount, updateQuantity, removeItem } = useCart();
   const closeButtonRef = useRef(null);
 
-  // Al abrir: foco en el botón de cerrar y la página de detrás sin scroll
+  // al abrir, foco en cerrar y sin scroll detrás
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open) return;
     closeButtonRef.current?.focus();
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
@@ -23,8 +20,9 @@ export default function CartPanel({ open, onClose }) {
     };
   }, [open]);
 
+  // cerrar con Escape
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open) return;
     function handleKeyDown(event) {
       if (event.key === 'Escape') onClose();
     }

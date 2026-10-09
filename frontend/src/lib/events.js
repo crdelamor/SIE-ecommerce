@@ -1,9 +1,4 @@
-/**
- * Envía a la API un evento generado en el navegador (cart.item_added, checkout.started).
- * El servidor lo guarda con logEvent(). Si falla, la compra sigue sin interrumpirse.
- *
- *   trackEvent('cart.item_added', 'product', 3, { quantity: 1 });
- */
+// Manda un evento del navegador a la API. Si falla no pasa nada, la compra sigue.
 export function trackEvent(type, entityType = null, entityId = null, payload = {}) {
   fetch('/api/events', {
     method: 'POST',
@@ -12,10 +7,7 @@ export function trackEvent(type, entityType = null, entityId = null, payload = {
   }).catch(() => {});
 }
 
-/**
- * Identificador anónimo de la visita, guardado en localStorage.
- * Sirve para agrupar los eventos de un mismo visitante sin guardar datos personales.
- */
+// Id anónimo de la visita para agrupar sus eventos (sin datos personales)
 function getSessionId() {
   try {
     let id = localStorage.getItem('sie.sessionId');
