@@ -51,12 +51,13 @@ INSERT INTO products (id, category_id, name, description, price, tax_rate, stock
 INSERT INTO users (id, email, password_hash, role) VALUES
     (1, 'admin@tcg-sie.example', '$2y$10$7bG1cX8LNMrwbQAeCN4y2OEejJk3LRurhEg/bnQTPfjSKjZsrGE1y', 'admin');
 
--- Clientes ficticios
+-- Clientes ficticios. Teléfono: 000000001 no es de ningún país y los demás van vacíos (campo opcional),
+-- para que ningún número pueda ser de una persona real.
 INSERT INTO customers (id, name, email, phone, address, city, postal_code) VALUES
-    (1, 'Lucía Fernández Prado', 'lucia.fernandez@example.com', '600111222', 'Calle Falsa 12, 2ºA', 'Murcia', '30001'),
-    (2, 'Marcos Ibáñez Soler', 'marcos.ibanez@example.com', '611222333', 'Avenida de Prueba 45', 'Valencia', '46001'),
+    (1, 'Lucía Fernández Prado', 'lucia.fernandez@example.com', '000000001', 'Calle Falsa 12, 2ºA', 'Murcia', '30001'),
+    (2, 'Marcos Ibáñez Soler', 'marcos.ibanez@example.com', NULL, 'Avenida de Prueba 45', 'Valencia', '46001'),
     (3, 'Elena Navarro Gil', 'elena.navarro@example.com', NULL, 'Plaza Inventada 3, 1ºB', 'Madrid', '28001'),
-    (4, 'Pablo Ortega Ruiz', 'pablo.ortega@example.com', '622333444', 'Calle Ejemplo 78', 'Sevilla', '41001');
+    (4, 'Pablo Ortega Ruiz', 'pablo.ortega@example.com', NULL, 'Calle Ejemplo 78', 'Sevilla', '41001');
 
 -- Pedidos de ejemplo en distintos estados
 INSERT INTO orders (id, code, customer_id, status, subtotal, discount, shipping, tax, total, created_at) VALUES
