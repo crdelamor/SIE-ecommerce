@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-label="Carta de ejemplo Anillo Solar, versión Usada (LP)">
+  <defs>
+    <clipPath id="cardClip"><rect x="170" y="30" width="300" height="420" rx="18"/></clipPath>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16324a"/><stop offset="1" stop-color="#3f6f86"/></linearGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6d77a"/><stop offset="1" stop-color="#b8861f"/></linearGradient>
+    <linearGradient id="rainbow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff6ec7"/><stop offset=".25" stop-color="#ffe45e"/><stop offset=".5" stop-color="#5eead4"/>
+      <stop offset=".75" stop-color="#7c9cff"/><stop offset="1" stop-color="#e879f9"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="640" height="480" fill="#e3e3dd"/>
+  <ellipse cx="320" cy="456" rx="150" ry="9" fill="#111" opacity=".12"/>
+
+  <rect x="170" y="30" width="300" height="420" rx="18" fill="#161616"/>
+  <rect x="180" y="40" width="280" height="400" rx="10" fill="#d9d0bf"/>
+
+  <rect x="190" y="48" width="260" height="30" rx="6" fill="#f6f1e4" stroke="#8a7d63"/>
+  <text x="200" y="69" font-family="Georgia, serif" font-size="17" font-weight="700" fill="#1b1b1b">Anillo Solar</text>
+  <circle cx="436" cy="63" r="8" fill="#9aa0a6" stroke="#5f6368"/>
+
+  <rect x="190" y="86" width="260" height="186" rx="4" fill="url(#sky)" stroke="#8a7d63"/>
+  <g stroke="#f6d77a" stroke-width="3" stroke-linecap="round" opacity=".85">
+    <path d="M320 112 V132"/><path d="M320 226 V246"/><path d="M252 179 H272"/><path d="M368 179 H388"/>
+    <path d="M272 131 L286 145"/><path d="M354 213 L368 227"/><path d="M368 131 L354 145"/><path d="M286 213 L272 227"/>
+  </g>
+  <circle cx="320" cy="179" r="46" fill="none" stroke="url(#gold)" stroke-width="16"/>
+  <circle cx="320" cy="179" r="46" fill="none" stroke="#fff3c4" stroke-opacity=".5" stroke-width="3"/>
+  <circle cx="320" cy="179" r="18" fill="#f6d77a" opacity=".9"/>
+
+  <rect x="190" y="280" width="260" height="26" rx="6" fill="#f6f1e4" stroke="#8a7d63"/>
+  <text x="200" y="298" font-family="Georgia, serif" font-size="14" fill="#1b1b1b">Artefacto</text>
+
+  <rect x="190" y="314" width="260" height="104" rx="4" fill="#f6f1e4" stroke="#8a7d63"/>
+  <g stroke="#a99d84" stroke-width="5" stroke-linecap="round">
+    <path d="M204 336 H434"/><path d="M204 354 H410"/><path d="M204 372 H426"/><path d="M204 390 H360"/>
+  </g>
+  <text x="200" y="433" font-family="Georgia, serif" font-size="10" fill="#3a3a3a">Ilustración de ejemplo · Usada (LP)</text>
+
+  <g fill="#f4f1ea">
+    <path d="M170 48 L170 30 L188 30 Q172 34 170 48Z"/><path d="M470 30 L452 30 Q468 34 470 48Z"/>
+    <path d="M170 432 L170 450 L190 450 Q172 446 170 432Z"/><path d="M470 432 L470 450 L452 450 Q468 446 470 432Z"/>
+  </g>
+  <g stroke="#ffffff" stroke-opacity=".55" stroke-width="1.2" fill="none">
+    <path d="M210 120 L300 168"/><path d="M232 112 L318 150"/><path d="M360 200 L430 236"/><path d="M200 330 L290 352"/>
+  </g>
+  <path d="M170 262 L470 270" stroke="#3a3a3a" stroke-opacity=".28" stroke-width="2"/>
+  <rect x="170" y="30" width="300" height="420" rx="18" fill="#6b5a3a" fill-opacity=".10"/>
+
+</svg>
