@@ -115,7 +115,7 @@ Apuntad aquí cada uso importante de IA. De este fichero sale el anexo de IA de 
 ## 2026-10-05 · Celia (A) · Revisión de las PR de José y César
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
 - **Tarea:** revisar las ramas `feature/catalogo`, `feature/db-schema`, `feature/catalogo-estilo`, `feature/footer-sin-admin` y `feature/admin` comparándolas con el plan de trabajo y el enunciado, y preparar los comentarios de las PR.
-- **Partes asistidas por IA:** las revisiones y el texto de los comentarios que dejé en las PR, que redactó la IA en mi nombre.
+- **Partes asistidas por IA:** las revisiones
 - **Errores detectados en la IA:**
   - La primera revisión mezclaba lo que pide el plan de trabajo con lo que exige el enunciado. Le pedí separarlo para saber qué era obligatorio de verdad.
 - **Cambios hechos por mí:** decidí qué puntos llevar a cada PR, pasé el tema de la tienda (cartas TCG) para que José añadiera los campos al esquema y acordé con César cómo encajar su parte con la mía (`readJsonBody()` común, historial al pagar, stock al cancelar).
@@ -134,7 +134,7 @@ Apuntad aquí cada uso importante de IA. De este fichero sale el anexo de IA de 
   - La IA propuso el nombre "La Bóveda TCG" y lo acepté.
 - **Cómo lo validé:** `npm run build` y prueba en el navegador con `npm run dev`. Hice yo el commit de los ajustes.
 
-## 2026-10-09 · Celia (A) · Entorno local y API del flujo de compra (pasos 1 a 4)
+## 2026-10-09 · Celia (A) · Entorno local y API del flujo de compra (pasos 1 a 5)
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
 - **Tarea:**
   1. Instalar PHP 8.3 y MariaDB 11.8 en local, crear la base de datos con `schema.sql` y `seed.sql` y el `api/config.php`.
@@ -142,7 +142,8 @@ Apuntad aquí cada uso importante de IA. De este fichero sale el anexo de IA de 
   3. `POST /api/events` para los eventos del carrito y del checkout.
   4. `PriceCalculator` y `POST /api/checkout/quote`.
   5. `OrderService` y `POST /api/orders`.
-- **Partes asistidas por IA:** `api/lib/request.php`, `api/index.php`, `api/http/admin.php` (solo quitar `readJsonBody()`), `api/http/orders.php`, `api/services/PriceCalculator.php`, `api/services/OrderService.php`, `api/repositories/OrderRepository.php` y la limpieza de comentarios de `CartContext.jsx`, `events.js` y `CartPanel.jsx`.
+  6. `PaymentService` y `POST /api/orders/{code}/pay` (pago simulado con tarjeta de prueba o Bizum).
+- **Partes asistidas por IA:** `api/lib/request.php`, `api/index.php`, `api/http/admin.php` (solo quitar `readJsonBody()`), `api/http/orders.php`, `api/services/PriceCalculator.php`, `api/services/OrderService.php`, `api/services/PaymentService.php`, `api/repositories/OrderRepository.php` y la limpieza de comentarios de `CartContext.jsx`, `events.js` y `CartPanel.jsx`.
 - **Errores detectados en la IA:**
   - La instalación de MariaDB falló (código 1603) porque no pedía permisos de administrador. Se repitió pidiéndolos.
   - Escribía comentarios y mensajes de commit demasiado largos, con mucha pinta de IA. Le pedí escribir más sencillo y simplificar los comentarios del carrito.
@@ -158,5 +159,6 @@ Apuntad aquí cada uso importante de IA. De este fichero sale el anexo de IA de 
   - El presupuesto da los mismos totales que los 4 pedidos del seed (15,72 / 27,93 / 62,32 / 20,46) y un precio inventado desde el navegador se ignora.
   - Al crear un pedido se guardan el cliente, las líneas, el historial y el evento `order.created`, y baja el stock. Si hay un error (email, código postal, stock) no se guarda nada.
   - Cancelándolo desde la administración de César, el stock vuelve.
+  - Pago: con la tarjeta 4000… se guarda el pago rechazado y el pedido sigue en `pendiente_pago`; al reintentar con la 4242… pasa a `pagado`, con su fila en el historial y los eventos `payment.simulated` y `order.status_changed`. Pagar dos veces da 409 y una tarjeta que no es de prueba da 400. Del número de tarjeta solo se guardan los 4 últimos dígitos.
   - Los eventos `cart.item_added` y `checkout.started` ya se guardan en la tabla `events` (lo que quedaba pendiente el 29-09).
   - Al terminar, la base de datos se restauró con `schema.sql` y `seed.sql`.
