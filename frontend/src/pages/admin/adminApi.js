@@ -62,6 +62,35 @@ export async function getOrder(id) {
   return data.order;
 }
 
+/** Una página de incidencias de soporte. `status` vacío = todas. Devuelve { tickets, total, page, per_page }. */
+export function getSupportTickets({ status = '', page = 1 } = {}) {
+  const params = new URLSearchParams();
+  if (status) params.set('status', status);
+  if (page > 1) params.set('page', String(page));
+  const query = params.toString();
+  return request(`/admin/support${query ? `?${query}` : ''}`);
+}
+
+/** Filtros del visor de eventos como query string ({ type, from, to, page }; los vacíos no se envían). */
+function eventQuery(filters) {
+  const params = new URLSearchParams();
+  for (const [name, value] of Object.entries(filters)) {
+    if (value) params.set(name, value);
+  }
+  return params.toString();
+}
+
+/** Una página de eventos. Devuelve { events, total, page, per_page, types }. */
+export function getEvents(filters = {}) {
+  const query = eventQuery(filters);
+  return request(`/admin/events${query ? `?${query}` : ''}`);
+}
+
+/** Dirección de descarga de la exportación (csv o json) con los mismos filtros del visor. */
+export function eventsExportUrl(format, { type, from, to } = {}) {
+  return `/api/admin/events/export?${eventQuery({ format, type, from, to })}`;
+}
+
 /** Cambia el estado del pedido. El servidor valida la transición (409 si no se permite). */
 export async function changeOrderStatus(id, status) {
   const data = await request(`/admin/orders/${encodeURIComponent(id)}/status`, {

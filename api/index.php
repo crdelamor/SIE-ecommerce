@@ -11,6 +11,7 @@ require __DIR__ . '/lib/request.php';
 require __DIR__ . '/lib/db.php';
 require __DIR__ . '/lib/events.php';
 require __DIR__ . '/lib/router.php';
+require __DIR__ . '/lib/query.php';
 
 date_default_timezone_set('Europe/Madrid');
 
