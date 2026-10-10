@@ -96,4 +96,27 @@ final class OrderRepository
             'line_total'   => $line['line_total'],
         ]);
     }
+
+    // Pedido por su código, bloqueado hasta el final de la transacción para que no se pague dos veces
+    public function findForPayment(string $code): ?array
+    {
+        $stmt = db()->prepare('SELECT id, code, status, total FROM orders WHERE code = :code FOR UPDATE');
+        $stmt->execute(['code' => $code]);
+        return $stmt->fetch() ?: null;
+    }
+
+    public function addPayment(int $orderId, string $method, string $status, string $amount, string $reference): void
+    {
+        $stmt = db()->prepare(
+            'INSERT INTO payments (order_id, method, status, amount, reference)
+             VALUES (:order_id, :method, :status, :amount, :reference)'
+        );
+        $stmt->execute([
+            'order_id'  => $orderId,
+            'method'    => $method,
+            'status'    => $status,
+            'amount'    => $amount,
+            'reference' => $reference,
+        ]);
+    }
 }

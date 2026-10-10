@@ -6,6 +6,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../repositories/OrderRepository.php';
 require_once __DIR__ . '/../services/PriceCalculator.php';
 require_once __DIR__ . '/../services/OrderService.php';
+require_once __DIR__ . '/../services/PaymentService.php';
 
 // Lee el carrito del body: [{ "product_id": 3, "quantity": 2 }, ...] -> [3 => 2, ...]
 function readCartItems(array $body): array
@@ -98,4 +99,19 @@ $router->post('/orders', function (): void {
         jsonError($e->getMessage(), $e->getCode());
     }
     jsonResponse(['order' => $order], 201);
+});
+
+// POST /orders/PED-000123/pay  { "method": "tarjeta_simulada", "card_number": "4242 4242 4242 4242" }
+//                              { "method": "bizum_simulado", "phone": "600111222" }
+// Si se rechaza responde 200 con "approved": false y el pedido sigue en pendiente_pago
+$router->post('/orders/{code}/pay', function (array $params): void {
+    $body = readJsonBody();
+    $method = is_string($body['method'] ?? null) ? $body['method'] : '';
+
+    try {
+        $payment = (new PaymentService())->pay($params['code'], $method, $body);
+    } catch (CheckoutException $e) {
+        jsonError($e->getMessage(), $e->getCode());
+    }
+    jsonResponse(['payment' => $payment]);
 });
