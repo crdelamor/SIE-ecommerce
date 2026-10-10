@@ -115,3 +115,12 @@ $router->post('/orders/{code}/pay', function (array $params): void {
     }
     jsonResponse(['payment' => $payment]);
 });
+
+// GET /orders/PED-000123  ->  datos para la página de confirmación (sin datos personales)
+$router->get('/orders/{code}', function (array $params): void {
+    $order = (new OrderRepository())->findSummary($params['code']);
+    if ($order === null) {
+        jsonError('El pedido no existe', 404);
+    }
+    jsonResponse(['order' => $order]);
+});

@@ -97,6 +97,41 @@ final class OrderRepository
         ]);
     }
 
+    // Resumen del pedido para la confirmación. Sin datos del cliente: el código se puede adivinar.
+    public function findSummary(string $code): ?array
+    {
+        $stmt = db()->prepare(
+            'SELECT id, code, status, subtotal, discount, shipping, tax, total, created_at FROM orders WHERE code = :code'
+        );
+        $stmt->execute(['code' => $code]);
+        $order = $stmt->fetch();
+        if (!$order) {
+            return null;
+        }
+
+        $stmt = db()->prepare(
+            'SELECT product_name, quantity, unit_price, line_total FROM order_items WHERE order_id = :id ORDER BY id'
+        );
+        $stmt->execute(['id' => $order['id']]);
+
+        return [
+            'code'       => $order['code'],
+            'status'     => $order['status'],
+            'created_at' => $order['created_at'],
+            'items'      => array_map(fn ($line) => [
+                'name'       => $line['product_name'],
+                'quantity'   => (int) $line['quantity'],
+                'unit_price' => (float) $line['unit_price'],
+                'line_total' => (float) $line['line_total'],
+            ], $stmt->fetchAll()),
+            'subtotal'   => (float) $order['subtotal'],
+            'discount'   => (float) $order['discount'],
+            'shipping'   => (float) $order['shipping'],
+            'tax'        => (float) $order['tax'],
+            'total'      => (float) $order['total'],
+        ];
+    }
+
     // Pedido por su código, bloqueado hasta el final de la transacción para que no se pague dos veces
     public function findForPayment(string $code): ?array
     {
