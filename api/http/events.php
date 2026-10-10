@@ -7,8 +7,7 @@ declare(strict_types=1);
  *   GET /admin/events?type=
  *   GET /admin/events/export?format=csv|json
  *
- * queryParam(), queryDate(), queryPage() y ADMIN_PER_PAGE están en http/admin.php,
- * que se carga antes que este fichero.
+ * queryParam(), queryDate(), queryPage() y ADMIN_PER_PAGE están en lib/query.php.
  */
 
 require_once __DIR__ . '/../repositories/EventRepository.php';
