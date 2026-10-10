@@ -71,7 +71,7 @@ export default function SupportPage() {
 
   // Ayudas bajo cada campo (se leen junto al campo gracias a aria-describedby)
   const hints = {
-    order_code: 'Opcional. Lo tienes en el email de confirmación del pedido.',
+    order_code: 'Opcional. Lo tienes en la página de confirmación del pedido.',
     message: `${form.message.length} / ${MESSAGE_MAX} caracteres`,
   };
 
