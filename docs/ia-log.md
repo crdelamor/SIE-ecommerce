@@ -128,7 +128,7 @@ Claude Code
   - La IA propuso el nombre "La Bóveda TCG" y lo acepté.
 - **Cómo lo validé:** `npm run build` y prueba en el navegador con `npm run dev`. Hice yo el commit de los ajustes.
 
-## 2026-10-09 · Celia (A) · Entorno local y API del flujo de compra (pasos 1 a 5)
+## 2026-10-09 · Celia (A) · Entorno local y API del flujo de compra (pasos 1 a 6)
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
 - **Tarea:**
   1. Instalar PHP 8.3 y MariaDB 11.8 en local, crear la base de datos con `schema.sql` y `seed.sql` y el `api/config.php`.
@@ -137,6 +137,7 @@ Claude Code
   4. `PriceCalculator` y `POST /api/checkout/quote`.
   5. `OrderService` y `POST /api/orders`.
   6. `PaymentService` y `POST /api/orders/{code}/pay` (pago simulado con tarjeta de prueba o Bizum).
+  7. `GET /api/orders/{code}` para la página de confirmación, sin datos personales del cliente porque el código del pedido se puede adivinar.
 - **Partes asistidas por IA:** `api/lib/request.php`, `api/index.php`, `api/http/admin.php` (solo quitar `readJsonBody()`), `api/http/orders.php`, `api/services/PriceCalculator.php`, `api/services/OrderService.php`, `api/services/PaymentService.php`, `api/repositories/OrderRepository.php` y la limpieza de comentarios de `CartContext.jsx`, `events.js` y `CartPanel.jsx`.
 - **Errores detectados en la IA:**
   - La instalación de MariaDB falló (código 1603) porque no pedía permisos de administrador. Se repitió pidiéndolos.
@@ -154,6 +155,7 @@ Claude Code
   - Al crear un pedido se guardan el cliente, las líneas, el historial y el evento `order.created`, y baja el stock. Si hay un error (email, código postal, stock) no se guarda nada.
   - Cancelándolo desde la administración de César, el stock vuelve.
   - Pago: con la tarjeta 4000… se guarda el pago rechazado y el pedido sigue en `pendiente_pago`; al reintentar con la 4242… pasa a `pagado`, con su fila en el historial y los eventos `payment.simulated` y `order.status_changed`. Pagar dos veces da 409 y una tarjeta que no es de prueba da 400. Del número de tarjeta solo se guardan los 4 últimos dígitos.
+  - Confirmación: `GET /api/orders/PED-000002` devuelve productos y totales sin nombre, email ni dirección; un código que no existe (o con SQL inyectado) da 404.
   - Los eventos `cart.item_added` y `checkout.started` ya se guardan en la tabla `events` (lo que quedaba pendiente el 29-09).
   - Al terminar, la base de datos se restauró con `schema.sql` y `seed.sql`.
 
