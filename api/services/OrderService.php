@@ -17,9 +17,11 @@ final class OrderService
     ) {
     }
 
-    public function create(array $cart, ?string $coupon, array $customer): array
+    // $billing es null si la facturación va a la misma dirección que el envío
+    public function create(array $cart, ?string $coupon, array $customer, ?array $billing = null): array
     {
         $customer = $this->validateCustomer($customer);
+        $billing = $billing === null ? null : $this->validateBilling($billing);
 
         $pdo = db();
         $pdo->beginTransaction();
@@ -35,7 +37,7 @@ final class OrderService
             }
 
             $customerId = $this->orders->createCustomer($customer);
-            $order = $this->orders->createOrder($customerId, $quote);
+            $order = $this->orders->createOrder($customerId, $quote, $billing);
             (new OrderStatusService())->recordCreated($order['id']);
 
             logEvent('order.created', 'order', $order['id'], [
@@ -56,36 +58,54 @@ final class OrderService
     // Misma validación que el formulario del checkout, porque la del navegador se puede saltar
     private function validateCustomer(array $data): array
     {
-        $text = fn (string $field): string => is_string($data[$field] ?? null) ? trim($data[$field]) : '';
+        $customer = $this->validateAddress($data);
+        $customer['email'] = $this->text($data, 'email');
+        $customer['phone'] = $this->text($data, 'phone');
 
-        $customer = [
-            'name'        => $text('name'),
-            'email'       => $text('email'),
-            'phone'       => $text('phone'),
-            'address'     => $text('address'),
-            'city'        => $text('city'),
-            'postal_code' => $text('postal_code'),
-        ];
-
-        if ($customer['name'] === '' || mb_strlen($customer['name']) > 120) {
-            throw new CheckoutException('Escribe tu nombre', 400);
-        }
         if (!filter_var($customer['email'], FILTER_VALIDATE_EMAIL) || strlen($customer['email']) > 150) {
             throw new CheckoutException('El email no es válido', 400);
         }
-        if ($customer['address'] === '' || mb_strlen($customer['address']) > 200) {
-            throw new CheckoutException('Escribe tu dirección', 400);
+        if (mb_strlen($customer['phone']) > 30) {
+            throw new CheckoutException('El teléfono es demasiado largo', 400);
         }
-        if (!preg_match('/^\d{5}$/', $customer['postal_code'])) {
+        $customer['phone'] = $customer['phone'] === '' ? null : $customer['phone'];
+        return $customer;
+    }
+
+    // Otra dirección de facturación: mismos campos que la de envío, sin email ni teléfono
+    private function validateBilling(array $data): array
+    {
+        return $this->validateAddress($data);
+    }
+
+    // Nombre, dirección, ciudad (opcional) y código postal
+    private function validateAddress(array $data): array
+    {
+        $address = [
+            'name'        => $this->text($data, 'name'),
+            'address'     => $this->text($data, 'address'),
+            'city'        => $this->text($data, 'city'),
+            'postal_code' => $this->text($data, 'postal_code'),
+        ];
+
+        if ($address['name'] === '' || mb_strlen($address['name']) > 120) {
+            throw new CheckoutException('Escribe el nombre', 400);
+        }
+        if ($address['address'] === '' || mb_strlen($address['address']) > 200) {
+            throw new CheckoutException('Escribe la dirección', 400);
+        }
+        if (!preg_match('/^\d{5}$/', $address['postal_code'])) {
             throw new CheckoutException('El código postal tiene que tener 5 números', 400);
         }
-        if (mb_strlen($customer['city']) > 100 || mb_strlen($customer['phone']) > 30) {
-            throw new CheckoutException('La ciudad o el teléfono son demasiado largos', 400);
+        if (mb_strlen($address['city']) > 100) {
+            throw new CheckoutException('La ciudad es demasiado larga', 400);
         }
+        $address['city'] = $address['city'] === '' ? null : $address['city'];
+        return $address;
+    }
 
-        // Los opcionales vacíos se guardan como NULL
-        $customer['phone'] = $customer['phone'] === '' ? null : $customer['phone'];
-        $customer['city'] = $customer['city'] === '' ? null : $customer['city'];
-        return $customer;
+    private function text(array $data, string $field): string
+    {
+        return is_string($data[$field] ?? null) ? trim($data[$field]) : '';
     }
 }

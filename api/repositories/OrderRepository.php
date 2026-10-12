@@ -52,21 +52,27 @@ final class OrderRepository
     }
 
     // Crea el pedido en pendiente_pago con sus líneas. El código PED-000123 sale del id.
-    public function createOrder(int $customerId, array $quote): array
+    public function createOrder(int $customerId, array $quote, ?array $billing): array
     {
         $stmt = db()->prepare(
-            'INSERT INTO orders (code, customer_id, status, subtotal, discount, shipping, tax, total)
-             VALUES (:code, :customer_id, :status, :subtotal, :discount, :shipping, :tax, :total)'
+            'INSERT INTO orders (code, customer_id, status, subtotal, discount, shipping, tax, total,
+                                 billing_name, billing_address, billing_city, billing_postal_code)
+             VALUES (:code, :customer_id, :status, :subtotal, :discount, :shipping, :tax, :total,
+                     :billing_name, :billing_address, :billing_city, :billing_postal_code)'
         );
         $stmt->execute([
-            'code'        => 'TMP-' . bin2hex(random_bytes(6)), // se cambia justo abajo
-            'customer_id' => $customerId,
-            'status'      => 'pendiente_pago',
-            'subtotal'    => $quote['subtotal'],
-            'discount'    => $quote['discount'],
-            'shipping'    => $quote['shipping'],
-            'tax'         => $quote['tax'],
-            'total'       => $quote['total'],
+            'code'                => 'TMP-' . bin2hex(random_bytes(6)), // se cambia justo abajo
+            'customer_id'         => $customerId,
+            'status'              => 'pendiente_pago',
+            'subtotal'            => $quote['subtotal'],
+            'discount'            => $quote['discount'],
+            'shipping'            => $quote['shipping'],
+            'tax'                 => $quote['tax'],
+            'total'               => $quote['total'],
+            'billing_name'        => $billing['name'] ?? null,
+            'billing_address'     => $billing['address'] ?? null,
+            'billing_city'        => $billing['city'] ?? null,
+            'billing_postal_code' => $billing['postal_code'] ?? null,
         ]);
         $orderId = (int) db()->lastInsertId();
 

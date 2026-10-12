@@ -86,15 +86,17 @@ $router->post('/checkout/quote', function (): void {
     }
 });
 
-// POST /orders  { "items": [...], "coupon": "...", "customer": { "name", "email", "phone", "address", "city", "postal_code" } }
+// POST /orders  { "items": [...], "coupon": "...", "customer": { "name", "email", "phone", "address", "city", "postal_code" },
+//                 "billing": null o { "name", "address", "city", "postal_code" } si se factura a otra dirección }
 $router->post('/orders', function (): void {
     $body = readJsonBody();
     $cart = readCartItems($body);
     $coupon = readCoupon($body);
     $customer = is_array($body['customer'] ?? null) ? $body['customer'] : [];
+    $billing = is_array($body['billing'] ?? null) ? $body['billing'] : null;
 
     try {
-        $order = (new OrderService())->create($cart, $coupon, $customer);
+        $order = (new OrderService())->create($cart, $coupon, $customer, $billing);
     } catch (CheckoutException $e) {
         jsonError($e->getMessage(), $e->getCode());
     }
