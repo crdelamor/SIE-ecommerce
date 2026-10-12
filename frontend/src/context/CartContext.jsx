@@ -52,10 +52,15 @@ export function CartProvider({ children }) {
     setItems((current) => current.filter((item) => item.productId !== productId));
   }
 
+  // Se vacía al terminar la compra
+  function clearCart() {
+    setItems([]);
+  }
+
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, itemCount, addItem, updateQuantity, removeItem }}>
+    <CartContext.Provider value={{ items, itemCount, addItem, updateQuantity, removeItem, clearCart }}>
       {children}
     </CartContext.Provider>
   );

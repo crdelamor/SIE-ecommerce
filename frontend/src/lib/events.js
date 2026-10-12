@@ -8,7 +8,7 @@ export function trackEvent(type, entityType = null, entityId = null, payload = {
 }
 
 // Id anónimo de la visita para agrupar sus eventos (sin datos personales)
-function getSessionId() {
+export function getSessionId() {
   try {
     let id = localStorage.getItem('sie.sessionId');
     if (!id) {
