@@ -17,8 +17,10 @@ final class OrderService
     ) {
     }
 
-    // $billing es null si la facturación va a la misma dirección que el envío
-    public function create(array $cart, ?string $coupon, array $customer, ?array $billing = null): array
+    // $billing es null si la facturación va a la misma dirección que el envío.
+    // $replaces es el código de un pedido anterior del mismo cliente que se quedó sin pagar
+    // (pago rechazado y luego cambió algún dato): se cancela para que no se quede reservando stock.
+    public function create(array $cart, ?string $coupon, array $customer, ?array $billing = null, ?string $replaces = null): array
     {
         $customer = $this->validateCustomer($customer);
         $billing = $billing === null ? null : $this->validateBilling($billing);
@@ -26,6 +28,9 @@ final class OrderService
         $pdo = db();
         $pdo->beginTransaction();
         try {
+            // Primero se cancela el pedido anterior, así su stock ya está libre para el nuevo
+            $replaced = $replaces === null ? null : $this->cancelReplaced($replaces, $customer['email']);
+
             // Los totales se vuelven a calcular aquí con los precios de la base de datos
             $quote = $this->calculator->quote($cart, $coupon);
 
@@ -41,9 +46,10 @@ final class OrderService
             (new OrderStatusService())->recordCreated($order['id']);
 
             logEvent('order.created', 'order', $order['id'], [
-                'code'  => $order['code'],
-                'total' => $quote['total'],
-                'items' => count($quote['items']),
+                'code'     => $order['code'],
+                'total'    => $quote['total'],
+                'items'    => count($quote['items']),
+                'replaces' => $replaced,
             ]);
 
             $pdo->commit();
@@ -53,6 +59,18 @@ final class OrderService
         }
 
         return ['code' => $order['code'], 'status' => 'pendiente_pago', 'total' => $quote['total']];
+    }
+
+    // Cancela el pedido anterior solo si sigue sin pagar y es del mismo email (para que nadie
+    // cancele pedidos de otros adivinando el código). Si no se cumple, no hace nada.
+    private function cancelReplaced(string $code, string $email): ?string
+    {
+        $old = $this->orders->findToReplace($code);
+        if ($old === null || $old['status'] !== 'pendiente_pago' || strcasecmp($old['email'], $email) !== 0) {
+            return null;
+        }
+        (new OrderStatusService())->changeStatus((int) $old['id'], 'cancelado');
+        return $code;
     }
 
     // Misma validación que el formulario del checkout, porque la del navegador se puede saltar

@@ -87,16 +87,22 @@ $router->post('/checkout/quote', function (): void {
 });
 
 // POST /orders  { "items": [...], "coupon": "...", "customer": { "name", "email", "phone", "address", "city", "postal_code" },
-//                 "billing": null o { "name", "address", "city", "postal_code" } si se factura a otra dirección }
+//                 "billing": null o { "name", "address", "city", "postal_code" } si se factura a otra dirección,
+//                 "replaces": null o "PED-000123" (pedido anterior sin pagar que se cancela) }
 $router->post('/orders', function (): void {
     $body = readJsonBody();
     $cart = readCartItems($body);
     $coupon = readCoupon($body);
     $customer = is_array($body['customer'] ?? null) ? $body['customer'] : [];
     $billing = is_array($body['billing'] ?? null) ? $body['billing'] : null;
+    // Código del pedido anterior sin pagar que sustituye este (reintento con datos cambiados)
+    $replaces = $body['replaces'] ?? null;
+    if ($replaces !== null && (!is_string($replaces) || !preg_match('/^PED-\d{6}$/', $replaces))) {
+        jsonError('El pedido a sustituir no es válido', 400);
+    }
 
     try {
-        $order = (new OrderService())->create($cart, $coupon, $customer, $billing);
+        $order = (new OrderService())->create($cart, $coupon, $customer, $billing, $replaces);
     } catch (CheckoutException $e) {
         jsonError($e->getMessage(), $e->getCode());
     }

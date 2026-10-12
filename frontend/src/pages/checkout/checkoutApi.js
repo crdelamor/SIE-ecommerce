@@ -32,8 +32,9 @@ export function getQuote(items, coupon) {
   return request('/checkout/quote', { items: cartToItems(items), coupon });
 }
 
-export async function createOrder(items, coupon, customer, billing) {
-  const data = await request('/orders', { items: cartToItems(items), coupon, customer, billing });
+// replaces: código de un pedido anterior sin pagar que el servidor cancela (o null)
+export async function createOrder(items, coupon, customer, billing, replaces) {
+  const data = await request('/orders', { items: cartToItems(items), coupon, customer, billing, replaces });
   return data.order;
 }
 

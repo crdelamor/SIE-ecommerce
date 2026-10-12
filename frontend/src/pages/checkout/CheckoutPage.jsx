@@ -127,11 +127,12 @@ export default function CheckoutPage() {
 
     setPaying(true);
     try {
-      // Si el pago anterior se rechazó y no ha cambiado nada, se paga el mismo pedido
+      // Si el pago anterior se rechazó y no ha cambiado nada, se paga el mismo pedido.
+      // Si ha cambiado algo, se crea otro y el servidor cancela el anterior (devuelve su stock).
       const orderData = JSON.stringify({ items, coupon, customer, billing });
       let code = pendingOrder?.data === orderData ? pendingOrder.code : null;
       if (!code) {
-        code = (await createOrder(items, coupon, customer, billing)).code;
+        code = (await createOrder(items, coupon, customer, billing, pendingOrder?.code ?? null)).code;
         setPendingOrder({ code, data: orderData });
       }
 

@@ -138,6 +138,18 @@ final class OrderRepository
         ];
     }
 
+    // Pedido a sustituir en un reintento: su estado y el email del cliente, bloqueado hasta el final
+    public function findToReplace(string $code): ?array
+    {
+        $stmt = db()->prepare(
+            'SELECT o.id, o.status, c.email
+             FROM orders o JOIN customers c ON c.id = o.customer_id
+             WHERE o.code = :code FOR UPDATE'
+        );
+        $stmt->execute(['code' => $code]);
+        return $stmt->fetch() ?: null;
+    }
+
     // Pedido por su código, bloqueado hasta el final de la transacción para que no se pague dos veces
     public function findForPayment(string $code): ?array
     {
