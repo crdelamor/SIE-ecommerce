@@ -11,6 +11,24 @@ export const STATUS_LABELS = {
   incidencia: 'Incidencia',
 };
 
+// Estados de una incidencia de soporte
+export const TICKET_STATUS_LABELS = {
+  abierta: 'Abierta',
+  en_curso: 'En curso',
+  cerrada: 'Cerrada',
+};
+
+// Qué significa cada tipo de evento (los del contrato y el de cambio de estado)
+export const EVENT_LABELS = {
+  'product.viewed': 'Producto visto',
+  'cart.item_added': 'Añadido al carrito',
+  'checkout.started': 'Checkout iniciado',
+  'order.created': 'Pedido creado',
+  'payment.simulated': 'Pago simulado',
+  'order.status_changed': 'Cambio de estado del pedido',
+  'support.requested': 'Incidencia de soporte',
+};
+
 // Texto del botón que lleva el pedido a cada estado
 export const STATUS_ACTIONS = {
   pagado: 'Marcar como pagado',

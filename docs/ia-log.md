@@ -106,13 +106,119 @@ Claude Code
   - Atomicidad del cambio de estado: con la tabla `events` renombrada a propósito, la API devolvió 500 y el pedido no cambió ni se añadió historial.
   - Todas las pantallas en el navegador (`npm run dev` + `php -S localhost:8000`) y `npm run build` sin errores. Tras las pruebas, la base de datos local se restauró con `schema.sql` y `seed.sql`.
 
+## 2026-10-05 · Celia (A) · Revisión de las PR de José y César
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** revisar las ramas `feature/catalogo`, `feature/db-schema`, `feature/catalogo-estilo`, `feature/footer-sin-admin` y `feature/admin` comparándolas con el plan de trabajo y el enunciado, y preparar los comentarios de las PR.
+- **Partes asistidas por IA:** las revisiones
+- **Errores detectados en la IA:**
+  - La primera revisión mezclaba lo que pide el plan de trabajo con lo que exige el enunciado. Le pedí separarlo para saber qué era obligatorio de verdad.
+- **Cambios hechos por mí:** decidí qué puntos llevar a cada PR, pasé el tema de la tienda (cartas TCG) para que José añadiera los campos al esquema y acordé con César cómo encajar su parte con la mía (`readJsonBody()` común, historial al pagar, stock al cancelar).
+- **Cómo lo validé:** simulación de los merges con `git merge-tree`, `npm run build` de cada rama y comparación con los dos PDF.
+
+## 2026-10-06 · Celia (A) · Integración con develop, estilo común y nombre de la tienda
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** actualizar mi rama con `develop` resolviendo los conflictos con el estilo de José, poner el pie siempre abajo, márgenes laterales, espacio en los títulos y nombre a la tienda.
+- **Partes asistidas por IA:** la resolución de conflictos del rebase, `Layout.jsx`, `Header.jsx`, `CartPanel.jsx` y `.css`, `Icons.jsx`, `theme.css`, `components.css`, `Footer.jsx` e `index.html`.
+- **Errores detectados en la IA:**
+  - Al integrar, el CSS del panel del carrito usaba 15 variables de mi tema antiguo que no existían en el de José.
+  - El panel quedaba por debajo de la cabecera fija de José y hubo que subirlo.
+- **Cambios hechos por mí:**
+  - Me quedé con el `theme.css` de José y con su botón del carrito; mi commit de estilos generales se quitó.
+  - Pedí el pie siempre abajo, márgenes de 64 px y más espacio en los títulos. En el móvil dejé 16 px.
+  - La IA propuso el nombre "La Bóveda TCG" y lo acepté.
+- **Cómo lo validé:** `npm run build` y prueba en el navegador con `npm run dev`. Hice yo el commit de los ajustes.
+
+## 2026-10-09 · Celia (A) · Entorno local y API del flujo de compra (pasos 1 a 6)
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:**
+  1. Instalar PHP 8.3 y MariaDB 11.8 en local, crear la base de datos con `schema.sql` y `seed.sql` y el `api/config.php`.
+  2. Mover `readJsonBody()` a `api/lib/request.php` (acordado con César).
+  3. `POST /api/events` para los eventos del carrito y del checkout.
+  4. `PriceCalculator` y `POST /api/checkout/quote`.
+  5. `OrderService` y `POST /api/orders`.
+  6. `PaymentService` y `POST /api/orders/{code}/pay` (pago simulado con tarjeta de prueba o Bizum).
+  7. `GET /api/orders/{code}` para la página de confirmación, sin datos personales del cliente porque el código del pedido se puede adivinar.
+- **Partes asistidas por IA:** `api/lib/request.php`, `api/index.php`, `api/http/admin.php` (solo quitar `readJsonBody()`), `api/http/orders.php`, `api/services/PriceCalculator.php`, `api/services/OrderService.php`, `api/services/PaymentService.php`, `api/repositories/OrderRepository.php` y la limpieza de comentarios de `CartContext.jsx`, `events.js` y `CartPanel.jsx`.
+- **Errores detectados en la IA:**
+  - La instalación de MariaDB falló (código 1603) porque no pedía permisos de administrador. Se repitió pidiéndolos.
+  - Escribía comentarios y mensajes de commit demasiado largos, con mucha pinta de IA. Le pedí escribir más sencillo y simplificar los comentarios del carrito.
+  - Dejaba este diario para el final en vez de ir apuntando cada paso. Se lo tuve que recordar.
+  - `createOrder()` devolvía solo el código del pedido y hacía falta también el id para el historial y el evento.
+  - En una prueba llamó a la ruta de cancelar sin `/status` y dio 404. Era un fallo de la prueba, no del código.
+- **Cambios hechos por mí:**
+  - Elegí las reglas de envío e IVA del `seed.sql` de José (envío gratis desde 50 € sin IVA, el envío no lleva IVA) para que los pedidos de ejemplo cuadren.
+  - Decidí ir paso a paso: un commit cada vez y probarlo antes de seguir.
+  - Acordé con César reutilizar su `OrderStatusService` para el historial y que él devuelva el stock al cancelar.
+- **Cómo lo validé:**
+  - `php -l` en todos los ficheros y pruebas con `curl` contra la base de datos local. Las ejecutó la IA y revisé los resultados.
+  - El presupuesto da los mismos totales que los 4 pedidos del seed (15,72 / 27,93 / 62,32 / 20,46) y un precio inventado desde el navegador se ignora.
+  - Al crear un pedido se guardan el cliente, las líneas, el historial y el evento `order.created`, y baja el stock. Si hay un error (email, código postal, stock) no se guarda nada.
+  - Cancelándolo desde la administración de César, el stock vuelve.
+  - Pago: con la tarjeta 4000… se guarda el pago rechazado y el pedido sigue en `pendiente_pago`; al reintentar con la 4242… pasa a `pagado`, con su fila en el historial y los eventos `payment.simulated` y `order.status_changed`. Pagar dos veces da 409 y una tarjeta que no es de prueba da 400. Del número de tarjeta solo se guardan los 4 últimos dígitos.
+  - Confirmación: `GET /api/orders/PED-000002` devuelve productos y totales sin nombre, email ni dirección; un código que no existe (o con SQL inyectado) da 404.
+  - Los eventos `cart.item_added` y `checkout.started` ya se guardan en la tabla `events` (lo que quedaba pendiente el 29-09).
+  - Al terminar, la base de datos se restauró con `schema.sql` y `seed.sql`.
+
 ## 2026-10-08 · José (B) · Quitar enlace público a Administración del pie
 Claude Code
 - **Qué pedí:** ayuda para revisar el PR de Celia (carrito) y el de César (administración), redactar mis comentarios en ellos y, a petición de César, quitar del pie (`Footer.jsx`) el enlace público "Administración", de modo que se entre directamente por `#/admin`.
 - **Qué falló o hubo que corregir:** en la revisión de los PR la herramienta solo leyó el código y no pudo ejecutarlo (sin Node en su entorno), así que las pruebas con `npm run dev` las hago yo. En el cambio del pie, la primera edición unió dos líneas porque el fichero usa saltos de línea CRLF y hubo que corregirla. También detectó que el contenedor del `Layout` y el `Container` de mis páginas se duplican, y que `order_items` no guarda estado, idioma ni foil; decidí no cambiar la tabla porque cada variante de carta es un producto distinto.
 - **Cómo lo validé:** con `git diff`, comprobando que el único cambio funcional es la eliminación del enlace y que la ruta `/admin` sigue en `App.jsx`.
 
-## 2026-10-09 · José (B) · Claude Code
+## 2026-10-09 · José (B) · Feature/catalogo imagenes
+Claude Code
 - **Qué pedí:** revisar si el catálogo tenía imágenes de producto y al menos 3 cartas con varias versiones (nueva, usada, foil), cada una con su imagen, y generar las imágenes que faltaban para todas las cartas sueltas de la base de datos.
-- **Qué falló o hubo que corregir:** la revisión mostró que los 11 productos usaban el mismo `placeholder.svg` y que solo Lightning Bolt tenía dos versiones. La herramienta generó 12 ilustraciones SVG propias de cartas con un script en PHP (3 versiones de Sol Ring, Lightning Bolt y Dark Magician, y una de Pikachu, Mewtwo y Blue-Eyes) y después 4 más para los sobres. Son ilustraciones originales con nombres inventados, no las cartas ni los sobres oficiales, por los derechos de autor. Las imágenes son horizontales (4:3) porque la tarjeta del catálogo recorta a ese formato. Un primer intento del script de sobres falló porque la función se llamaba `pack`, que ya existe en PHP, y se renombró. Para tener 3 cartas con 3 versiones cada una y no pasar del máximo de 15 productos del plan, se añadieron 5 productos (ids 12 a 16) y se quitó el sobre de Bloomburrow (id 4, que no aparecía en ningún pedido) junto con su imagen. Los ids existentes no se renumeraron para no tocar los pedidos de ejemplo. Además, los tres productos que no indicaban su estado se renombraron (`Sol Ring (nueva)`, `Lightning Bolt (usada)`, `Dark Magician (usada)`) porque el nombre se copia en `order_items`, y se actualizaron también las líneas de los pedidos de ejemplo. Tras la revisión de César, los teléfonos del seed tenían forma de móvil español real (600111222, 611222333, 622333444); se sustituyeron por `000000001`, que no es de ningún país, y `NULL` en los demás clientes, porque el campo es opcional. En España no hay un rango de teléfonos reservado para ficción, y números como 666666666 podrían existir, por lo que se descartaron.
+- **Qué falló o hubo que corregir:** la revisión mostró que los 11 productos usaban el mismo `placeholder.svg` y que solo Lightning Bolt tenía dos versiones. La herramienta generó 12 ilustraciones SVG propias de cartas con un script en PHP (3 versiones de Sol Ring, Lightning Bolt y Dark Magician, y una de Pikachu, Mewtwo y Blue-Eyes) y después 4 más para los sobres. Son ilustraciones originales con nombres inventados, no las cartas ni los sobres oficiales, por los derechos de autor. 
+  Las imágenes son horizontales (4:3) porque la tarjeta del catálogo recorta a ese formato. Un primer intento del script de sobres falló porque la función se llamaba `pack`, que ya existe en PHP, y se renombró. Para tener 3 cartas con 3 versiones cada una y no pasar del máximo de 15 productos del plan, se añadieron 5 productos (ids 12 a 16) y se quitó el sobre de Bloomburrow (id 4, que no aparecía en ningún pedido) junto con su imagen. Los ids existentes no se renumeraron para no tocar los pedidos de ejemplo. Además, los tres productos que no indicaban su estado se renombraron (`Sol Ring (nueva)`, `Lightning Bolt (usada)`, `Dark Magician (usada)`) porque el nombre se copia en `order_items`, y se actualizaron también las líneas de los pedidos de ejemplo. Tras la revisión de César, los teléfonos del seed tenían forma de móvil español real (600111222, 611222333, 622333444); se sustituyeron por `000000001`, que no es de ningún país, y `NULL` en los demás clientes, porque el campo es opcional. En España no hay un rango de teléfonos reservado para ficción, y números como 666666666 podrían existir, por lo que se descartaron.
 - **Cómo lo validé:** comprobé que los 12 SVG son XML válido y que cada ruta del `seed.sql` apunta a un fichero existente. Las imágenes las reviso yo en el navegador.
+## 2026-10-09 · César (C) · Soporte, incidencias y eventos
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** completar mi módulo (días 08 y 09/10):
+  1. Ajustes de `OrderStatusService` para el pago de Celia (PR #9): `admin_id` opcional, uso de una transacción ya abierta, devolución de stock al cancelar y primera fila del historial.
+  2. Soporte: `POST /api/support` con motivos de una tienda de cartas y evento `support.requested`, formulario público y lista de incidencias en la administración.
+  3. Eventos: `GET /api/admin/events` y exportación a CSV y JSON, y el visor en el panel.
+  4. Navegación del panel (Pedidos, Incidencias, Eventos) sin tocar `App.jsx`.
+- **Partes asistidas por IA:** `api/http/support.php`, `api/http/events.php`, `api/services/SupportService.php`, `api/services/EventService.php`, `api/services/OrderStatusService.php`, `api/repositories/SupportTicketRepository.php`, `api/repositories/EventRepository.php`, `api/repositories/AdminOrderRepository.php` y en `frontend/src/pages/`: `support/` (`SupportPage`, `supportApi.js`, `support.css`) y `admin/` (`SupportTicketsPage`, `EventsPage`, `AdminPagination`, cambios en `AdminPage`).
+- **Errores detectados en la IA:**
+  - Usó `lines` como alias de una subconsulta y es palabra reservada de MySQL; se cambió a `sold` antes de probar.
+  - Declaró un componente de React dentro de otro (se recreaba en cada render); se cambió por una función.
+  - Al editar el CSV con `sed` metió un salto de línea literal dentro de una cadena de PHP; se detectó al revisar el fichero y se corrigió.
+  - En una prueba, el formulario de soporte pareció fallar: era la propia prueba, porque `curl` en Windows envía mal las tildes escritas en la línea de comandos. Se repitió generando el JSON con PHP.
+- **Cambios hechos por mí:**
+  - Elegí que la primera fila del historial la guarde `OrderStatusService` (`recordCreated()`) para que Celia no toque mi repositorio, y acepté como limitación que el stock de los pedidos del seed no cuadre al cancelarlos, para no cargar a los compañeros.
+  - Decidí que cambiar el estado de un ticket quede como sugerencia para el grupo y no se implemente sin acordarlo.
+  - Pedí trabajar soporte y eventos en una rama aparte (`feature/soporte`) para no mezclarlo con el PR #9 que Celia estaba revisando.
+  - Tras la revisión de José (10/10): los helpers de la URL pasan a `lib/query.php` para no depender del orden de carga de `http/`, y el formulario habla de la página de confirmación, porque no enviamos emails.
+- **Cómo lo validé:**
+  - `OrderStatusService` con un script que lo usa como lo hará el pago: devolución de stock desde pagado e incidencia, producto repetido en dos líneas, commit y rollback de una transacción de fuera y `recordCreated()`.
+  - Soporte con `curl`: ticket vinculado solo si el email coincide con el del pedido, misma respuesta si no existe, errores por campo (422), inyección en el código de pedido y atomicidad (con `events` renombrada, ningún ticket guardado).
+  - Eventos con `curl`: filtros, cabeceras de descarga, BOM y CRLF del CSV, payload aplanado en columnas e inyección de fórmulas neutralizada (`=HYPERLINK(...)` sale como texto).
+  - Todas las pantallas en el navegador y `npm run build` sin errores; base de datos restaurada con el seed tras cada prueba.
+
+## 2026-10-11 y 12 · Celia (A) · Checkout tipo Shopify, facturación y confirmación
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code, y la extensión Claude in Chrome para las pruebas.
+- **Tarea:**
+  1. Un primer formulario de checkout con validación (11-10). No se llegó a subir: lo sustituyó el siguiente.
+  2. Rehacer el checkout copiando la estructura del de Shopify: cabecera propia sin menú, formulario a la izquierda (contacto, entrega, envío, pago y facturación) y resumen del pedido a la derecha con el código de descuento; en el móvil el resumen sale arriba y plegado.
+  3. Pago con tarjeta de prueba o Bizum en la misma página; si se rechaza, se reintenta sobre el mismo pedido.
+  4. Guardar una dirección de facturación distinta: columnas `billing_*` nuevas en `orders` (cambio del `schema.sql` de José, avisando a José y César).
+  5. Página de confirmación del pedido y vaciar el carrito al pagar.
+- **Partes asistidas por IA:** `db/schema.sql` (columnas de facturación), `api/services/OrderService.php`, `api/repositories/OrderRepository.php`, `api/http/orders.php`, `frontend/src/App.jsx` y en `frontend/src/pages/checkout/`: `CheckoutLayout.jsx`, `CheckoutPage.jsx`, `OrderSummary.jsx`, `ConfirmationPage.jsx`, `checkoutApi.js` y `checkout.css`; además `clearCart()` en `CartContext.jsx` y exportar `getSessionId()` de `lib/events.js`.
+- **Errores detectados en la IA:**
+  - En el primer formulario, cuando el código postal mostraba su error en dos líneas, el campo "Ciudad" de al lado se estiraba. Se vio en las capturas y se corrigió.
+  - Para validar la facturación reutilizaba la validación del cliente inventándose un email. Se cambió por una función común de dirección.
+  - Una prueba con `curl` fallaba con "JSON no válido" porque la consola de Windows mandaba mal la tilde de "Polígono". Era un fallo de la prueba, no del código.
+  - En la prueba en Chrome se vio que, si tras un pago rechazado se cambia algún dato (por ejemplo la facturación), se crea un pedido nuevo y el anterior se queda "pendiente de pago" reservando stock. Se corrigió: el pedido nuevo cancela el anterior (con el `OrderStatusService` de César, que devuelve el stock), solo si sigue sin pagar y es del mismo email.
+  - En la primera versión de esa corrección, la cancelación iba después de comprobar el stock, así que una carta con stock 1 reservada por el pedido viejo habría dado "sin stock". Se puso la cancelación antes.
+- **Cambios hechos por mí:**
+  - Pedí copiar el checkout de Shopify y quitar el menú y el pie del checkout para que el cliente no tenga por dónde salirse a mitad de la compra.
+  - Decidí guardar la dirección de facturación en la base de datos en lugar de usar siempre la de envío.
+  - Pedí ver las pruebas en mi navegador e instalé la extensión de Chrome para ello.
+  - Decidí no subir el primer formulario y pasar directamente al nuevo.
+  - Ante el pedido que se quedaba pendiente, elegí que el nuevo cancele el anterior en lugar de dejarlo como limitación.
+  - Revisé con la IA el enunciado y el plan: el pago puede ser simulado (no hace falta PayPal) y no se pide enviar correo; se deja como limitación.
+- **Cómo lo validé:**
+  - `npm run build` y `php -l` sin errores.
+  - En mi Chrome: con todo vacío salen los errores; el cupón "GRATIS" se rechaza y BIENVENIDA10 deja el total en 27,93 € (igual que el pedido 2 del seed); la tarjeta 4000… se rechaza con su mensaje; con la 4242… y otra dirección de facturación se paga y lleva a "¡Gracias, Laura!". En la base de datos quedan el pedido pagado con su facturación, los dos pagos, el historial y los eventos, y el carrito queda vacío.
+  - La vista de móvil, con capturas a 390 px de ancho.
+  - Sustitución del pedido: con `curl`, otro email no puede cancelar el pedido de Laura y el mismo email sí, y 2 Mewtwo (todo el stock) reservados por el pedido viejo se pueden volver a comprar en el nuevo. En Chrome: pago rechazado, cambio de facturación y pago aprobado; en la administración el primer pedido sale "Cancelado" y el segundo "Pagado", y el stock solo baja una vez.

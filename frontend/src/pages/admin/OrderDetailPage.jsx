@@ -21,7 +21,7 @@ function DateTime({ value }) {
  * pagos e historial de estados. Se abre con #/admin?pedido=ID y conserva los
  * filtros de la lista para volver a la misma vista.
  */
-export default function OrderDetailPage({ orderId, onUnauthorized }) {
+export default function OrderDetailPage({ orderId, onUnauthorized, backLabel = 'Volver a pedidos' }) {
   const [searchParams] = useSearchParams();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -68,7 +68,7 @@ export default function OrderDetailPage({ orderId, onUnauthorized }) {
 
   const backLink = (
     <Link to={backTo} className="link admin-back">
-      ← Volver a pedidos
+      ← {backLabel}
     </Link>
   );
 

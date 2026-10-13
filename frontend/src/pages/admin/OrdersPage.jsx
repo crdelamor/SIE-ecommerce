@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import Button from '../../components/Button.jsx';
+import AdminPagination from './AdminPagination.jsx';
 import StatusBadge from './StatusBadge.jsx';
 import { getOrders } from './adminApi.js';
 import { STATUS_LABELS, formatDateTime, formatPrice, toIsoDateTime } from './adminFormat.js';
@@ -238,18 +239,14 @@ export default function OrdersPage({ onUnauthorized }) {
         </div>
       )}
 
-      {!error && totalPages > 1 && (
-        <nav className="admin-pagination" aria-label="Páginas de pedidos">
-          <Button variant="secondary" onClick={() => goToPage(page - 1)} disabled={page <= 1 || loading}>
-            Anterior
-          </Button>
-          <span>
-            Página {page} de {totalPages}
-          </span>
-          <Button variant="secondary" onClick={() => goToPage(page + 1)} disabled={page >= totalPages || loading}>
-            Siguiente
-          </Button>
-        </nav>
+      {!error && (
+        <AdminPagination
+          page={page}
+          totalPages={totalPages}
+          onChange={goToPage}
+          disabled={loading}
+          label="Páginas de pedidos"
+        />
       )}
     </section>
   );
