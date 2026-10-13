@@ -2,21 +2,20 @@ import { Link } from 'react-router-dom';
 import useReveal from '../hooks/useReveal.js';
 import { useCart } from '../context/CartContext.jsx';
 import Button from './Button.jsx';
+import { formatPrice, productMeta } from './productFormat.js';
 
 const PLACEHOLDER = `${import.meta.env.BASE_URL}placeholder.svg`;
-
-// Solo formato de presentación; el importe ya llega calculado de la API
-const formatPrice = (value) =>
-  new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
 /**
  * Tarjeta de producto. `index` escalona la animación de entrada dentro de una lista.
  * Muestra `price_with_tax` (precio con IVA calculado por la API), el mismo que verá el cliente en el carrito.
- * El botón llama a addItem del carrito de A (useCart).
+ * El botón llama a addItem del carrito de A (useCart) y se desactiva si no queda stock
+ * (el servidor vuelve a comprobar el stock al crear el pedido).
  */
 export default function ProductCard({ product, index = 0 }) {
   const [ref, visible] = useReveal();
   const { addItem } = useCart();
+  const soldOut = product.stock === 0;
 
   return (
     <article
@@ -44,8 +43,16 @@ export default function ProductCard({ product, index = 0 }) {
             {product.name}
           </Link>
         </h3>
-        <p className="product-card__price">{formatPrice(product.price_with_tax)}</p>
-        <Button onClick={() => addItem(product)}>Añadir al carrito</Button>
+        <p className="product-card__meta">
+          {productMeta(product)}
+          {product.is_foil && <span className="badge">Foil</span>}
+        </p>
+        <p className="product-card__price">
+          {formatPrice(product.price_with_tax)} <span className="product-card__tax">IVA incluido</span>
+        </p>
+        <Button onClick={() => addItem(product)} disabled={soldOut}>
+          {soldOut ? 'Agotado' : 'Añadir al carrito'}
+        </Button>
       </div>
     </article>
   );

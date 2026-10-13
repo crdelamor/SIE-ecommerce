@@ -1,0 +1,31 @@
+/* Catálogo: filtro por juego y mensajes. Solo variables de theme.css. */
+
+/* Filtro por juego: una fila de botones que baja de línea en pantallas estrechas */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.filters__item {
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--color-text);
+  border-radius: var(--radius-pill);
+  font-weight: var(--font-weight-bold);
+  transition:
+    background-color var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out),
+    border-color var(--duration-base) var(--ease-out);
+}
+
+.filters__item:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* El filtro activo se rellena: no depende solo del color (también cambia el fondo y se anuncia con aria-current) */
+.filters__item[aria-current='true'] {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
