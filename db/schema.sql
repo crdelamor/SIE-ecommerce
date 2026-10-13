@@ -54,11 +54,13 @@ CREATE TABLE products (
     language        VARCHAR(30) NULL,                     -- Español, Inglés, Japonés...
     illustrator     VARCHAR(100) NULL,                    -- NULL en sobres
     is_foil         TINYINT(1) NOT NULL DEFAULT 0,        -- 0 en sobres
+    card_ref        VARCHAR(100) NULL,                    -- agrupa las versiones de una misma carta (NULL en sobres)
     PRIMARY KEY (id),
     KEY idx_products_category (category_id),
     KEY idx_products_active (active),
     KEY idx_products_type (product_type),
     KEY idx_products_set (set_name),
+    KEY idx_products_card_ref (card_ref),
     CONSTRAINT fk_products_category
         FOREIGN KEY (category_id) REFERENCES categories (id)
         ON UPDATE CASCADE ON DELETE RESTRICT,
