@@ -83,7 +83,8 @@ final class AdminOrderRepository
     {
         $stmt = db()->prepare(
             'SELECT o.id, o.code, o.status, o.subtotal, o.discount, o.shipping, o.tax, o.total, o.created_at,
-                    c.name, c.email, c.phone, c.address, c.city, c.postal_code
+                    c.name, c.email, c.phone, c.address, c.city, c.postal_code,
+                    o.billing_name, o.billing_address, o.billing_city, o.billing_postal_code
              FROM orders o
              JOIN customers c ON c.id = o.customer_id
              WHERE o.id = :id'
@@ -111,6 +112,13 @@ final class AdminOrderRepository
                 'address'     => $row['address'],
                 'city'        => $row['city'],
                 'postal_code' => $row['postal_code'],
+            ],
+            // null si se factura a la dirección de envío (billing_* vacías)
+            'billing'    => $row['billing_address'] === null ? null : [
+                'name'        => $row['billing_name'],
+                'address'     => $row['billing_address'],
+                'city'        => $row['billing_city'],
+                'postal_code' => $row['billing_postal_code'],
             ],
             'items'      => $this->findItems($id),
             'payments'   => $this->findPayments($id),
