@@ -216,3 +216,14 @@ Claude Code
   - En mi Chrome: con todo vacío salen los errores; el cupón "GRATIS" se rechaza y BIENVENIDA10 deja el total en 27,93 € (igual que el pedido 2 del seed); la tarjeta 4000… se rechaza con su mensaje; con la 4242… y otra dirección de facturación se paga y lleva a "¡Gracias, Laura!". En la base de datos quedan el pedido pagado con su facturación, los dos pagos, el historial y los eventos, y el carrito queda vacío.
   - La vista de móvil, con capturas a 390 px de ancho.
   - Sustitución del pedido: con `curl`, otro email no puede cancelar el pedido de Laura y el mismo email sí, y 2 Mewtwo (todo el stock) reservados por el pedido viejo se pueden volver a comprar en el nuevo. En Chrome: pago rechazado, cambio de facturación y pago aprobado; en la administración el primer pedido sale "Cancelado" y el segundo "Pagado", y el stock solo baja una vez.
+
+## 2026-10-13 · Celia (A) · Correcciones de la revisión de la PR #12
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** leer las revisiones de César y José de la PR #12, decidir qué se arreglaba en el código y qué iba a las limitaciones de la memoria, y hacer los arreglos.
+- **Partes asistidas por IA:** el análisis de los comentarios, `api/services/PaymentService.php`, `api/services/PriceCalculator.php` y `api/http/orders.php`.
+- **Errores detectados en la IA:** los tres arreglos corrigen fallos del código que había hecho la IA y que encontraron mis compañeros:
+  - El evento `payment.simulated` se guardaba después de `order.status_changed` (lo vio César).
+  - El cálculo del IVA dividía entre el subtotal, que podía ser 0 € (lo vio César).
+  - Las rutas de crear y pagar pedidos no capturaban `OrderStatusException`, que habría dado un 500 (lo vio José).
+- **Cambios hechos por mí:** decidí arreglar esos tres puntos y dejar como limitaciones de la memoria: un cliente nuevo por pedido (la fila guarda la dirección de envío de ese pedido), `POST /api/events` sin límite de peticiones, poder cancelar un pedido sin pagar conociendo su código y su email, los pedidos pendientes que reservan stock sin caducidad y que el número de tarjeta llega entero al servidor aunque no se guarda.
+- **Cómo lo validé:** `php -l`; con `curl` contra la base de datos local: los eventos del pago salen en orden (pedido, pago y cambio de estado), un carrito a 0 € da 200 con IVA 0 y los totales del seed no cambian (27,93 y 62,32), y el flujo de pedido, pago rechazado, pago aprobado y pagar dos veces (409) sigue igual. Un pedido ya pagado no se cancela aunque otro intente sustituirlo. Al terminar se restauró la base de datos con el seed.
