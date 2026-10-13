@@ -12,12 +12,20 @@ public_html/api/        <- carpeta api/ del repositorio
 public_html/api/config.php   <- SOLO en el servidor (no está en GitHub)
 ```
 
+## Requisitos del hosting
+
+Antes de subir nada, comprueba en el panel de control:
+
+1. **Versión de PHP: 8.1 o superior.** El código usa funciones de PHP 8.1 (`new` como valor por defecto en los constructores de `OrderService`, `AuthService`, `PaymentService`…, propiedades `readonly` y `array_is_list`). Con PHP 8.0 o anterior la API no arranca. Si el panel ofrece varias versiones, elige la más reciente disponible.
+2. **Extensiones activas: `pdo_mysql` y `mbstring`.** La primera es la conexión con MySQL; la segunda la usan las validaciones de longitud de los formularios (`mb_strlen`).
+3. **Errores de PHP sin mostrar:** `display_errors` desactivado (en el panel, en la configuración de PHP). Así un fallo no enseña rutas del servidor al visitante; la API ya responde con un JSON genérico y guarda el detalle en el log.
+
 ## 1. Base de datos
 
 1. En el panel, crea una base de datos MySQL y un usuario con todos los permisos sobre ella. Anota nombre, usuario y contraseña (en el hosting suelen llevar un prefijo).
 2. Abre phpMyAdmin, selecciona esa base de datos.
 3. Pestaña **Importar**: `db/schema.sql` y, después, `db/seed.sql`.
-4. Comprueba en phpMyAdmin que están las 10 tablas y que `productos` tiene datos.
+4. Comprueba en phpMyAdmin que están las 10 tablas y que `products` tiene datos.
 
 `schema.sql` borra las tablas existentes antes de crearlas: al reimportar se pierden los datos.
 
@@ -54,8 +62,9 @@ Con un cliente FTP (por ejemplo FileZilla), con los datos del panel:
 ## 6. Lista de comprobación tras cada despliegue
 
 - [ ] `https://<dominio>/api/health` devuelve `{"status":"ok"}`.
-- [ ] `https://<dominio>/api/products` devuelve los productos en JSON.
-- [ ] La página principal, el catálogo y la ficha de producto se ven bien; las imágenes cargan.
+- [ ] `https://<dominio>/api/no-existe` devuelve solo `{"error":"Ruta no encontrada"}` (404), sin avisos de PHP ni rutas del servidor.
+- [ ] `https://<dominio>/api/products` devuelve los productos en JSON. *(Falla hasta que se suba `api/http/products.php`, que aún no está en el repositorio.)*
+- [ ] La página principal, el catálogo y la ficha de producto se ven bien; las imágenes cargan. *(Pendiente de que estén hechas esas páginas.)*
 - [ ] Recargar una página interna no da error 404 (por `HashRouter`).
 - [ ] Se puede hacer una compra de prueba y el pedido aparece en la administración.
 - [ ] Login de administrador con el usuario de prueba del README.
@@ -68,6 +77,8 @@ Con un cliente FTP (por ejemplo FileZilla), con los datos del panel:
 | Síntoma | Causa probable |
 |---|---|
 | `/api/...` devuelve 500 | `config.php` no existe o los datos de MySQL son incorrectos. Mira el log de errores de PHP en el panel. |
+| La API da 500 en todas las rutas nada más subirla | La versión de PHP es anterior a 8.1 (ver «Requisitos del hosting»). |
+| Los formularios (checkout o soporte) dan 500 | Falta la extensión `mbstring` o `pdo_mysql` en PHP. |
 | `/api/...` devuelve 404 | No se subió `api/.htaccess` (es un fichero oculto) o falta `mod_rewrite`. |
 | La web no carga tras activar la redirección | Se descomentó antes de activar el SSL. Vuelve a comentar las líneas. |
 | Pantalla en blanco | Se subió la carpeta `dist` en vez de su contenido, o falta `index.html` en `public_html/`. |

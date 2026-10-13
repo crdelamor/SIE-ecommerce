@@ -36,7 +36,7 @@ La API necesita PHP y MySQL: copia `api/config.example.php` como `api/config.php
 Importa los dos ficheros en este orden, en local (phpMyAdmin o `mysql`) y en el hosting:
 
 1. `db/schema.sql`: crea las tablas (borra las existentes, así que se puede reimportar).
-2. `db/seed.sql`: datos de prueba ficticios (4 categorías, 15 productos (Sol Ring, Lightning Bolt y Dark Magician en tres versiones cada uno), 4 clientes, 4 pedidos de ejemplo y el administrador).
+2. `db/seed.sql`: datos de prueba ficticios (4 categorías, 11 productos, 4 clientes, 4 pedidos de ejemplo y el administrador).
 
 ## Usuarios de prueba
 
