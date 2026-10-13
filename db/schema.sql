@@ -105,6 +105,11 @@ CREATE TABLE orders (
     shipping     DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     tax          DECIMAL(10,2) NOT NULL DEFAULT 0.00,
     total        DECIMAL(10,2) NOT NULL,
+    -- Dirección de facturación: NULL si es la misma que la de envío (la del cliente)
+    billing_name         VARCHAR(120) NULL,
+    billing_address      VARCHAR(200) NULL,
+    billing_city         VARCHAR(100) NULL,
+    billing_postal_code  CHAR(5) NULL,
     created_at   DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     UNIQUE KEY uq_orders_code (code),

@@ -1,15 +1,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { trackEvent } from '../lib/events.js';
 
-/**
- * Carrito de la tienda. Se guarda en localStorage para no perderlo al recargar.
- *
- *   const { addItem } = useCart();
- *   addItem(producto);  // producto tal cual llega de la API (id, name, image_url...)
- *
- * Solo guarda qué productos y cuántos. Los precios y totales los calculará el servidor.
- */
-
+// Carrito guardado en localStorage. Los precios no se guardan, los calcula el servidor.
 const STORAGE_KEY = 'sie.cart';
 
 const CartContext = createContext(null);
@@ -30,7 +22,7 @@ export function CartProvider({ children }) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch {
-      // Sin localStorage el carrito funciona igual, pero no se conserva al recargar
+      // si no hay localStorage simplemente no se guarda
     }
   }, [items]);
 
@@ -60,10 +52,15 @@ export function CartProvider({ children }) {
     setItems((current) => current.filter((item) => item.productId !== productId));
   }
 
+  // Se vacía al terminar la compra
+  function clearCart() {
+    setItems([]);
+  }
+
   const itemCount = items.reduce((total, item) => total + item.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, itemCount, addItem, updateQuantity, removeItem }}>
+    <CartContext.Provider value={{ items, itemCount, addItem, updateQuantity, removeItem, clearCart }}>
       {children}
     </CartContext.Provider>
   );
