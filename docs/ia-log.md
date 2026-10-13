@@ -222,3 +222,24 @@ Claude Code
   - En mi Chrome: con todo vacío salen los errores; el cupón "GRATIS" se rechaza y BIENVENIDA10 deja el total en 27,93 € (igual que el pedido 2 del seed); la tarjeta 4000… se rechaza con su mensaje; con la 4242… y otra dirección de facturación se paga y lleva a "¡Gracias, Laura!". En la base de datos quedan el pedido pagado con su facturación, los dos pagos, el historial y los eventos, y el carrito queda vacío.
   - La vista de móvil, con capturas a 390 px de ancho.
   - Sustitución del pedido: con `curl`, otro email no puede cancelar el pedido de Laura y el mismo email sí, y 2 Mewtwo (todo el stock) reservados por el pedido viejo se pueden volver a comprar en el nuevo. En Chrome: pago rechazado, cambio de facturación y pago aprobado; en la administración el primer pedido sale "Cancelado" y el segundo "Pagado", y el stock solo baja una vez.
+
+## 2026-10-14 · José (B) · Catálogo: API de productos, página principal, catálogo y ficha
+- **Herramienta:** Claude Code.
+- **Tarea:** terminar mi parte del plan: `api/http/products.php` (categorías, listado y ficha, con `product.viewed` y `price_with_tax`), la página principal, el catálogo con filtro por juego y la ficha de producto con las versiones de cada carta, y la limpieza previa a la entrega (quitar la página de muestra `/muestra` y añadir un favicon).
+- **Partes asistidas por IA:** `api/http/products.php`, `api/services/CatalogService.php`, `api/repositories/ProductRepository.php`, la columna `card_ref` de `db/schema.sql` y `db/seed.sql`, `frontend/src/pages/home`, `catalog` y `product` (páginas, estilos y `catalogApi.js`), `hooks/useAsync.js`, `components/productFormat.js`, los cambios en `ProductCard.jsx` y `components.css`, y el favicon.
+- **Errores detectados en la IA:**
+  - Un manejador de eventos se llamó `useFallback`; por convención `use…` se reserva para hooks y se renombró a `showPlaceholder`.
+  - Con `npm run dev` Vite se cerraba por un problema del vigilante de ficheros con rutas cortas de Windows; las pruebas se hicieron con `vite preview` sobre el resultado compilado.
+  - La captura de pantalla de móvil engañaba (Chrome sin ventana tiene un ancho mínimo y la captura completa no desplaza la página, así que los bloques animados salían vacíos). Se cambió por Puppeteer con 390 px exactos y scroll real.
+  - La prueba automática detectó que faltaba un favicon (el navegador recibía un 404 en cada página) y se añadió.
+  - Los fallos de contraste que avisó la auditoría automática en el catálogo eran un artefacto: se medía con las tarjetas a medias de la animación de entrada; con la animación terminada no hay ninguno.
+- **Cambios hechos por mí:**
+  - Decidí que las versiones de una misma carta (nueva, usada, foil) se agrupan con una columna nueva `products.card_ref`, para poder mostrarlas en la ficha, cada una con su imagen. Es un cambio de `schema.sql` y de `seed.sql`, que hay que avisar al grupo y reimportar.
+  - Decidí que si falla el guardado de `product.viewed` la ficha se muestra igualmente y el error queda en el log del servidor, porque es una lectura.
+  - El payload de `product.viewed` es `category`, `product_type`, `card_condition`, `language` e `is_foil`, sin datos personales.
+  - Mantuve el `Section` y el `Container` tal cual: Celia ya evitó el margen doble con una regla de CSS.
+- **Cómo lo validé:**
+  - `php -l` en toda la API y `npm run build` sin errores.
+  - 43 comprobaciones de la API con una base de datos simulada que lee el `seed.sql` real: contenido de los tres endpoints, precios con IVA, filtros, errores 400 y 404 (también con intentos de inyección), versiones, que un producto retirado o desactivado no salga, y que `product.viewed` quede registrado con la sesión y sin datos personales. Si falla el guardado del evento, la ficha sigue respondiendo 200.
+  - 33 comprobaciones en Chrome real con Puppeteer: navegación de la portada al catálogo, filtro por juego, botón atrás, ficha, añadir al carrito (se abre el panel y el carrito guarda el producto), cambio de versión, producto agotado, error de producto o juego inexistente, acceso con teclado, y móvil de 390 px sin desbordamiento horizontal. La auditoría de accesibilidad automática (axe, WCAG A y AA) no encuentra violaciones. Las animaciones aparecen con el scroll y con "reducir movimiento" se ven desde el principio.
+  - No se ha probado contra MySQL real, porque no hay MySQL en el equipo donde se desarrolló; las consultas son sencillas, pero hay que importar `schema.sql` y `seed.sql` y repetir las tres llamadas a la API contra la base de datos.
