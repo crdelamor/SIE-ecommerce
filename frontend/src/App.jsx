@@ -8,7 +8,6 @@ import CheckoutPage from './pages/checkout/CheckoutPage.jsx';
 import ConfirmationPage from './pages/checkout/ConfirmationPage.jsx';
 import AdminPage from './pages/admin/AdminPage.jsx';
 import SupportPage from './pages/support/SupportPage.jsx';
-import StylePreviewPage from './pages/home/StylePreviewPage.jsx';
 
 export default function App() {
   return (
@@ -19,7 +18,6 @@ export default function App() {
         <Route path="producto/:id" element={<ProductPage />} />
         <Route path="admin" element={<AdminPage />} />
         <Route path="soporte" element={<SupportPage />} />
-        <Route path="muestra" element={<StylePreviewPage />} />
       </Route>
 
       {/* El checkout tiene su propia cabecera, sin menú */}
