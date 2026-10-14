@@ -71,8 +71,11 @@ final class CatalogService
     }
 
     /**
-     * Precio con IVA de una unidad, en euros. Se calcula en céntimos y con el mismo redondeo
-     * que el checkout (PriceCalculator), para que el precio que ve el cliente sea coherente.
+     * Precio con IVA de una unidad, en euros. Se calcula en céntimos y con el mismo método de
+     * redondeo que el checkout (PriceCalculator), pero aplicado por unidad: el checkout redondea
+     * el IVA sobre el total de cada pedido, así que con varias unidades puede diferir en un céntimo
+     * (3 × 3,39 € = 10,17 € en la ficha y 10,16 € en el checkout). El importe que se cobra
+     * es siempre el que calcula el servidor al crear el pedido.
      */
     public static function priceWithTax(string|float $price, string|float $taxRate): float
     {
@@ -133,6 +136,7 @@ final class CatalogService
             logEvent('product.viewed', 'product', $product['id'], [
                 'category'       => $product['category']['slug'],
                 'product_type'   => $product['product_type'],
+                'set_name'       => $product['set_name'],
                 'card_condition' => $product['card_condition'],
                 'language'       => $product['language'],
                 'is_foil'        => $product['is_foil'],
