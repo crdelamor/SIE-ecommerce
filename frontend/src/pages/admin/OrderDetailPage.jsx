@@ -130,6 +130,20 @@ export default function OrderDetailPage({ orderId, onUnauthorized, backLabel = '
               <br />
               {customer.postal_code} {customer.city}
             </dd>
+            <dt>Facturación</dt>
+            <dd>
+              {order.billing ? (
+                <>
+                  {order.billing.name}
+                  <br />
+                  {order.billing.address}
+                  <br />
+                  {order.billing.postal_code} {order.billing.city}
+                </>
+              ) : (
+                'La misma que el envío'
+              )}
+            </dd>
           </dl>
         </section>
 
