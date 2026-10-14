@@ -236,8 +236,9 @@ Claude Code
 - **Cambios hechos por mí:**
   - Decidí que las versiones de una misma carta (nueva, usada, foil) se agrupan con una columna nueva `products.card_ref`, para poder mostrarlas en la ficha, cada una con su imagen. Es un cambio de `schema.sql` y de `seed.sql`, que hay que avisar al grupo y reimportar.
   - Decidí que si falla el guardado de `product.viewed` la ficha se muestra igualmente y el error queda en el log del servidor, porque es una lectura.
-  - El payload de `product.viewed` es `category`, `product_type`, `card_condition`, `language` e `is_foil`, sin datos personales.
+  - El payload de `product.viewed` es `category`, `product_type`, `set_name`, `card_condition`, `language` e `is_foil`, sin datos personales. La edición (`set_name`) se añadió tras la revisión de César, porque el plan pedía analizar por juego, edición, estado y foil en la Tarea 2.
   - Mantuve el `Section` y el `Container` tal cual: Celia ya evitó el margen doble con una regla de CSS.
+  - Limitación que se deja anotada tras la revisión de César: `price_with_tax` se redondea por unidad y el checkout redondea el IVA sobre el total del pedido, así que con varias unidades pueden diferir en un céntimo (3 × Sol Ring usada: 10,17 € en la ficha y 10,16 € en el checkout; con una unidad coinciden). Se comprobó con el código real de `CatalogService` y `PriceCalculator`. El importe que se cobra es siempre el del servidor, y el comentario del código lo explica. Va a la sección 7.2 de la memoria.
 - **Cómo lo validé:**
   - `php -l` en toda la API y `npm run build` sin errores.
   - 43 comprobaciones de la API con una base de datos simulada que lee el `seed.sql` real: contenido de los tres endpoints, precios con IVA, filtros, errores 400 y 404 (también con intentos de inyección), versiones, que un producto retirado o desactivado no salga, y que `product.viewed` quede registrado con la sesión y sin datos personales. Si falla el guardado del evento, la ficha sigue respondiendo 200.
