@@ -195,6 +195,12 @@ Claude Code
   - Eventos con `curl`: filtros, cabeceras de descarga, BOM y CRLF del CSV, payload aplanado en columnas e inyección de fórmulas neutralizada (`=HYPERLINK(...)` sale como texto).
   - Todas las pantallas en el navegador y `npm run build` sin errores; base de datos restaurada con el seed tras cada prueba.
 
+## 2026-10-09 · José (B) · Imágenes de producto y cartas con varias versiones
+Claude Code
+- **Qué pedí:** revisar si el catálogo tenía imágenes de producto y al menos 3 cartas con varias versiones (nueva, usada, foil), cada una con su imagen, y generar las imágenes que faltaban para todas las cartas sueltas de la base de datos.
+- **Qué falló o hubo que corregir:** la revisión mostró que los 11 productos usaban el mismo `placeholder.svg` y que solo Lightning Bolt tenía dos versiones. La herramienta generó 12 ilustraciones SVG propias de cartas con un script en PHP (3 versiones de Sol Ring, Lightning Bolt y Dark Magician, y una de Pikachu, Mewtwo y Blue-Eyes) y después 4 más para los sobres. Son ilustraciones originales con nombres inventados, no las cartas ni los sobres oficiales, por los derechos de autor. Las imágenes son horizontales (4:3) porque la tarjeta del catálogo recorta a ese formato. Un primer intento del script de sobres falló porque la función se llamaba `pack`, que ya existe en PHP, y se renombró. Para tener 3 cartas con 3 versiones cada una y no pasar del máximo de 15 productos del plan, se añadieron 5 productos (ids 12 a 16) y se quitó el sobre de Bloomburrow (id 4, que no aparecía en ningún pedido) junto con su imagen. Los ids existentes no se renumeraron para no tocar los pedidos de ejemplo. Además, los tres productos que no indicaban su estado se renombraron (`Sol Ring (nueva)`, `Lightning Bolt (usada)`, `Dark Magician (usada)`) porque el nombre se copia en `order_items`, y se actualizaron también las líneas de los pedidos de ejemplo.
+- **Cómo lo validé:** comprobé que los 12 SVG son XML válido y que cada ruta del `seed.sql` apunta a un fichero existente. Las 15 imágenes las abrí yo una a una en el navegador con `npm run dev` y se ven correctamente.
+
 ## 2026-10-11 y 12 · Celia (A) · Checkout tipo Shopify, facturación y confirmación
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code, y la extensión Claude in Chrome para las pruebas.
 - **Tarea:**
@@ -223,24 +229,25 @@ Claude Code
   - La vista de móvil, con capturas a 390 px de ancho.
   - Sustitución del pedido: con `curl`, otro email no puede cancelar el pedido de Laura y el mismo email sí, y 2 Mewtwo (todo el stock) reservados por el pedido viejo se pueden volver a comprar en el nuevo. En Chrome: pago rechazado, cambio de facturación y pago aprobado; en la administración el primer pedido sale "Cancelado" y el segundo "Pagado", y el stock solo baja una vez.
 
-## 2026-10-14 · José (B) · Catálogo: API de productos, página principal, catálogo y ficha
-- **Herramienta:** Claude Code.
-- **Tarea:** terminar mi parte del plan: `api/http/products.php` (categorías, listado y ficha, con `product.viewed` y `price_with_tax`), la página principal, el catálogo con filtro por juego y la ficha de producto con las versiones de cada carta, y la limpieza previa a la entrega (quitar la página de muestra `/muestra` y añadir un favicon).
-- **Partes asistidas por IA:** `api/http/products.php`, `api/services/CatalogService.php`, `api/repositories/ProductRepository.php`, la columna `card_ref` de `db/schema.sql` y `db/seed.sql`, `frontend/src/pages/home`, `catalog` y `product` (páginas, estilos y `catalogApi.js`), `hooks/useAsync.js`, `components/productFormat.js`, los cambios en `ProductCard.jsx` y `components.css`, y el favicon.
-- **Errores detectados en la IA:**
-  - Un manejador de eventos se llamó `useFallback`; por convención `use…` se reserva para hooks y se renombró a `showPlaceholder`.
-  - Con `npm run dev` Vite se cerraba por un problema del vigilante de ficheros con rutas cortas de Windows; las pruebas se hicieron con `vite preview` sobre el resultado compilado.
-  - La captura de pantalla de móvil engañaba (Chrome sin ventana tiene un ancho mínimo y la captura completa no desplaza la página, así que los bloques animados salían vacíos). Se cambió por Puppeteer con 390 px exactos y scroll real.
-  - La prueba automática detectó que faltaba un favicon (el navegador recibía un 404 en cada página) y se añadió.
-  - Los fallos de contraste que avisó la auditoría automática en el catálogo eran un artefacto: se medía con las tarjetas a medias de la animación de entrada; con la animación terminada no hay ninguno.
-- **Cambios hechos por mí:**
-  - Decidí que las versiones de una misma carta (nueva, usada, foil) se agrupan con una columna nueva `products.card_ref`, para poder mostrarlas en la ficha, cada una con su imagen. Es un cambio de `schema.sql` y de `seed.sql`, que hay que avisar al grupo y reimportar.
-  - Decidí que si falla el guardado de `product.viewed` la ficha se muestra igualmente y el error queda en el log del servidor, porque es una lectura.
-  - El payload de `product.viewed` es `category`, `product_type`, `set_name`, `card_condition`, `language` e `is_foil`, sin datos personales. La edición (`set_name`) se añadió tras la revisión de César, porque el plan pedía analizar por juego, edición, estado y foil en la Tarea 2.
-  - Mantuve el `Section` y el `Container` tal cual: Celia ya evitó el margen doble con una regla de CSS.
-  - Limitación que se deja anotada tras la revisión de César: `price_with_tax` se redondea por unidad y el checkout redondea el IVA sobre el total del pedido, así que con varias unidades pueden diferir en un céntimo (3 × Sol Ring usada: 10,17 € en la ficha y 10,16 € en el checkout; con una unidad coinciden). Se comprobó con el código real de `CatalogService` y `PriceCalculator`. El importe que se cobra es siempre el del servidor, y el comentario del código lo explica. Va a la sección 7.2 de la memoria.
-- **Cómo lo validé:**
-  - `php -l` en toda la API y `npm run build` sin errores.
-  - 43 comprobaciones de la API con una base de datos simulada que lee el `seed.sql` real: contenido de los tres endpoints, precios con IVA, filtros, errores 400 y 404 (también con intentos de inyección), versiones, que un producto retirado o desactivado no salga, y que `product.viewed` quede registrado con la sesión y sin datos personales. Si falla el guardado del evento, la ficha sigue respondiendo 200.
-  - 33 comprobaciones en Chrome real con Puppeteer: navegación de la portada al catálogo, filtro por juego, botón atrás, ficha, añadir al carrito (se abre el panel y el carrito guarda el producto), cambio de versión, producto agotado, error de producto o juego inexistente, acceso con teclado, y móvil de 390 px sin desbordamiento horizontal. La auditoría de accesibilidad automática (axe, WCAG A y AA) no encuentra violaciones. Las animaciones aparecen con el scroll y con "reducir movimiento" se ven desde el principio.
-  - No se ha probado contra MySQL real, porque no hay MySQL en el equipo donde se desarrolló; las consultas son sencillas, pero hay que importar `schema.sql` y `seed.sql` y repetir las tres llamadas a la API contra la base de datos.
+## 2026-10-13 · José (B) · Plataforma: guía de despliegue en DonDominio y README
+Claude Code
+- **Qué pedí:** preparar mi parte de "Plataforma" del plan: la documentación del despliegue en DonDominio (FTP, importación de la base de datos en phpMyAdmin y certificado SSL) y completar el README. Después, preparar un PR con todos los cambios pendientes que tenía sin subir.
+- **Cambios aplicados:**
+  - `docs/despliegue.md`: guía paso a paso (base de datos, `npm run build`, subida por FTP, `config.php` solo en el servidor, SSL, lista de comprobación y problemas frecuentes).
+  - `README.md`: sección "Despliegue en DonDominio" con el resumen, y número de productos del seed actualizado (15).
+  - `frontend/public/.htaccess`: redirección a HTTPS, comentada a propósito para activarla solo cuando el SSL esté emitido.
+  - `db/seed.sql` y `frontend/public/products/`: las imágenes y los productos de la entrada anterior, que estaban sin subir.
+- **Qué falló o hubo que corregir:**
+  - La herramienta no conoce los nombres exactos de las secciones del panel de DonDominio, así que la guía está escrita en términos generales y la ajusto yo cuando lo haga en el panel. La herramienta no recibió ninguna contraseña ni dato de acceso del hosting.
+  - Mi rama `feature/catalogo` estaba obsoleta: tenía 4 commits de estilo que ya entraron en `develop` por otras ramas y al fusionarla daban 9 conflictos (`Layout`, `Header`, `Footer`, `theme.css`, etc.). Decidí no arrastrarla y preparar el PR desde una rama nueva, `feature/catalogo-despliegue`, creada desde `develop`.
+  - Al pasar los cambios a la rama nueva hubo un conflicto en `docs/ia-log.md`, porque `develop` lo había ampliado mucho. Me quedé con la versión de `develop` y volví a añadir mis entradas al final.
+  - Al guardar los cambios con `git stash` falló el borrado de la carpeta `frontend/public/products/` (permiso denegado), pero el guardado estaba completo. Lo comprobé antes de seguir (20 ficheros) y había hecho una copia aparte.
+- **Cómo lo validé:** con `git merge-tree` comprobé los conflictos antes de elegir la rama, con `git stash show` que no se perdía ningún fichero, y con `git status` y `git diff` que el PR contiene solo estos cambios. Las 15 imágenes se ven correctamente en el navegador (`npm run dev`), abriendo cada una por su enlace directo; el catálogo todavía no las muestra porque `CatalogPage` está vacía, y eso se hace en el siguiente PR. `npm run build` termina sin errores y `dist/` incluye `.htaccess`, `index.html`, `assets/` y las 15 imágenes de `products/`. **Pendiente de validar por mí:** probar el despliegue real en DonDominio con la lista de comprobación de `docs/despliegue.md`.
+
+## 2026-10-13 · José (B) · Revisión del PR #13 y ajustes de la guía de despliegue
+Claude Code
+- **Qué pedí:** revisar el PR #13 (despliegue) tras el comentario de un compañero, que advertía de que repetía el seed y las imágenes del #11 con los teléfonos antiguos, y aplicar sus ajustes a `docs/despliegue.md`.
+- **Qué falló o hubo que corregir:**
+  - El #13 incluía las 15 imágenes y el `seed.sql` del #11, pero con los teléfonos con forma de móvil real (600111222, 611222333, 622333444), porque lo preparé desde `develop` antes de corregirlos en el #11. Como el seed y las imágenes ya van en el #11, se quitaron del #13 (el seed queda igual que en `develop`, con lo que no revierte nada) y se devolvió en el README el recuento de productos al de `develop`; el #13 queda solo con el despliegue. Las entradas anteriores de este diario que citan el seed y las imágenes describen el proyecto entero, que llega por el #11.
+  - En `docs/despliegue.md`: la tabla se llama `products`, no `productos`; la comprobación de `/api/products` y la del catálogo fallan hasta que existan `api/http/products.php` y las páginas, y ahora se avisa de ello; se añadió una sección de requisitos del hosting con PHP 8.1 o superior (el código usa `new` como valor por defecto en constructores, propiedades `readonly` y `array_is_list`), las extensiones `pdo_mysql` y `mbstring` y `display_errors` desactivado; y se añadió a la lista de comprobación que una ruta inexistente devuelva solo JSON. También dos filas nuevas en «Problemas frecuentes».
+- **Cómo lo validé:** comprobé en el código de `develop` que `api/index.php` responde un JSON 500 genérico a las excepciones y que `lib/router.php` devuelve `{"error":"Ruta no encontrada"}` con 404; que `api/.htaccess` bloquea `config.php`; que no existe `api/http/products.php`; y que las funciones de PHP 8.1 citadas están en el código. Con `git diff` comprobé que el seed no cambia respecto a `develop`. **Pendiente de validar por mí:** el despliegue real en DonDominio y la versión de PHP y las extensiones de mi plan.

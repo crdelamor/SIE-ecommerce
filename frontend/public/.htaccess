@@ -1,0 +1,6 @@
+# Se copia a public_html/ al compilar (npm run build).
+# Fuerza HTTPS. Descomenta estas líneas SOLO cuando el certificado SSL esté activo en el hosting;
+# si no, la web dejará de cargar.
+#RewriteEngine On
+#RewriteCond %{HTTPS} off
+#RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
