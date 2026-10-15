@@ -27,7 +27,7 @@ export default function Header({ cartButtonRef }) {
       <Container className="header__inner">
         <Link to="/" className="header__logo">
           <img src="logo.svg" alt="" className="header__logo-icon" />
-          <span>theblacklotus<span className="header__logo-accent">tcg</span></span>
+          <span>The Black Lotus <span className="header__logo-accent">TCG</span></span>
         </Link>
 
         <nav className="header__nav" aria-label="Principal">

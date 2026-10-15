@@ -37,7 +37,7 @@ export default function ProductPage() {
   useEffect(() => {
     if (!product) return undefined;
     const previous = document.title;
-    document.title = `${product.name} · theblacklotustcg`;
+    document.title = `${product.name} · The Black Lotus TCG`;
     return () => {
       document.title = previous;
     };
@@ -63,9 +63,9 @@ export default function ProductPage() {
   const isCard = product.product_type === 'single';
   const soldOut = product.stock === 0;
 
-  // Añade el producto al carrito y abre el panel del carrito (el mismo ?isCartOpened=1 que usa la cabecera)
+  // Añade el producto al carrito; el aviso "Añadido al carrito" de la cabecera deja abrir el carrito
   function handleAdd() {
-    addItem(product); // el aviso "Añadido al carrito" de la cabecera deja abrir el carrito
+    addItem(product);
   }
 
   return (

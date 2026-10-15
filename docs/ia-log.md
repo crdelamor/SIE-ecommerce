@@ -313,3 +313,15 @@ Claude Code
   - Vi el diseño nuevo con un pedido inventado en escritorio y en móvil. En el móvil el símbolo € se bajaba de línea; se arregló con un espacio que no se corta.
   - Las fotos de los productos eran SVG y Gmail y Outlook no muestran imágenes SVG en los correos. Decidí pasarlas a PNG en toda la web: la herramienta las convirtió con el navegador de las pruebas (Playwright, al doble de tamaño), cambió las rutas de `seed.sql` y el `placeholder` de `ProductCard.jsx` y `ProductPage.jsx`, y borró los SVG. El favicon y el logo siguen en SVG porque el navegador sí los muestra.
   - Comprobé que el catálogo carga las 15 fotos en PNG sin ninguna rota, que la ficha de producto también, y que `npm run build` copia los PNG a `dist/products/`. En mi base de datos local cambié las rutas con `UPDATE products SET image_url = REPLACE(image_url, '.svg', '.png')`.
+
+## 2026-10-15 · Celia (A) · Cambios pedidos en la revisión de la PR de `feature/checkout`
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** aplicar lo que pidieron José y César al revisar la PR.
+- **Partes asistidas por IA:** el nombre "The Black Lotus TCG" en título, cabecera, cabecera del checkout, pie, portada, ficha, favicon y correo; el tiempo máximo de 10 s del SMTP en `MailService.php`; la frase de las tarjetas de prueba en el checkout; el aviso "Añadido al carrito" a 4 s con pausa; y el comentario de `handleAdd` en `ProductPage.jsx`.
+- **Errores detectados en la IA:** la herramienta añadió primero una segunda línea "Pago simulado" debajo del botón de pagar sin ver que ya había una en la sección de pago; se dejó solo la que había, con la nota del README.
+- **Cambios hechos por mí:**
+  - Elegí el nombre "The Black Lotus TCG", igual que en la memoria, una frase discreta para las tarjetas de prueba y que el aviso del carrito durara más y se parara con el ratón o el foco.
+- **Cómo lo validé:**
+  - Con un servidor SMTP que acepta la conexión y no contesta, el envío se corta a los 10-11 s con "NO enviado" (antes podía esperar 300 s).
+  - En el navegador: el nombre sale en título, cabecera, portada y ficha; en el móvil (375 px) la portada no se sale de la pantalla; el aviso sigue a los 3 s y desaparece antes de los 4,5 s, con el ratón encima o el foco en "Ver carrito" sigue a los 6 s, y con Enter se abre el carrito; la frase sale en el checkout.
+  - `npm run build` y `php -l` sin errores.

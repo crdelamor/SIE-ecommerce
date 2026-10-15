@@ -241,7 +241,7 @@ export default function CheckoutPage() {
 
         <section className="checkout-section">
           <h2>Pago</h2>
-          <p className="text-muted">Pago simulado: no se cobra nada.</p>
+          <p className="text-muted">Pago simulado: no se cobra nada. Las tarjetas de prueba están en el README.</p>
           <fieldset className="choices">
             <legend className="sr-only">Método de pago</legend>
             <label className={`choice${payment === 'tarjeta_simulada' ? ' is-selected' : ''}`}>

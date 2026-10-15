@@ -6,7 +6,7 @@ export default function Footer() {
   return (
     <footer className="footer">
       <Container className="footer__inner">
-        <p>theblacklotustcg · Prototipo académico - sin actividad comercial real</p>
+        <p>The Black Lotus TCG · Prototipo académico - sin actividad comercial real</p>
         <nav className="footer__links" aria-label="Secundaria">
           <Link to="/soporte" className="link">Soporte</Link>
         </nav>

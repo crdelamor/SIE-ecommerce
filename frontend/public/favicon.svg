@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="512" height="512">
-  <title>theblacklotustcg</title>
+  <title>The Black Lotus TCG</title>
   <!-- Mismo loto que logo.svg; en pestañas con tema oscuro se pinta claro para que se vea -->
   <style>
     .loto { fill: #111111; }

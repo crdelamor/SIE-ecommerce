@@ -50,7 +50,7 @@ export default function HomePage() {
   return (
     <>
       <div className="hero">
-        <h1 className="text-hero">theblacklotustcg</h1>
+        <h1 className="text-hero">The Black Lotus TCG</h1>
         <p className="hero__lead">
           Cartas sueltas y sobres de Magic: The Gathering, Riftbound, Pokémon TCG y Yu-Gi-Oh!, con el estado, el
           idioma y el acabado de cada carta bien indicados.

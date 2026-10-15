@@ -38,6 +38,9 @@ final class MailService
         try {
             $mail = new PHPMailer(true);
             $mail->isSMTP();
+            // Si el servidor SMTP no contesta, como mucho 10 s (por defecto son 300 y el pago se queda esperando)
+            $mail->Timeout = 10;
+            $mail->getSMTPInstance()->Timelimit = 10;
             $mail->Host = $config['host'];
             $mail->Port = (int) $config['port'];
             $mail->SMTPSecure = $config['secure'] ?? PHPMailer::ENCRYPTION_STARTTLS; // 'tls' = STARTTLS
@@ -77,7 +80,7 @@ final class MailService
             . 'IVA: ' . $this->euros($order['tax']) . "\n"
             . 'Total: ' . $this->euros($order['total']) . "\n\n"
             . "Puedes ver tu pedido en {$siteUrl}/#/pedido/{$order['code']}\n\n"
-            . "theblacklotustcg · Prototipo académico, sin actividad comercial real: no se ha cobrado nada.\n";
+            . "The Black Lotus TCG · Prototipo académico, sin actividad comercial real: no se ha cobrado nada.\n";
     }
 
     // Los correos solo admiten tablas y estilos en línea. Colores de theme.css.
@@ -110,7 +113,7 @@ final class MailService
         return '<div style="background:#fafaf7;padding:24px 12px;' . $font . ';color:#111">'
             . '<div style="max-width:560px;margin:0 auto;background:#fff;border:1px solid #e3e3dd;border-radius:8px;overflow:hidden">'
             . '<div style="background:#111;color:#fff;padding:18px 24px;font-size:20px;font-weight:bold">'
-            . 'theblacklotus<span style="color:#c8102e">tcg</span></div>'
+            . 'The Black Lotus <span style="color:#c8102e">TCG</span></div>'
             . '<div style="padding:24px">'
             . '<p style="margin:0 0 4px;color:#5a5a5a;font-size:14px">Pedido ' . $e($order['code']) . '</p>'
             . '<h1 style="margin:0 0 8px;font-size:24px">¡Gracias, ' . $e($name) . '!</h1>'
@@ -130,7 +133,7 @@ final class MailService
             . 'background:#111;color:#fff;text-decoration:none;font-weight:bold;padding:12px 28px;border-radius:999px">Ver mi pedido</a></p>'
             . '</div></div>'
             . '<p style="max-width:560px;margin:16px auto 0;color:#5a5a5a;font-size:12px;text-align:center">'
-            . 'theblacklotustcg · Prototipo académico, sin actividad comercial real: no se ha cobrado nada.</p>'
+            . 'The Black Lotus TCG · Prototipo académico, sin actividad comercial real: no se ha cobrado nada.</p>'
             . '</div>';
     }
 
