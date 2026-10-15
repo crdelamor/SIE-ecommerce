@@ -280,11 +280,13 @@ Claude Code
   2. Poner mi rama al día con `develop`.
   3. Investigar si DonDominio ofrece envío de correo y pasarela de pago.
   4. Cambiar el nombre de la tienda a theblacklotustcg en el título y en las páginas, y usar el loto negro como favicon y logo.
+  5. Quitar del checkout el aviso con las tarjetas de prueba (quedan solo en el README).
 - **Partes asistidas por IA:** la revisión, la unión con `develop`, la búsqueda sobre DonDominio, `frontend/public/favicon.svg` y `logo.svg` (a partir del SVG del loto que pasé yo), `index.html`, `Header.jsx`, `Footer.jsx`, `CheckoutLayout.jsx`, `HomePage.jsx`, `home.css`, `ProductPage.jsx` y `components.css`.
 - **Errores detectados en la IA:**
   - Con el nombre nuevo, el título grande del inicio no cabía en el móvil y la cabecera mostraba "theblacklotus tcg" separado. Se vio en las capturas y se corrigió.
 - **Cambios hechos por mí:**
   - Decidí que la tienda se llame theblacklotustcg, como el dominio, y pasé el dibujo del loto para el favicon.
+  - Decidí que las tarjetas de prueba no salgan en la web, solo en la documentación.
 - **Cómo lo validé:**
   - Web publicada: todas las páginas cargan sin errores en ordenador y móvil, la API responde, `http` redirige a `https`, `config.php` da 403 y el checkout calcula lo mismo que en local (30,48 €). Se vio que `https://theblacklotustcg.onl` sin `www` da un certificado de DonDominio en vez del nuestro (hay que arreglarlo en el panel).
   - DonDominio: el plan incluye cuentas de correo y se puede enviar por SMTP con una cuenta del dominio, pero no tiene pasarela de pago para la tienda (el Redsys que usan es para cobrar sus servicios). Se queda el pago simulado.
