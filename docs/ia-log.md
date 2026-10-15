@@ -262,3 +262,30 @@ Claude Code
   - El #13 incluía las 15 imágenes y el `seed.sql` del #11, pero con los teléfonos con forma de móvil real (600111222, 611222333, 622333444), porque lo preparé desde `develop` antes de corregirlos en el #11. Como el seed y las imágenes ya van en el #11, se quitaron del #13 (el seed queda igual que en `develop`, con lo que no revierte nada) y se devolvió en el README el recuento de productos al de `develop`; el #13 queda solo con el despliegue. Las entradas anteriores de este diario que citan el seed y las imágenes describen el proyecto entero, que llega por el #11.
   - En `docs/despliegue.md`: la tabla se llama `products`, no `productos`; la comprobación de `/api/products` y la del catálogo fallan hasta que existan `api/http/products.php` y las páginas, y ahora se avisa de ello; se añadió una sección de requisitos del hosting con PHP 8.1 o superior (el código usa `new` como valor por defecto en constructores, propiedades `readonly` y `array_is_list`), las extensiones `pdo_mysql` y `mbstring` y `display_errors` desactivado; y se añadió a la lista de comprobación que una ruta inexistente devuelva solo JSON. También dos filas nuevas en «Problemas frecuentes».
 - **Cómo lo validé:** comprobé en el código de `develop` que `api/index.php` responde un JSON 500 genérico a las excepciones y que `lib/router.php` devuelve `{"error":"Ruta no encontrada"}` con 404; que `api/.htaccess` bloquea `config.php`; que no existe `api/http/products.php`; y que las funciones de PHP 8.1 citadas están en el código. Con `git diff` comprobé que el seed no cambia respecto a `develop`. **Pendiente de validar por mí:** el despliegue real en DonDominio y la versión de PHP y las extensiones de mi plan.
+
+## 2026-10-14 · Celia (A) · Prueba con el catálogo y borradores de memoria y vídeo
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:**
+  1. Revisar lo que han subido José y César y comprobar que el catálogo de José encaja con mi carrito y mi checkout.
+  2. Borrador de mi sección de la memoria y del guion de mi parte del vídeo (los guardo fuera del repositorio hasta pasarlos a la memoria final).
+- **Partes asistidas por IA:** la revisión de las ramas, la prueba de integración y el texto de los dos borradores, que tengo que repasar y adaptar con mis palabras.
+- **Errores detectados en la IA:**
+- **Cambios hechos por mí:**
+- **Cómo lo validé:** la extensión de Chrome estaba desconectada, así que la prueba se hizo con un script que abría Microsoft Edge en mi pantalla. En una copia aparte con `develop` + `feature/catalogo-productos` + mis correcciones (sin subir nada), compra completa desde el catálogo: ficha, añadir al carrito, panel, checkout con cupón, pago rechazado, pago aprobado y confirmación (PED-000005, 27,93 €), sin errores en la consola y con el carrito vacío al final. Se vio que el catálogo muestra los precios con IVA y el resumen del checkout las líneas sin IVA (va a las limitaciones).
+
+## 2026-10-15 · Celia (A) · Revisión de la web publicada, rama al día, DonDominio y nuevo nombre
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:**
+  1. Revisar la web publicada en https://www.theblacklotustcg.onl/ sin crear pedidos (páginas, API, ficheros bloqueados, certificado).
+  2. Poner mi rama al día con `develop`.
+  3. Investigar si DonDominio ofrece envío de correo y pasarela de pago.
+  4. Cambiar el nombre de la tienda a theblacklotustcg en el título y en las páginas, y usar el loto negro como favicon y logo.
+- **Partes asistidas por IA:** la revisión, la unión con `develop`, la búsqueda sobre DonDominio, `frontend/public/favicon.svg` y `logo.svg` (a partir del SVG del loto que pasé yo), `index.html`, `Header.jsx`, `Footer.jsx`, `CheckoutLayout.jsx`, `HomePage.jsx`, `home.css`, `ProductPage.jsx` y `components.css`.
+- **Errores detectados en la IA:**
+  - Con el nombre nuevo, el título grande del inicio no cabía en el móvil y la cabecera mostraba "theblacklotus tcg" separado. Se vio en las capturas y se corrigió.
+- **Cambios hechos por mí:**
+  - Decidí que la tienda se llame theblacklotustcg, como el dominio, y pasé el dibujo del loto para el favicon.
+- **Cómo lo validé:**
+  - Web publicada: todas las páginas cargan sin errores en ordenador y móvil, la API responde, `http` redirige a `https`, `config.php` da 403 y el checkout calcula lo mismo que en local (30,48 €). Se vio que `https://theblacklotustcg.onl` sin `www` da un certificado de DonDominio en vez del nuestro (hay que arreglarlo en el panel).
+  - DonDominio: el plan incluye cuentas de correo y se puede enviar por SMTP con una cuenta del dominio, pero no tiene pasarela de pago para la tienda (el Redsys que usan es para cobrar sus servicios). Se queda el pago simulado.
+  - Nombre y favicon: capturas en ordenador y móvil y el favicon en tema claro y oscuro; el título de la pestaña cambia también en la ficha de producto. `npm run build` sin errores.
