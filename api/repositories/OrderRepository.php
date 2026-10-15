@@ -103,6 +103,16 @@ final class OrderRepository
         ]);
     }
 
+    // Nombre y email del cliente de un pedido. Solo lo usa el correo de confirmación (no sale por la API).
+    public function findContact(string $code): ?array
+    {
+        $stmt = db()->prepare(
+            'SELECT c.name, c.email FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.code = :code'
+        );
+        $stmt->execute(['code' => $code]);
+        return $stmt->fetch() ?: null;
+    }
+
     // Resumen del pedido para la confirmación. Sin datos del cliente: el código se puede adivinar.
     public function findSummary(string $code): ?array
     {
@@ -115,8 +125,11 @@ final class OrderRepository
             return null;
         }
 
+        // La imagen sale del producto (para el correo); si se borró el producto, queda a null
         $stmt = db()->prepare(
-            'SELECT product_name, quantity, unit_price, line_total FROM order_items WHERE order_id = :id ORDER BY id'
+            'SELECT oi.product_name, oi.quantity, oi.unit_price, oi.line_total, p.image_url
+             FROM order_items oi LEFT JOIN products p ON p.id = oi.product_id
+             WHERE oi.order_id = :id ORDER BY oi.id'
         );
         $stmt->execute(['id' => $order['id']]);
 
@@ -129,6 +142,7 @@ final class OrderRepository
                 'quantity'   => (int) $line['quantity'],
                 'unit_price' => (float) $line['unit_price'],
                 'line_total' => (float) $line['line_total'],
+                'image_url'  => $line['image_url'],
             ], $stmt->fetchAll()),
             'subtotal'   => (float) $order['subtotal'],
             'discount'   => (float) $order['discount'],

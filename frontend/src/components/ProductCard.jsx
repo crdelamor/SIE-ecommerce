@@ -4,7 +4,7 @@ import { useCart } from '../context/CartContext.jsx';
 import Button from './Button.jsx';
 import { formatPrice, productMeta } from './productFormat.js';
 
-const PLACEHOLDER = `${import.meta.env.BASE_URL}placeholder.svg`;
+const PLACEHOLDER = `${import.meta.env.BASE_URL}placeholder.png`;
 
 /**
  * Tarjeta de producto. `index` escalona la animación de entrada dentro de una lista.
@@ -31,7 +31,7 @@ export default function ProductCard({ product, index = 0 }) {
           loading="lazy"
           onError={(event) => {
             // Si la URL de la imagen falla, se muestra el placeholder (una sola vez)
-            if (!event.currentTarget.src.endsWith('placeholder.svg')) {
+            if (!event.currentTarget.src.endsWith('placeholder.png')) {
               event.currentTarget.src = PLACEHOLDER;
             }
           }}

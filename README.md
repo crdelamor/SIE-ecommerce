@@ -50,6 +50,12 @@ En la base de datos solo se guarda el hash (`password_hash()` de PHP), nunca la 
 
 Tarjetas de prueba del pago simulado: `4242 4242 4242 4242` se aprueba y `4000 0000 0000 0002` se rechaza. Cupón de descuento: `BIENVENIDA10`.
 
+## Correo de confirmación (opcional)
+
+Al aprobarse el pago se envía un correo con el resumen del pedido, por SMTP con [PHPMailer](https://github.com/PHPMailer/PHPMailer) 7.1.1 (en `api/lib/PHPMailer/`, licencia LGPL). Está desactivado por defecto: en local no hace falta configurarlo.
+
+Para activarlo, en el `config.php` del servidor, bloque `mail` (ver `config.example.php`): `enabled => true` y los datos SMTP de una cuenta del propio dominio (DonDominio: `smtp.<dominio>`, puerto 587, `secure => 'tls'`, usuario = el email completo). La contraseña de esa cuenta va **solo** en `config.php`, nunca en GitHub. Si el envío falla, el pedido sigue pagado y el error queda en el log de PHP.
+
 ## Despliegue en DonDominio
 
 El hosting (plan Básico) solo admite web estática y PHP, sin Node.js. Por eso el front se compila en local y se sube ya construido. La guía paso a paso, con la lista de comprobaciones, está en [`docs/despliegue.md`](docs/despliegue.md). Resumen:

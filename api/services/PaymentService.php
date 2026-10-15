@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/PriceCalculator.php';
 require_once __DIR__ . '/OrderStatusService.php';
+require_once __DIR__ . '/MailService.php';
 
 /**
  * Pago simulado: no se cobra nada ni se usa ninguna pasarela real.
@@ -57,11 +58,15 @@ final class PaymentService
             throw $e;
         }
 
+        // El correo va después de guardar el pago: si falla, el pedido sigue pagado
+        $emailSent = $approved && (new MailService($this->orders))->sendOrderConfirmation($order['code']);
+
         return [
-            'code'      => $order['code'],
-            'status'    => $approved ? 'pagado' : 'pendiente_pago',
-            'approved'  => $approved,
-            'reference' => $reference,
+            'code'       => $order['code'],
+            'status'     => $approved ? 'pagado' : 'pendiente_pago',
+            'approved'   => $approved,
+            'reference'  => $reference,
+            'email_sent' => $emailSent,
         ];
     }
 
