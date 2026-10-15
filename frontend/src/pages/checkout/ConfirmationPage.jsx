@@ -8,7 +8,7 @@ import { formatPrice } from './OrderSummary.jsx';
 // devuelve datos personales; el nombre solo se muestra si venimos del checkout.
 export default function ConfirmationPage() {
   const { code } = useParams();
-  const firstName = useLocation().state?.firstName;
+  const { firstName, emailTo } = useLocation().state ?? {};
   const [order, setOrder] = useState(null);
   const [error, setError] = useState('');
 
@@ -47,7 +47,8 @@ export default function ConfirmationPage() {
             ? 'Ya estamos preparando tus cartas. Guarda el código del pedido por si necesitas contactar con soporte.'
             : 'Todavía no hemos recibido el pago de este pedido.'}
         </p>
-        <p className="text-muted">Es un prototipo académico: no se ha cobrado nada ni se envía ningún email.</p>
+        {emailTo && <p>Te hemos enviado un email a <strong>{emailTo}</strong> con el resumen.</p>}
+        <p className="text-muted">Es un prototipo académico: no se ha cobrado nada.</p>
       </section>
 
       <section className="confirmation__box">

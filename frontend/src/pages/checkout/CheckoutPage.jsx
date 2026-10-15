@@ -138,7 +138,9 @@ export default function CheckoutPage() {
 
       const result = await payOrder(code, paymentData);
       if (result.approved) {
-        navigate(`/pedido/${code}`, { state: { firstName: form.firstName.trim() } });
+        // el email solo viaja en el estado de la navegación, la API de confirmación no lo devuelve
+        const emailTo = result.email_sent ? form.email.trim() : null;
+        navigate(`/pedido/${code}`, { state: { firstName: form.firstName.trim(), emailTo } });
         clearCart();
         return;
       }
