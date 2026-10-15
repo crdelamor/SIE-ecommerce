@@ -13,7 +13,8 @@ export default function CheckoutLayout() {
         <header className="header">
           <Container className="header__inner">
             <Link to="/" className="header__logo">
-              La Bóveda <span className="header__logo-accent">TCG</span>
+              <img src="logo.svg" alt="" className="header__logo-icon" />
+              <span>theblacklotus<span className="header__logo-accent">tcg</span></span>
             </Link>
             <Link to="/catalogo?isCartOpened=1" className="header__cart" aria-label="Volver al carrito">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">

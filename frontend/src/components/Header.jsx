@@ -23,7 +23,8 @@ export default function Header({ cartButtonRef }) {
     <header className="header">
       <Container className="header__inner">
         <Link to="/" className="header__logo">
-          La Bóveda <span className="header__logo-accent">TCG</span>
+          <img src="logo.svg" alt="" className="header__logo-icon" />
+          <span>theblacklotus<span className="header__logo-accent">tcg</span></span>
         </Link>
 
         <nav className="header__nav" aria-label="Principal">

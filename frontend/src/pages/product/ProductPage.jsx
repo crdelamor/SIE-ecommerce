@@ -38,7 +38,7 @@ export default function ProductPage() {
   useEffect(() => {
     if (!product) return undefined;
     const previous = document.title;
-    document.title = `${product.name} · La Bóveda TCG`;
+    document.title = `${product.name} · theblacklotustcg`;
     return () => {
       document.title = previous;
     };

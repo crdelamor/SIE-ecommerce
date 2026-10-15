@@ -1,6 +1,32 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="La Bóveda TCG">
-  <rect width="64" height="64" rx="12" fill="#111111"/>
-  <circle cx="32" cy="32" r="18" fill="none" stroke="#c8102e" stroke-width="6"/>
-  <circle cx="32" cy="32" r="5" fill="#fafaf7"/>
-  <path d="M32 6v8M32 50v8M6 32h8M50 32h8" stroke="#fafaf7" stroke-width="3" stroke-linecap="round"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="512" height="512">
+  <title>theblacklotustcg</title>
+  <!-- Mismo loto que logo.svg; en pestañas con tema oscuro se pinta claro para que se vea -->
+  <style>
+    .loto { fill: #111111; }
+    @media (prefers-color-scheme: dark) { .loto { fill: #fafaf7; } }
+  </style>
+  <defs>
+    <path id="p" d="M100 34 C122 64 132 118 100 150 C68 118 78 64 100 34 Z"/>
+    <use id="centro" href="#p"/>
+    <use id="medioI" href="#p" transform="rotate(-32 100 150) translate(100 150) scale(0.86) translate(-100 -150)"/>
+    <use id="medioD" href="#p" transform="rotate(32 100 150) translate(100 150) scale(0.86) translate(-100 -150)"/>
+    <use id="exteriorI" href="#p" transform="rotate(-64 100 152) translate(100 150) scale(0.68) translate(-100 -150)"/>
+    <use id="exteriorD" href="#p" transform="rotate(64 100 152) translate(100 150) scale(0.68) translate(-100 -150)"/>
+    <mask id="tapaMedios" maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="200">
+      <rect width="200" height="200" fill="#fff"/>
+      <use href="#centro" fill="#000" stroke="#000" stroke-width="7"/>
+    </mask>
+    <mask id="tapaExteriores" maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="200">
+      <rect width="200" height="200" fill="#fff"/>
+      <g fill="#000" stroke="#000" stroke-width="7">
+        <use href="#medioI"/><use href="#medioD"/><use href="#centro"/>
+      </g>
+    </mask>
+  </defs>
+  <!-- en una pestaña el icono se ve muy pequeño: se amplía un poco recortando el margen -->
+  <g class="loto" transform="translate(100 110) scale(1.25) translate(-100 -92)">
+    <g mask="url(#tapaExteriores)"><use href="#exteriorI"/><use href="#exteriorD"/></g>
+    <g mask="url(#tapaMedios)"><use href="#medioI"/><use href="#medioD"/></g>
+    <use href="#centro"/>
+  </g>
 </svg>
