@@ -7,11 +7,11 @@ import useAsync from '../../hooks/useAsync.js';
 import { getProduct } from '../catalog/catalogApi.js';
 import './product.css';
 
-const PLACEHOLDER = `${import.meta.env.BASE_URL}placeholder.svg`;
+const PLACEHOLDER = `${import.meta.env.BASE_URL}placeholder.png`;
 
 // Si la URL de la imagen falla, se muestra el placeholder (una sola vez)
 function showPlaceholder(event) {
-  if (!event.currentTarget.src.endsWith('placeholder.svg')) {
+  if (!event.currentTarget.src.endsWith('placeholder.png')) {
     event.currentTarget.src = PLACEHOLDER;
   }
 }
