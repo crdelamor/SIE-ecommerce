@@ -85,12 +85,6 @@
   border: 2px solid var(--color-accent);
 }
 
-.checkout-form__hint {
-  margin: 0;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-}
-
 .checkout-form__error {
   margin: 0;
   color: var(--color-accent);

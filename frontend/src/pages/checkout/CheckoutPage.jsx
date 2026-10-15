@@ -253,9 +253,6 @@ export default function CheckoutPage() {
             </label>
             {payment === 'tarjeta_simulada' && (
               <div className="choice__body">
-                <p className="checkout-form__hint">
-                  Se aprueba la 4242 4242 4242 4242 y se rechaza la 4000 0000 0000 0002.
-                </p>
                 {input('cardNumber', 'Número de tarjeta', { inputMode: 'numeric', autoComplete: 'off' })}
                 <div className="checkout-form__row">
                   {input('cardExpiry', 'Caducidad (MM/AA)', { autoComplete: 'off', maxLength: 5 })}
