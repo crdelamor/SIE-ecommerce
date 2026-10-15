@@ -194,8 +194,34 @@
 }
 
 .product-card__name { margin: 0; font-size: var(--font-size-lg); }
+.product-card__meta { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-sm); }
 .product-card__price { margin: 0; font-weight: var(--font-weight-bold); }
+.product-card__tax { color: var(--color-text-muted); font-size: var(--font-size-sm); font-weight: var(--font-weight-regular); }
 .product-card__body .button { margin-top: auto; }
+
+/* Etiqueta pequeña, por ejemplo "Foil" */
+.badge {
+  display: inline-block;
+  margin-left: var(--space-2);
+  padding: 0.1rem 0.6rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-on-accent);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.5;
+  vertical-align: middle;
+}
+
+/* Mensajes de estado de las pantallas del catálogo (error, sin resultados) */
+.catalog-message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.catalog-message p { margin: 0; }
 
 /* Pie */
 .footer {
@@ -216,6 +242,6 @@
 .footer__inner p { margin: 0; }
 .footer__links { display: flex; gap: var(--space-4); }
 
-/* Muestra */
+/* Portada */
 .hero { padding-block: var(--space-6); }
 .hero__actions { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: var(--space-4); }

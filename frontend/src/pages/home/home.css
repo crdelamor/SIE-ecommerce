@@ -1,0 +1,67 @@
+/* Portada: texto de presentación, accesos a cada juego y clasificación de las cartas. Solo variables de theme.css. */
+
+.hero__lead {
+  max-width: 40rem;
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
+}
+
+/* Un acceso por juego, grande y con el nombre bien marcado */
+.game-tiles {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+}
+
+.game-tile {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--space-5);
+  min-height: 9rem;
+  padding: var(--space-4);
+  border: 2px solid var(--color-text);
+  border-radius: var(--radius-md);
+  /* La transición de .reveal se redefine aquí para incluir también el hover */
+  transition:
+    opacity var(--duration-slow) var(--ease-out),
+    transform var(--duration-slow) var(--ease-out),
+    background-color var(--duration-base) var(--ease-out),
+    color var(--duration-base) var(--ease-out);
+  transition-delay: var(--reveal-delay, 0ms), var(--reveal-delay, 0ms), 0ms, 0ms;
+}
+
+.game-tile:hover {
+  background: var(--color-text);
+  color: var(--color-bg);
+}
+
+.game-tile__name {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-tight);
+}
+
+.game-tile__cta { font-size: var(--font-size-sm); }
+
+/* Clasificación de las cartas: cuatro bloques en una rejilla */
+.conditions {
+  display: grid;
+  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  margin: 0;
+}
+
+.conditions__item {
+  padding-top: var(--space-3);
+  border-top: 2px solid var(--color-text);
+}
+
+.conditions__item dt {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-bold);
+}
+
+.conditions__item dd { margin: var(--space-2) 0 0; color: var(--color-text-muted); }
