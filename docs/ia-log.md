@@ -281,13 +281,21 @@ Claude Code
   3. Investigar si DonDominio ofrece envío de correo y pasarela de pago.
   4. Cambiar el nombre de la tienda a theblacklotustcg en el título y en las páginas, y usar el loto negro como favicon y logo.
   5. Quitar del checkout el aviso con las tarjetas de prueba (quedan solo en el README).
+  6. Dar margen lateral a los productos del panel del carrito.
+  7. Aviso "Añadido al carrito" bajo el icono de la cesta: dura 2 segundos y tiene un botón "Ver carrito" que lo cierra y abre el panel. La ficha de producto deja de abrir el panel directamente al añadir.
+  8. Comprobar la gestión del stock en el carrito y corregirla.
 - **Partes asistidas por IA:** la revisión, la unión con `develop`, la búsqueda sobre DonDominio, `frontend/public/favicon.svg` y `logo.svg` (a partir del SVG del loto que pasé yo), `index.html`, `Header.jsx`, `Footer.jsx`, `CheckoutLayout.jsx`, `HomePage.jsx`, `home.css`, `ProductPage.jsx` y `components.css`.
 - **Errores detectados en la IA:**
   - Con el nombre nuevo, el título grande del inicio no cabía en el móvil y la cabecera mostraba "theblacklotus tcg" separado. Se vio en las capturas y se corrigió.
+  - En el CSS del panel del carrito, `.cart-list` ponía el `padding` a 0 y anulaba el margen lateral de `.cart-drawer__body`, así que los productos quedaban pegados al borde (lo vi yo). Ahora solo quita el de arriba y abajo.
+  - El carrito no comprobaba el stock: se podía añadir el Mewtwo (stock 2) tres veces y subirlo con "+" sin límite. El servidor sí lo frenaba en el checkout ("No hay stock suficiente") y no dejaba pagar, pero el cliente se enteraba tarde. Ahora el carrito guarda el stock de cada producto, no deja pasar de él al añadir ni con "+" y avisa con "No quedan más unidades".
 - **Cambios hechos por mí:**
   - Decidí que la tienda se llame theblacklotustcg, como el dominio, y pasé el dibujo del loto para el favicon.
   - Decidí que las tarjetas de prueba no salgan en la web, solo en la documentación.
+  - Pedí el aviso "Añadido al carrito" con el botón "Ver carrito".
 - **Cómo lo validé:**
   - Web publicada: todas las páginas cargan sin errores en ordenador y móvil, la API responde, `http` redirige a `https`, `config.php` da 403 y el checkout calcula lo mismo que en local (30,48 €). Se vio que `https://theblacklotustcg.onl` sin `www` da un certificado de DonDominio en vez del nuestro (hay que arreglarlo en el panel).
   - DonDominio: el plan incluye cuentas de correo y se puede enviar por SMTP con una cuenta del dominio, pero no tiene pasarela de pago para la tienda (el Redsys que usan es para cobrar sus servicios). Se queda el pago simulado.
   - Nombre y favicon: capturas en ordenador y móvil y el favicon en tema claro y oscuro; el título de la pestaña cambia también en la ficha de producto. `npm run build` sin errores.
+  - Aviso del carrito: con un script en Edge, en ordenador y móvil, sale al añadir desde el catálogo y desde la ficha, se va a los 2 segundos y "Ver carrito" abre el panel. Al principio no salía porque el servidor de desarrollo de Vite se había quedado con una versión a medio guardar de `CartContext.jsx`; se arregló reiniciándolo.
+  - Stock: Mewtwo (stock 2) añadido 3 veces → la tercera sale "No quedan más unidades" y el carrito se queda en 2; el "+" queda desactivado en 2; un carrito antiguo con 4 unidades da el error en el checkout y no deja pagar, y al bajar a 2 se puede pagar.

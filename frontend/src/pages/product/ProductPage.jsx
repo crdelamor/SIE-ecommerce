@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import Button from '../../components/Button.jsx';
 import { conditionLabel, formatPrice } from '../../components/productFormat.js';
 import { useCart } from '../../context/CartContext.jsx';
@@ -29,7 +29,6 @@ function stockText(stock) {
  */
 export default function ProductPage() {
   const { id } = useParams();
-  const [, setSearchParams] = useSearchParams();
   const { addItem } = useCart();
 
   const { status, data: product, error } = useAsync((signal) => getProduct(id, signal), [id]);
@@ -66,11 +65,7 @@ export default function ProductPage() {
 
   // Añade el producto al carrito y abre el panel del carrito (el mismo ?isCartOpened=1 que usa la cabecera)
   function handleAdd() {
-    addItem(product);
-    setSearchParams((params) => {
-      params.set('isCartOpened', '1');
-      return params;
-    });
+    addItem(product); // el aviso "Añadido al carrito" de la cabecera deja abrir el carrito
   }
 
   return (

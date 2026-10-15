@@ -313,7 +313,7 @@ export default function CheckoutPage() {
           </p>
         )}
 
-        <Button type="submit" className="checkout-pay" disabled={paying || !quote}>
+        <Button type="submit" className="checkout-pay" disabled={paying || !quote || Boolean(quoteError)}>
           {paying ? 'Procesando pago…' : 'Pagar ahora'}
         </Button>
       </form>
