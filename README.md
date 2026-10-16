@@ -102,3 +102,13 @@ El hosting (plan Básico) solo admite web estática y PHP, sin Node.js. Por eso 
 - **Fuente externa.** La tipografía Space Grotesk se carga desde Google Fonts.
 - **Accesibilidad.** Se han pasado comprobaciones automáticas (axe, sin violaciones A/AA) y de teclado, pero no una auditoría con usuarios ni con lectores de pantalla.
 - **Despliegue manual.** Se sube por el administrador de archivos o FTP y no hay integración continua. Se probó con MariaDB 12.3 en local y el hosting tiene MariaDB 12.1.
+- **Intentos de login.** El login de administrador no limita los intentos fallidos.
+- **Contraseña de prueba.** La del administrador está publicada en este README porque lo pide el enunciado; en un entorno real se cambiaría tras desplegar.
+- **Soporte.** El formulario no tiene protección contra spam, y la administración ve las incidencias pero no puede cambiar su estado.
+- **Incidencias sin pagar.** Un pedido sin pagar puede pasar de `incidencia` a `en_preparacion` sin pasar por `pagado`; depende del criterio del administrador.
+- **Stock reservado.** Los pedidos pendientes de pago reservan stock sin caducidad hasta que se cancelan, y los pedidos de ejemplo del seed no restaron stock al crearse.
+- **Concurrencia.** El bloqueo de pedidos (`SELECT … FOR UPDATE`) no se ha probado con peticiones realmente simultáneas, porque el servidor de desarrollo de PHP las atiende de una en una.
+- **Analítica del carrito.** `cart.item_added` solo guarda la cantidad: para analizar por juego, edición o estado hay que cruzar `entity_id` con `products`.
+- **Exportación de eventos.** Carga en memoria todos los eventos que cumplen el filtro.
+- **Eventos del navegador.** `POST /api/events` no limita las peticiones, así que se podría llenar la tabla de eventos con datos falsos.
+- **Cabeceras de seguridad.** La API no envía `X-Content-Type-Options: nosniff`.
