@@ -241,7 +241,7 @@ export default function CheckoutPage() {
 
         <section className="checkout-section">
           <h2>Pago</h2>
-          <p className="text-muted">Pago simulado: no se cobra nada.</p>
+          <p className="text-muted">Pago simulado: no se cobra nada. Las tarjetas de prueba están en el README.</p>
           <fieldset className="choices">
             <legend className="sr-only">Método de pago</legend>
             <label className={`choice${payment === 'tarjeta_simulada' ? ' is-selected' : ''}`}>
@@ -255,9 +255,6 @@ export default function CheckoutPage() {
             </label>
             {payment === 'tarjeta_simulada' && (
               <div className="choice__body">
-                <p className="checkout-form__hint">
-                  Se aprueba la 4242 4242 4242 4242 y se rechaza la 4000 0000 0000 0002.
-                </p>
                 {input('cardNumber', 'Número de tarjeta', { inputMode: 'numeric', autoComplete: 'off' })}
                 <div className="checkout-form__row">
                   {input('cardExpiry', 'Caducidad (MM/AA)', { autoComplete: 'off', maxLength: 5 })}
@@ -318,7 +315,7 @@ export default function CheckoutPage() {
           </p>
         )}
 
-        <Button type="submit" className="checkout-pay" disabled={paying || !quote}>
+        <Button type="submit" className="checkout-pay" disabled={paying || !quote || Boolean(quoteError)}>
           {paying ? 'Procesando pago…' : 'Pagar ahora'}
         </Button>
       </form>

@@ -98,7 +98,8 @@ export default function CartPanel({ open, onClose }) {
                           type="button"
                           className="quantity__button"
                           onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                          aria-label="Añadir una unidad"
+                          disabled={item.quantity >= item.stock}
+                          aria-label={item.quantity >= item.stock ? 'No quedan más unidades' : 'Añadir una unidad'}
                         >
                           +
                         </button>

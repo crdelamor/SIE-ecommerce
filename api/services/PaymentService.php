@@ -39,17 +39,18 @@ final class PaymentService
             $reference = 'SIM-' . strtoupper(bin2hex(random_bytes(4))) . '-' . $last;
             $this->orders->addPayment((int) $order['id'], $method, $status, $order['total'], $reference);
 
-            if ($approved) {
-                // Mismo cambio de estado que en la administración: valida, guarda historial y evento
-                (new OrderStatusService())->changeStatus((int) $order['id'], 'pagado');
-            }
-
+            // Primero el evento del pago y después el del cambio de estado, para que se lean en orden
             logEvent('payment.simulated', 'order', (int) $order['id'], [
                 'code'   => $order['code'],
                 'method' => $method,
                 'status' => $status,
                 'amount' => (float) $order['total'],
             ]);
+
+            if ($approved) {
+                // Mismo cambio de estado que en la administración: valida, guarda historial y evento
+                (new OrderStatusService())->changeStatus((int) $order['id'], 'pagado');
+            }
 
             $pdo->commit();
         } catch (Throwable $e) {

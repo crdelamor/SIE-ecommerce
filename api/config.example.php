@@ -22,7 +22,7 @@ return [
         'user'      => 'pedidos@tudominio.com',
         'password'  => '',
         'from'      => 'pedidos@tudominio.com',
-        'from_name' => 'theblacklotustcg',
+        'from_name' => 'The Black Lotus TCG',
         'site_url'  => 'https://www.tudominio.com',   // para el enlace a la confirmación
     ],
 ];

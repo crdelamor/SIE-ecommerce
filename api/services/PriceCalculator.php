@@ -67,7 +67,8 @@ final class PriceCalculator
         $discount = $coupon !== null ? (int) round($subtotal * self::COUPON_PERCENT / 100) : 0;
         $shipping = $subtotal >= self::FREE_SHIPPING_FROM ? 0 : self::SHIPPING;
         // El IVA de cada línea baja en la misma proporción que el descuento
-        $tax = (int) round($taxSum * ($subtotal - $discount) / $subtotal / 10000);
+        // (si todo cuesta 0 € no hay IVA y así no se divide entre cero)
+        $tax = $subtotal > 0 ? (int) round($taxSum * ($subtotal - $discount) / $subtotal / 10000) : 0;
         $total = $subtotal - $discount + $shipping + $tax;
 
         return [

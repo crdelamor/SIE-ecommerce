@@ -103,7 +103,8 @@ $router->post('/orders', function (): void {
 
     try {
         $order = (new OrderService())->create($cart, $coupon, $customer, $billing, $replaces);
-    } catch (CheckoutException $e) {
+    } catch (CheckoutException | OrderStatusException $e) {
+        // OrderStatusException: el cambio de estado de César (al cancelar el pedido sustituido)
         jsonError($e->getMessage(), $e->getCode());
     }
     jsonResponse(['order' => $order], 201);
@@ -118,7 +119,8 @@ $router->post('/orders/{code}/pay', function (array $params): void {
 
     try {
         $payment = (new PaymentService())->pay($params['code'], $method, $body);
-    } catch (CheckoutException $e) {
+    } catch (CheckoutException | OrderStatusException $e) {
+        // OrderStatusException: el cambio de estado de César (al pasar el pedido a pagado)
         jsonError($e->getMessage(), $e->getCode());
     }
     jsonResponse(['payment' => $payment]);

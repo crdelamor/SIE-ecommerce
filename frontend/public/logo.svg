@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="512" height="512">
+  <title>Loto negro</title>
+  <defs>
+    <!-- un pétalo: punta arriba, base en (100,150), más lleno abajo -->
+    <path id="p" d="M100 34 C122 64 132 118 100 150 C68 118 78 64 100 34 Z"/>
+    <use id="centro" href="#p"/>
+    <use id="medioI" href="#p" transform="rotate(-32 100 150) translate(100 150) scale(0.86) translate(-100 -150)"/>
+    <use id="medioD" href="#p" transform="rotate(32 100 150) translate(100 150) scale(0.86) translate(-100 -150)"/>
+    <use id="exteriorI" href="#p" transform="rotate(-64 100 152) translate(100 150) scale(0.68) translate(-100 -150)"/>
+    <use id="exteriorD" href="#p" transform="rotate(64 100 152) translate(100 150) scale(0.68) translate(-100 -150)"/>
+
+    <!-- la línea de aire entre capas: lo que queda delante "recorta" lo de detrás -->
+    <mask id="tapaMedios" maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="200">
+      <rect width="200" height="200" fill="#fff"/>
+      <use href="#centro" fill="#000" stroke="#000" stroke-width="7"/>
+    </mask>
+    <mask id="tapaExteriores" maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="200">
+      <rect width="200" height="200" fill="#fff"/>
+      <g fill="#000" stroke="#000" stroke-width="7">
+        <use href="#medioI"/><use href="#medioD"/><use href="#centro"/>
+      </g>
+    </mask>
+  </defs>
+
+  <g fill="#000" transform="translate(0 8)">
+    <g mask="url(#tapaExteriores)"><use href="#exteriorI"/><use href="#exteriorD"/></g>
+    <g mask="url(#tapaMedios)"><use href="#medioI"/><use href="#medioD"/></g>
+    <use href="#centro"/>
+  </g>
+</svg>

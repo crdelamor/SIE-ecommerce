@@ -229,6 +229,17 @@ Claude Code
   - La vista de móvil, con capturas a 390 px de ancho.
   - Sustitución del pedido: con `curl`, otro email no puede cancelar el pedido de Laura y el mismo email sí, y 2 Mewtwo (todo el stock) reservados por el pedido viejo se pueden volver a comprar en el nuevo. En Chrome: pago rechazado, cambio de facturación y pago aprobado; en la administración el primer pedido sale "Cancelado" y el segundo "Pagado", y el stock solo baja una vez.
 
+## 2026-10-13 · Celia (A) · Correcciones de la revisión de la PR #12
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** leer las revisiones de César y José de la PR #12, decidir qué se arreglaba en el código y qué iba a las limitaciones de la memoria, y hacer los arreglos.
+- **Partes asistidas por IA:** el análisis de los comentarios, `api/services/PaymentService.php`, `api/services/PriceCalculator.php` y `api/http/orders.php`.
+- **Errores detectados en la IA:** los tres arreglos corrigen fallos del código que había hecho la IA y que encontraron mis compañeros:
+  - El evento `payment.simulated` se guardaba después de `order.status_changed` (lo vio César).
+  - El cálculo del IVA dividía entre el subtotal, que podía ser 0 € (lo vio César).
+  - Las rutas de crear y pagar pedidos no capturaban `OrderStatusException`, que habría dado un 500 (lo vio José).
+- **Cambios hechos por mí:** decidí arreglar esos tres puntos y dejar como limitaciones de la memoria: un cliente nuevo por pedido (la fila guarda la dirección de envío de ese pedido), `POST /api/events` sin límite de peticiones, poder cancelar un pedido sin pagar conociendo su código y su email, los pedidos pendientes que reservan stock sin caducidad y que el número de tarjeta llega entero al servidor aunque no se guarda.
+- **Cómo lo validé:** `php -l`; con `curl` contra la base de datos local: los eventos del pago salen en orden (pedido, pago y cambio de estado), un carrito a 0 € da 200 con IVA 0 y los totales del seed no cambian (27,93 y 62,32), y el flujo de pedido, pago rechazado, pago aprobado y pagar dos veces (409) sigue igual. Un pedido ya pagado no se cancela aunque otro intente sustituirlo. Al terminar se restauró la base de datos con el seed.
+
 ## 2026-10-13 · José (B) · Plataforma: guía de despliegue en DonDominio y README
 Claude Code
 - **Qué pedí:** preparar mi parte de "Plataforma" del plan: la documentación del despliegue en DonDominio (FTP, importación de la base de datos en phpMyAdmin y certificado SSL) y completar el README. Después, preparar un PR con todos los cambios pendientes que tenía sin subir.
@@ -252,11 +263,53 @@ Claude Code
   - En `docs/despliegue.md`: la tabla se llama `products`, no `productos`; la comprobación de `/api/products` y la del catálogo fallan hasta que existan `api/http/products.php` y las páginas, y ahora se avisa de ello; se añadió una sección de requisitos del hosting con PHP 8.1 o superior (el código usa `new` como valor por defecto en constructores, propiedades `readonly` y `array_is_list`), las extensiones `pdo_mysql` y `mbstring` y `display_errors` desactivado; y se añadió a la lista de comprobación que una ruta inexistente devuelva solo JSON. También dos filas nuevas en «Problemas frecuentes».
 - **Cómo lo validé:** comprobé en el código de `develop` que `api/index.php` responde un JSON 500 genérico a las excepciones y que `lib/router.php` devuelve `{"error":"Ruta no encontrada"}` con 404; que `api/.htaccess` bloquea `config.php`; que no existe `api/http/products.php`; y que las funciones de PHP 8.1 citadas están en el código. Con `git diff` comprobé que el seed no cambia respecto a `develop`. **Pendiente de validar por mí:** el despliegue real en DonDominio y la versión de PHP y las extensiones de mi plan.
 
+## 2026-10-14 · Celia (A) · Prueba con el catálogo y borradores de memoria y vídeo
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:**
+  1. Revisar lo que han subido José y César y comprobar que el catálogo de José encaja con mi carrito y mi checkout.
+  2. Borrador de mi sección de la memoria y del guion de mi parte del vídeo (los guardo fuera del repositorio hasta pasarlos a la memoria final).
+- **Partes asistidas por IA:** la revisión de las ramas, la prueba de integración y el texto de los dos borradores, que tengo que repasar y adaptar con mis palabras.
+- **Errores detectados en la IA:**
+- **Cambios hechos por mí:**
+- **Cómo lo validé:** la extensión de Chrome estaba desconectada, así que la prueba se hizo con un script que abría Microsoft Edge en mi pantalla. En una copia aparte con `develop` + `feature/catalogo-productos` + mis correcciones (sin subir nada), compra completa desde el catálogo: ficha, añadir al carrito, panel, checkout con cupón, pago rechazado, pago aprobado y confirmación (PED-000005, 27,93 €), sin errores en la consola y con el carrito vacío al final. Se vio que el catálogo muestra los precios con IVA y el resumen del checkout las líneas sin IVA (va a las limitaciones).
+
+## 2026-10-15 · Celia (A) · Revisión de la web publicada, rama al día, DonDominio y nuevo nombre
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:**
+  1. Revisar la web publicada en https://www.theblacklotustcg.onl/ sin crear pedidos (páginas, API, ficheros bloqueados, certificado).
+  2. Poner mi rama al día con `develop`.
+  3. Investigar si DonDominio ofrece envío de correo y pasarela de pago.
+  4. Cambiar el nombre de la tienda a theblacklotustcg en el título y en las páginas, y usar el loto negro como favicon y logo.
+  5. Quitar del checkout el aviso con las tarjetas de prueba (quedan solo en el README).
+  6. Dar margen lateral a los productos del panel del carrito.
+  7. Aviso "Añadido al carrito" bajo el icono de la cesta: dura 2 segundos y tiene un botón "Ver carrito" que lo cierra y abre el panel. La ficha de producto deja de abrir el panel directamente al añadir.
+  8. Comprobar la gestión del stock en el carrito y corregirla.
+- **Partes asistidas por IA:** la revisión, la unión con `develop`, la búsqueda sobre DonDominio, `frontend/public/favicon.svg` y `logo.svg` (a partir del SVG del loto que pasé yo), `index.html`, `Header.jsx`, `Footer.jsx`, `CheckoutLayout.jsx`, `HomePage.jsx`, `home.css`, `ProductPage.jsx` y `components.css`.
+- **Errores detectados en la IA:**
+  - Con el nombre nuevo, el título grande del inicio no cabía en el móvil y la cabecera mostraba "theblacklotus tcg" separado. Se vio en las capturas y se corrigió.
+  - En el CSS del panel del carrito, `.cart-list` ponía el `padding` a 0 y anulaba el margen lateral de `.cart-drawer__body`, así que los productos quedaban pegados al borde (lo vi yo). Ahora solo quita el de arriba y abajo.
+  - El carrito no comprobaba el stock: se podía añadir el Mewtwo (stock 2) tres veces y subirlo con "+" sin límite. El servidor sí lo frenaba en el checkout ("No hay stock suficiente") y no dejaba pagar, pero el cliente se enteraba tarde. Ahora el carrito guarda el stock de cada producto, no deja pasar de él al añadir ni con "+" y avisa con "No quedan más unidades".
+- **Cambios hechos por mí:**
+  - Decidí que la tienda se llame theblacklotustcg, como el dominio, y pasé el dibujo del loto para el favicon.
+  - Decidí que las tarjetas de prueba no salgan en la web, solo en la documentación.
+  - Pedí el aviso "Añadido al carrito" con el botón "Ver carrito".
+- **Cómo lo validé:**
+  - Web publicada: todas las páginas cargan sin errores en ordenador y móvil, la API responde, `http` redirige a `https`, `config.php` da 403 y el checkout calcula lo mismo que en local (30,48 €). Se vio que `https://theblacklotustcg.onl` sin `www` da un certificado de DonDominio en vez del nuestro (hay que arreglarlo en el panel).
+  - DonDominio: el plan incluye cuentas de correo y se puede enviar por SMTP con una cuenta del dominio, pero no tiene pasarela de pago para la tienda (el Redsys que usan es para cobrar sus servicios). Se queda el pago simulado.
+  - Nombre y favicon: capturas en ordenador y móvil y el favicon en tema claro y oscuro; el título de la pestaña cambia también en la ficha de producto. `npm run build` sin errores.
+  - Aviso del carrito: con un script en Edge, en ordenador y móvil, sale al añadir desde el catálogo y desde la ficha, se va a los 2 segundos y "Ver carrito" abre el panel. Al principio no salía porque el servidor de desarrollo de Vite se había quedado con una versión a medio guardar de `CartContext.jsx`; se arregló reiniciándolo.
+  - Stock: Mewtwo (stock 2) añadido 3 veces → la tercera sale "No quedan más unidades" y el carrito se queda en 2; el "+" queda desactivado en 2; un carrito antiguo con 4 unidades da el error en el checkout y no deja pagar, y al bajar a 2 se puede pagar.
+
 ## 2026-10-15 · Celia (A) · Correo de confirmación del pedido
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
 - **Tarea:** en la rama `feature/correo-confirmacion` (desde `develop`), enviar un correo con el resumen del pedido cuando se aprueba el pago, por SMTP con una cuenta del dominio de DonDominio.
 - **Partes asistidas por IA:** `api/services/MailService.php`, el envío al final de `PaymentService.php`, `findContact()` en `OrderRepository.php`, el bloque `mail` de `config.example.php`, el aviso en `ConfirmationPage.jsx` y `CheckoutPage.jsx`, y el apartado del README. PHPMailer 7.1.1 se descargó del repositorio oficial a `api/lib/PHPMailer/`.
 - **Errores detectados en la IA:**
+  - El primer diseño del correo era muy plano y en el móvil el símbolo € se bajaba de línea en los importes. Se rehízo el diseño y se puso un espacio que no se corta antes del €.
+  - La herramienta puso las fotos de los productos en el correo sin avisar al principio de que eran SVG, y Gmail y Outlook no muestran SVG en los correos. Lo avisó después, al rehacer el diseño; por eso se pasaron a PNG.
+  - No puso ningún tiempo máximo al SMTP: si el servidor no contestaba, el pago se quedaba esperando hasta 300 s. Lo detectó un compañero en la revisión de la PR, y además con solo `Timeout` no bastaba, también hacía falta `Timelimit`. Se corrigió en la PR de `feature/checkout`.
+  - Creó la rama `feature/correo-confirmacion` enlazada a `origin/develop`, así que al hacer `git push` los 4 commits se subieron directamente a `develop` sin PR. Se dejó así y se avisó al grupo.
+  - Al pasar las imágenes a PNG no añadió a `docs/despliegue.md` el `UPDATE` de `image_url` para la base de datos del hosting, y en el texto de la PR dijo que sí estaba. Lo detectó un compañero en la revisión y se añadió después.
 - **Cambios hechos por mí:**
   - Decidí usar PHPMailer en lugar de escribir el envío SMTP a mano.
   - Pedí que el correo fuera más bonito (cabecera con el nombre de la tienda, botón "Ver mi pedido") y que llevara la foto pequeña de cada producto. Para eso `findSummary()` devuelve también `image_url` de cada línea.
@@ -266,3 +319,15 @@ Claude Code
   - Vi el diseño nuevo con un pedido inventado en escritorio y en móvil. En el móvil el símbolo € se bajaba de línea; se arregló con un espacio que no se corta.
   - Las fotos de los productos eran SVG y Gmail y Outlook no muestran imágenes SVG en los correos. Decidí pasarlas a PNG en toda la web: la herramienta las convirtió con el navegador de las pruebas (Playwright, al doble de tamaño), cambió las rutas de `seed.sql` y el `placeholder` de `ProductCard.jsx` y `ProductPage.jsx`, y borró los SVG. El favicon y el logo siguen en SVG porque el navegador sí los muestra.
   - Comprobé que el catálogo carga las 15 fotos en PNG sin ninguna rota, que la ficha de producto también, y que `npm run build` copia los PNG a `dist/products/`. En mi base de datos local cambié las rutas con `UPDATE products SET image_url = REPLACE(image_url, '.svg', '.png')`.
+
+## 2026-10-15 · Celia (A) · Cambios pedidos en la revisión de la PR de `feature/checkout`
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** aplicar lo que pidieron José y César al revisar la PR.
+- **Partes asistidas por IA:** el nombre "The Black Lotus TCG" en título, cabecera, cabecera del checkout, pie, portada, ficha, favicon y correo; el tiempo máximo de 10 s del SMTP en `MailService.php`; la frase de las tarjetas de prueba en el checkout; el aviso "Añadido al carrito" a 4 s con pausa; y el comentario de `handleAdd` en `ProductPage.jsx`.
+- **Errores detectados en la IA:** la herramienta añadió primero una segunda línea "Pago simulado" debajo del botón de pagar sin ver que ya había una en la sección de pago; se dejó solo la que había, con la nota del README.
+- **Cambios hechos por mí:**
+  - Elegí el nombre "The Black Lotus TCG", igual que en la memoria, una frase discreta para las tarjetas de prueba y que el aviso del carrito durara más y se parara con el ratón o el foco.
+- **Cómo lo validé:**
+  - Con un servidor SMTP que acepta la conexión y no contesta, el envío se corta a los 10-11 s con "NO enviado" (antes podía esperar 300 s).
+  - En el navegador: el nombre sale en título, cabecera, portada y ficha; en el móvil (375 px) la portada no se sale de la pantalla; el aviso sigue a los 3 s y desaparece antes de los 4,5 s, con el ratón encima o el foco en "Ver carrito" sigue a los 6 s, y con Enter se abre el carrito; la frase sale en el checkout.
+  - `npm run build` y `php -l` sin errores.

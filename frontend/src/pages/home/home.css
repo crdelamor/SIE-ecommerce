@@ -1,5 +1,10 @@
 /* Portada: texto de presentación, accesos a cada juego y clasificación de las cartas. Solo variables de theme.css. */
 
+/* El nombre es una sola palabra larga: en el móvil se reduce para que quepa en una línea */
+.hero .text-hero {
+  font-size: min(var(--font-size-hero), 11vw);
+}
+
 .hero__lead {
   max-width: 40rem;
   margin: 0;

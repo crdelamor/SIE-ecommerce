@@ -108,7 +108,7 @@
 /* Líneas del carrito */
 .cart-list {
   margin: 0;
-  padding: 0;
+  padding-block: 0; /* el margen lateral lo pone .cart-drawer__body */
   list-style: none;
 }
 
