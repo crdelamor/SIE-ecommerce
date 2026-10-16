@@ -1,0 +1,42 @@
+/* Aviso "Añadido al carrito" que sale bajo el icono de la cesta */
+
+.header__cart-wrap {
+  position: relative;
+}
+
+.cart-toast {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 10;
+  display: grid;
+  gap: var(--space-2);
+  width: min(18rem, calc(100vw - 2 * var(--gutter)));
+  padding: var(--space-3);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  animation: cart-toast-in var(--duration-base) var(--ease-out);
+}
+
+@keyframes cart-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+.cart-toast__title {
+  margin: 0;
+  font-weight: var(--font-weight-bold);
+}
+
+.cart-toast__name {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.cart-toast .button {
+  width: 100%;
+}

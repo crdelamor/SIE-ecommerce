@@ -1,0 +1,421 @@
+/* admin.css — pantallas de administración (C). Solo usa variables de theme.css. */
+
+/* Login */
+.admin-login {
+  max-width: 26rem;
+}
+
+.admin-form {
+  display: grid;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.admin-form__field {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.admin-form__label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-form__input {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  /* Borde oscuro: los campos tienen que distinguirse del fondo (contraste ≥ 3:1) */
+  border: 1px solid var(--color-text-muted);
+  border-radius: var(--radius-sm);
+}
+
+.admin-form__error {
+  margin: 0;
+  color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Barra superior del panel */
+.admin-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.admin-bar h1 {
+  margin: 0;
+}
+
+.admin-bar__user {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.admin-bar__user p {
+  margin: 0;
+}
+
+.admin-notice {
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface);
+  border-left: 4px solid var(--color-accent);
+}
+
+/* Lista de pedidos: filtros en una fila que se reparte en varias en pantallas estrechas */
+.admin-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-3);
+  margin-bottom: var(--space-2);
+}
+
+.admin-filters .admin-form__field {
+  flex: 1 1 10rem;
+}
+
+.admin-filters .admin-filters__search {
+  flex: 2 1 14rem;
+}
+
+.admin-table.is-loading {
+  opacity: 0.5;
+}
+
+/* Código del pedido: enlace a la ficha, siempre subrayado para que se vea que se puede pulsar */
+.admin-table__code {
+  font-weight: var(--font-weight-bold);
+  background-size: 100% 1px;
+}
+
+.admin-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+/* En móvil la tabla se desplaza en horizontal dentro de su caja, sin mover la página */
+.admin-table-wrap {
+  overflow-x: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.admin-table th,
+.admin-table td {
+  padding: var(--space-2) var(--space-3);
+  text-align: left;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.admin-table th {
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-table .admin-table__num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Estado del pedido: el texto siempre dice el estado; el color solo lo refuerza */
+.admin-status {
+  display: inline-block;
+  padding: 0 var(--space-2);
+  border: 1px solid var(--color-text-muted);
+  border-radius: var(--radius-pill);
+}
+
+.admin-status--incidencia {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-status--cancelado {
+  color: var(--color-text-muted);
+  text-decoration: line-through;
+}
+
+/* Ficha del pedido */
+.admin-back {
+  display: inline-block;
+  margin-bottom: var(--space-3);
+}
+
+.admin-detail-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.admin-detail-header h2 {
+  margin: 0;
+}
+
+.admin-detail-header p {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+.admin-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.admin-card {
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.admin-card h3 {
+  margin-bottom: var(--space-2);
+}
+
+/* Lista de datos en dos columnas: etiqueta a la izquierda, valor a la derecha */
+.admin-dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-1) var(--space-3);
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+
+.admin-dl dt {
+  color: var(--color-text-muted);
+}
+
+.admin-dl dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.admin-dl--amounts dd {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-dl .admin-dl__total {
+  padding-top: var(--space-1);
+  border-top: 1px solid var(--color-border);
+  color: var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Cambiar estado */
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.admin-confirm p {
+  margin-bottom: var(--space-2);
+}
+
+.admin-success {
+  padding: var(--space-2) var(--space-3);
+  border-left: 4px solid var(--color-text);
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-detail-block {
+  margin-bottom: var(--space-5);
+}
+
+.admin-note {
+  margin-top: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+/* En las tablas de la ficha, el nombre del producto es la cabecera de su fila */
+.admin-table tbody th {
+  color: var(--color-text);
+}
+
+.admin-table abbr {
+  text-decoration: underline dotted;
+  cursor: help;
+}
+
+.admin-payment--rejected {
+  color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+/* Historial: línea de tiempo vertical */
+.admin-timeline {
+  margin: 0;
+  padding: 0 0 0 var(--space-3);
+  list-style: none;
+  border-left: 2px solid var(--color-border);
+}
+
+.admin-timeline li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--space-3);
+  padding-block: var(--space-2);
+  font-size: var(--font-size-sm);
+}
+
+.admin-timeline time {
+  min-width: 8rem;
+  color: var(--color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Navegación del panel: pestañas con la sección actual marcada */
+.admin-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1) var(--space-4);
+  margin-bottom: var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.admin-nav__link {
+  padding-block: var(--space-2);
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  color: var(--color-text-muted);
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-nav__link:hover {
+  color: var(--color-text);
+}
+
+.admin-nav__link[aria-current='page'] {
+  color: var(--color-text);
+  border-bottom-color: var(--color-accent);
+}
+
+/* Incidencias */
+.admin-tickets {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-tickets.is-loading {
+  opacity: 0.5;
+}
+
+.admin-ticket__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.admin-ticket__header h3 {
+  margin: 0;
+  font-size: var(--font-size-base);
+}
+
+.admin-ticket__meta {
+  margin: var(--space-1) 0 var(--space-2);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}
+
+/* El mensaje del cliente respeta sus saltos de línea */
+.admin-ticket__message {
+  margin-bottom: var(--space-2);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.admin-ticket__order {
+  margin: 0;
+  font-size: var(--font-size-sm);
+}
+
+.admin-ticket-status--abierta {
+  color: var(--color-accent);
+  border-color: var(--color-accent);
+  font-weight: var(--font-weight-bold);
+}
+
+.admin-ticket-status--cerrada {
+  color: var(--color-text-muted);
+}
+
+/* Visor de eventos */
+.admin-export {
+  align-items: center;
+  margin-bottom: var(--space-2);
+}
+
+.admin-code {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+}
+
+.admin-events td {
+  vertical-align: top;
+}
+
+/* La columna de datos sí puede partir líneas: el payload puede ser largo */
+.admin-events td:last-child {
+  min-width: 18rem;
+  white-space: normal;
+}
+
+.admin-payload {
+  display: grid;
+  gap: 0.15rem;
+  margin: 0;
+}
+
+.admin-payload div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--space-2);
+}
+
+.admin-payload dt {
+  color: var(--color-text-muted);
+}
+
+.admin-payload dt::after {
+  content: ':';
+}
+
+.admin-payload dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}

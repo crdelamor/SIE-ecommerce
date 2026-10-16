@@ -1,0 +1,102 @@
+/* Ficha de producto. Solo variables de theme.css. Móvil primero: una columna; desde 48em, imagen y datos en dos. */
+
+.breadcrumb {
+  margin-bottom: var(--space-4);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.product-detail {
+  display: grid;
+  gap: var(--space-5);
+}
+
+.product-detail__media {
+  align-self: start;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-border);
+  overflow: hidden;
+}
+
+.product-detail__media img {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+.product-detail__info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+
+.product-detail__info h1,
+.product-detail__info p { margin: 0; }
+
+.product-detail__price {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-bold);
+}
+
+.product-detail__stock { color: var(--color-text-muted); }
+.product-detail__stock--out { color: var(--color-accent); font-weight: var(--font-weight-bold); }
+
+/* Datos de la carta: etiqueta y valor en dos columnas */
+.product-detail__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-2) var(--space-4);
+  width: 100%;
+  margin: var(--space-3) 0;
+  padding-block: var(--space-3);
+  border-block: 1px solid var(--color-border);
+}
+
+.product-detail__facts dt { color: var(--color-text-muted); }
+.product-detail__facts dd { margin: 0; }
+
+/* Versiones de la misma carta */
+.versions { margin-top: var(--space-6); }
+
+.versions__list {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.versions__item {
+  display: flex;
+  gap: var(--space-3);
+  align-items: center;
+  height: 100%;
+  padding: var(--space-3);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  transition: border-color var(--duration-base) var(--ease-out);
+}
+
+.versions__item:hover { border-color: var(--color-text); }
+
+/* La versión que se está viendo: borde marcado (además se anuncia con aria-current) */
+.versions__item[aria-current='true'] { border-color: var(--color-accent); }
+
+.versions__image {
+  flex: none;
+  width: 5rem;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.versions__text { display: flex; flex-direction: column; }
+.versions__label { font-weight: var(--font-weight-bold); }
+
+@media (min-width: 48em) {
+  .product-detail { grid-template-columns: 1fr 1fr; }
+}
