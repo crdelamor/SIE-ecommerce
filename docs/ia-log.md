@@ -331,3 +331,23 @@ Claude Code
   - Con un servidor SMTP que acepta la conexión y no contesta, el envío se corta a los 10-11 s con "NO enviado" (antes podía esperar 300 s).
   - En el navegador: el nombre sale en título, cabecera, portada y ficha; en el móvil (375 px) la portada no se sale de la pantalla; el aviso sigue a los 3 s y desaparece antes de los 4,5 s, con el ratón encima o el foco en "Ver carrito" sigue a los 6 s, y con Enter se abre el carrito; la frase sale en el checkout.
   - `npm run build` y `php -l` sin errores.
+
+## 2026-10-16 · José (B) · Redespliegue en DonDominio, correo de confirmación en el hosting, README y guía final
+- **Herramienta:** Claude Code (Claude Sonnet 5.5). Claude en Chrome (extensión del navegador) solo para revisar la pestaña de red de una compra de prueba; no leyó ni escribió contraseñas ni cambió ajustes.
+- **Tarea:** regenerar el paquete de despliegue desde `develop` tras fusionar el PR #16, guiar la actualización del hosting, diagnosticar por qué no llegaba el correo de confirmación, y dejar el `README.md` y `docs/despliegue.md` listos para el PR final a `main`.
+- **Partes asistidas por IA:** el script del paquete de despliegue y dos ficheros de prueba de un solo uso (`diagnostico.php` y `correo-prueba.php`, con una clave de un solo uso y fuera del repositorio); las comprobaciones desde fuera del estado del hosting; `README.md` (acceso, reparto, correo, despliegue y limitaciones conocidas) y `docs/despliegue.md`.
+- **Errores detectados en la IA:**
+  - Pensó que los 404 de `/api/health` eran un fallo del contenido de `.htaccess`; eran estados transitorios mientras se subían y editaban los ficheros. Lo aclararon las comprobaciones repetidas desde fuera.
+  - Dijo que `PaymentService` devolvía `email_sent` y descartó el análisis de Claude en Chrome; en `develop` era cierto, pero el servidor tenía una versión anterior de `api/` (sin `PHPMailer/` ni la llamada a `MailService`), así que la extensión describía bien lo que había publicado. Se sustituyó la carpeta `api/` completa. Claude en Chrome propuso además soluciones que no encajan con el proyecto (variables de entorno, Composer, otras columnas, un proveedor de correo externo); no se aplicó ninguna.
+  - El primer `correo-prueba.php` daba un 500 en blanco en el hosting aunque funcionaba en local; se rehízo para comprobar cada paso y mostrar el motivo.
+  - El diagnóstico no mostraba el campo `enabled` del bloque `mail`, así que no podía distinguir un correo desactivado de uno que fallaba.
+- **Cambios hechos por mí:**
+  - Decidí dejar como mejora futura el texto en español pintado en las imágenes de producto de cartas en inglés, y anotarlo en las limitaciones.
+  - Pedí que el README describa el correo como factura proforma de confirmación de pago, y no como factura fiscal.
+  - Cambié el servidor SMTP de `config.php` a `smtp.dondominio.com` (con `smtp.theblacklotustcg.onl` el certificado no coincide) y lo recogí en el README y en la guía.
+  - Subí yo los ficheros al hosting y escribí yo la contraseña del buzón en `config.php`; la IA no la vio.
+- **Cómo lo validé:**
+  - Desde fuera del hosting: `/api/health`, `/api/products` (15 productos con las 15 imágenes `.png`), `config.php` y la carpeta `db/` con 403, y `correo-prueba.php` con 404 tras borrarlo (`diagnostico.php` y la carpeta `db/` están pendientes de borrar a la hora de escribir esto).
+  - `correo-prueba.php` con el SMTP real: el primer intento dio «subjectAltName did not match», y tras cambiar el servidor a `smtp.dondominio.com` llegó el correo de prueba.
+  - Compra completa con la tarjeta `4242 4242 4242 4242` tras subir la `api/` actual: en la confirmación sale la línea del email y llega la factura proforma.
+  - Los apartados del README se contrastaron con el código y con los ficheros del repositorio (cupón, tablas, versión de PHP, rutas y estructura).
