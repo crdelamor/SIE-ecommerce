@@ -29,6 +29,14 @@ Antes de subir nada, comprueba en el panel de control:
 
 `schema.sql` borra las tablas existentes antes de crearlas: al reimportar se pierden los datos.
 
+**Si la base de datos ya estaba importada de antes:** las imágenes de los productos pasaron de `.svg` a `.png` y los `.svg` ya no existen, así que sin este cambio las fotos salen rotas en la web. Para no reimportar (y no perder los pedidos), ejecuta en la pestaña **SQL** de phpMyAdmin:
+
+```sql
+UPDATE products SET image_url = REPLACE(image_url, '.svg', '.png') WHERE image_url LIKE '%.svg';
+```
+
+Después comprueba que no queda ninguna: `SELECT COUNT(*) FROM products WHERE image_url LIKE '%.svg';` debe dar 0.
+
 ## 2. Compilar el frontend
 
 ```bash

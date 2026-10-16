@@ -299,11 +299,17 @@ Claude Code
   - Nombre y favicon: capturas en ordenador y móvil y el favicon en tema claro y oscuro; el título de la pestaña cambia también en la ficha de producto. `npm run build` sin errores.
   - Aviso del carrito: con un script en Edge, en ordenador y móvil, sale al añadir desde el catálogo y desde la ficha, se va a los 2 segundos y "Ver carrito" abre el panel. Al principio no salía porque el servidor de desarrollo de Vite se había quedado con una versión a medio guardar de `CartContext.jsx`; se arregló reiniciándolo.
   - Stock: Mewtwo (stock 2) añadido 3 veces → la tercera sale "No quedan más unidades" y el carrito se queda en 2; el "+" queda desactivado en 2; un carrito antiguo con 4 unidades da el error en el checkout y no deja pagar, y al bajar a 2 se puede pagar.
+
 ## 2026-10-15 · Celia (A) · Correo de confirmación del pedido
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
 - **Tarea:** en la rama `feature/correo-confirmacion` (desde `develop`), enviar un correo con el resumen del pedido cuando se aprueba el pago, por SMTP con una cuenta del dominio de DonDominio.
 - **Partes asistidas por IA:** `api/services/MailService.php`, el envío al final de `PaymentService.php`, `findContact()` en `OrderRepository.php`, el bloque `mail` de `config.example.php`, el aviso en `ConfirmationPage.jsx` y `CheckoutPage.jsx`, y el apartado del README. PHPMailer 7.1.1 se descargó del repositorio oficial a `api/lib/PHPMailer/`.
 - **Errores detectados en la IA:**
+  - El primer diseño del correo era muy plano y en el móvil el símbolo € se bajaba de línea en los importes. Se rehízo el diseño y se puso un espacio que no se corta antes del €.
+  - La herramienta puso las fotos de los productos en el correo sin avisar al principio de que eran SVG, y Gmail y Outlook no muestran SVG en los correos. Lo avisó después, al rehacer el diseño; por eso se pasaron a PNG.
+  - No puso ningún tiempo máximo al SMTP: si el servidor no contestaba, el pago se quedaba esperando hasta 300 s. Lo detectó un compañero en la revisión de la PR, y además con solo `Timeout` no bastaba, también hacía falta `Timelimit`. Se corrigió en la PR de `feature/checkout`.
+  - Creó la rama `feature/correo-confirmacion` enlazada a `origin/develop`, así que al hacer `git push` los 4 commits se subieron directamente a `develop` sin PR. Se dejó así y se avisó al grupo.
+  - Al pasar las imágenes a PNG no añadió a `docs/despliegue.md` el `UPDATE` de `image_url` para la base de datos del hosting, y en el texto de la PR dijo que sí estaba. Lo detectó un compañero en la revisión y se añadió después.
 - **Cambios hechos por mí:**
   - Decidí usar PHPMailer en lugar de escribir el envío SMTP a mano.
   - Pedí que el correo fuera más bonito (cabecera con el nombre de la tienda, botón "Ver mi pedido") y que llevara la foto pequeña de cada producto. Para eso `findSummary()` devuelve también `image_url` de cada línea.
