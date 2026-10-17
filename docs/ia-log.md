@@ -367,3 +367,17 @@ Claude Code
   - En local: 44 pruebas de la API (reglas, pagos, stock, sustitución, admin, soporte y eventos) y el admin en el navegador.
   - La página del pedido decía "Tu pedido está confirmado" aunque estuviera cancelado. Ahora muestra el estado real (pendiente, confirmado, en preparación, en camino, entregado, cancelado o incidencia) y el ✓ solo si está pagado. Comprobado con un pedido de cada estado.
   - `npm run build` y `php -l` sin errores.
+
+## 2026-10-17 · César (C) · Logout que no cerraba la sesión en el hosting
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** revisar la web publicada antes de grabar el vídeo y corregir lo que fallara en mi parte.
+- **Partes asistidas por IA:** la prueba del logout contra la web publicada y el cambio en `frontend/src/pages/admin/adminApi.js`.
+- **Errores detectados en la IA:**
+  - La función `logout()` que escribió la IA hacía un `POST` sin cuerpo. En local funcionaba, pero el servidor de DonDominio rechaza esos `POST` con un 403 de Apache antes de llegar a PHP, así que la sesión seguía abierta en el servidor aunque la pantalla volviera al login.
+  - Mis pruebas automáticas del logout no lo detectaron porque comprobaban la cookie que devolvía el servidor y no si la sesión antigua seguía siendo válida.
+- **Cambios hechos por mí:**
+  - Pedí revisar la web publicada antes de grabar y decidí arreglarlo antes de la entrega.
+  - El logout envía ahora un cuerpo JSON vacío (`{}`); no cambia la API.
+- **Cómo lo validé:**
+  - En la web publicada, con `curl`: el `POST /api/auth/logout` sin cuerpo daba 403 y la misma cookie seguía devolviendo los pedidos (200); con cuerpo `{}` da 200 y después la misma cookie recibe 401.
+  - En local, login y logout con la API y `npm run build` sin errores.
