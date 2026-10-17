@@ -4,6 +4,17 @@ import Button from '../../components/Button.jsx';
 import { getOrder } from './checkoutApi.js';
 import { formatPrice } from './OrderSummary.jsx';
 
+// Texto según el estado real del pedido (es también el enlace del correo, se puede abrir más tarde)
+const STATUS_TEXT = {
+  pendiente_pago: ['Tu pedido está pendiente de pago', 'Todavía no hemos recibido el pago de este pedido.'],
+  pagado: ['Tu pedido está confirmado', 'Ya estamos preparando tus cartas. Guarda el código del pedido por si necesitas contactar con soporte.'],
+  en_preparacion: ['Tu pedido está en preparación', 'Estamos preparando tus cartas para enviarlas.'],
+  enviado: ['Tu pedido está en camino', 'Ya lo hemos enviado. Si llega con algún problema, escríbenos desde soporte.'],
+  entregado: ['Tu pedido está entregado', 'Esperamos que disfrutes de tus cartas.'],
+  cancelado: ['Tu pedido está cancelado', 'Este pedido se ha cancelado. Si tienes dudas, escríbenos desde soporte.'],
+  incidencia: ['Tu pedido tiene una incidencia', 'Estamos revisándola y te escribiremos al email del pedido.'],
+};
+
 // Página de "gracias por tu pedido". Los datos salen de GET /api/orders/{code}, que no
 // devuelve datos personales; el nombre solo se muestra si venimos del checkout.
 export default function ConfirmationPage() {
@@ -32,21 +43,19 @@ export default function ConfirmationPage() {
     return <div className="confirmation"><p className="text-muted">Cargando pedido…</p></div>;
   }
 
-  const paid = order.status !== 'pendiente_pago';
+  // El ✓ y el "gracias" solo si el pedido está pagado y sigue adelante
+  const ok = ['pagado', 'en_preparacion', 'enviado', 'entregado'].includes(order.status);
+  const [title, text] = STATUS_TEXT[order.status] ?? [`Estado del pedido: ${order.status}`, ''];
 
   return (
     <div className="confirmation">
-      <span className="confirmation__check" aria-hidden="true">✓</span>
+      {ok && <span className="confirmation__check" aria-hidden="true">✓</span>}
       <p className="text-muted">Pedido {order.code}</p>
-      <h1>{firstName ? `¡Gracias, ${firstName}!` : '¡Gracias por tu compra!'}</h1>
+      <h1>{ok ? (firstName ? `¡Gracias, ${firstName}!` : '¡Gracias por tu compra!') : title}</h1>
 
       <section className="confirmation__box">
-        <h2>{paid ? 'Tu pedido está confirmado' : 'Tu pedido está pendiente de pago'}</h2>
-        <p>
-          {paid
-            ? 'Ya estamos preparando tus cartas. Guarda el código del pedido por si necesitas contactar con soporte.'
-            : 'Todavía no hemos recibido el pago de este pedido.'}
-        </p>
+        {ok && <h2>{title}</h2>}
+        {text && <p>{text}</p>}
         {emailTo && <p>Te hemos enviado un email a <strong>{emailTo}</strong> con el resumen.</p>}
         <p className="text-muted">Es un prototipo académico: no se ha cobrado nada.</p>
       </section>
