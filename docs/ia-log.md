@@ -351,3 +351,19 @@ Claude Code
   - `correo-prueba.php` con el SMTP real: el primer intento dio «subjectAltName did not match», y tras cambiar el servidor a `smtp.dondominio.com` llegó el correo de prueba.
   - Compra completa con la tarjeta `4242 4242 4242 4242` tras subir la `api/` actual: en la confirmación sale la línea del email y llega la factura proforma.
   - Los apartados del README se contrastaron con el código y con los ficheros del repositorio (cupón, tablas, versión de PHP, rutas y estructura).
+
+## 2026-10-17 · Celia (A) · Revisión final de main y página del pedido
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** revisar `main` entero (web publicada, código y flujo completo) y, en la rama `fix/estado-pedido` (desde `develop`), arreglar la página del pedido.
+- **Partes asistidas por IA:** la revisión (scripts de navegador y de la API, y lectura del código), los textos por estado de `ConfirmationPage.jsx` y el ejemplo añadido a la limitación «Stock reservado» del README.
+- **Errores detectados en la IA:**
+  - En una prueba de la API esperaba que la API diera error al intentar sustituir un pedido ya pagado; en realidad la API ignora la sustitución y crea un pedido nuevo sin tocar el pagado, que es correcto. Era fallo de la prueba, no del código.
+  - Marcó como fallo que un pedido sin pagar pueda pasar de `incidencia` a `en_preparacion` y lo cambió en `OrderStatusService.php` (también que no se devolviera el stock al cancelar un pedido ya enviado). Pero eso lo habíamos decidido así en el grupo y ya estaba documentado en el README, así que deshice esos cambios.
+- **Cambios hechos por mí:**
+  - Pedí la revisión completa y autoricé hacer un pedido real en la web publicada con mi email, para comprobar el correo.
+  - Decidí dejar las transiciones de incidencia como las acordó el grupo.
+- **Cómo lo validé:**
+  - Web publicada: pedido PED-000014 con Bizum y BIENVENIDA10 (14,86 €), `email_sent: true`, stock de 30 a 28, e incidencia de soporte nº 1. El admin publicado lo compruebo yo.
+  - En local: 44 pruebas de la API (reglas, pagos, stock, sustitución, admin, soporte y eventos) y el admin en el navegador.
+  - La página del pedido decía "Tu pedido está confirmado" aunque estuviera cancelado. Ahora muestra el estado real (pendiente, confirmado, en preparación, en camino, entregado, cancelado o incidencia) y el ✓ solo si está pagado. Comprobado con un pedido de cada estado.
+  - `npm run build` y `php -l` sin errores.
