@@ -38,8 +38,9 @@ export async function login(email, password) {
   return data.user;
 }
 
+// Con cuerpo JSON vacío: el hosting rechaza con 403 los POST sin cuerpo y la sesión no se cerraba
 export function logout() {
-  return request('/auth/logout', { method: 'POST' });
+  return request('/auth/logout', { method: 'POST', body: {} });
 }
 
 /**
