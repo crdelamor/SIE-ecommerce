@@ -427,5 +427,6 @@ Claude Code
   - Dos pendientes forzados (el `order.created` con la clave de la tienda cambiada, `tienda_no_disponible`, y su `order.status_changed`, `pedido_no_existe`): Reintentos los reenvió en orden y el pedido quedó creado y pagado.
   - Reintentos en local contra el back-office de José: un `order.status_changed` pendiente (`pedido_no_existe`) se aplicó al reintentarlo después de crear el pedido; un evento que no existe en la tienda se queda pendiente y no se reenvía.
   - Los totales de la matriz salen de un script (pesos que suman 100, puntuaciones de 1 a 5).
+  - `deploy/docker-compose.yml` levantado en Docker Desktop con otro nombre de puertos (5688 y 8088) y sin tocar los contenedores de otra asignatura: pedido y pago llegaron al back-office del contenedor (`ok` ×3) y los datos siguieron tras `docker compose down` y `up`. n8n avisaba de que PostgreSQL 16 solo tiene soporte de compatibilidad: se pasó a la 17.
 - **Limitaciones:**
   - En una prueba, un `order.status_changed` enviado por la tienda no llegó a ejecutarse en n8n sin dejar error en ningún lado; no se encontró la causa. Lo cubrirá la recuperación con `/api/integration/events?after_id=`, pendiente del endpoint de eventos procesados del back-office.
