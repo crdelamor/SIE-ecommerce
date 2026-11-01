@@ -411,3 +411,19 @@ Claude Code
 - **Cómo lo validé:**
   - En local, con n8n 2.45.7, la API de la tienda y un back-office falso que sigue `docs/backoffice-api.md`: un pedido con 2 líneas se crea con sus datos TCG y pasa a `pagado` con su historial; el mismo evento otra vez queda `duplicado`; `incompleto.json` queda `error` + `payload_incompleto`; un webhook sin secreto o con secreto malo da 403.
   - Con el back-office parado, el error se clasifica como `backoffice_no_disponible` y la ejecución queda en error en n8n (no se puede registrar en el back-office).
+
+## 2026-11-01 · César (A) · Tarea 2: flujo "Reintentos", variables de n8n y matriz de decisión
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** bloque 3 de la parte A: flujo "Reintentos" (`feature/integracion-reintentos`), `integration/n8n/.env.example` y `docs/matriz-decision.md` (`feature/matriz-decision`).
+- **Partes asistidas por IA:** el JSON del flujo, la plantilla de variables, la redacción de la matriz y el cálculo de los totales ponderados y de la sensibilidad.
+- **Errores detectados en la IA:**
+  - Intentó lanzar el flujo con `n8n execute` sin un disparador manual y con el n8n local encendido (puerto 5679 ocupado); se añadió el nodo "Ejecutar ahora" y otro puerto para la ejecución desde la consola.
+  - La primera versión de la matriz ponía Zapier como alternativa SaaS sin más; el enunciado no acepta herramientas 100 % no-code como Zapier, así que se cambió por Make y se dejó escrito.
+  - `.env.*` del `.gitignore` también ignora `.env.example`; se añadió forzado en vez de cambiar el `.gitignore` común.
+- **Cambios hechos por mí:**
+  - Pedí adelantar lo que no dependía de nadie mientras José añade el endpoint de eventos procesados.
+- **Cómo lo validé:**
+  - Reintentos en local contra el back-office de José: un `order.status_changed` pendiente (`pedido_no_existe`) se aplicó al reintentarlo después de crear el pedido; un evento que no existe en la tienda se queda pendiente y no se reenvía.
+  - Los totales de la matriz salen de un script (pesos que suman 100, puntuaciones de 1 a 5).
+- **Limitaciones:**
+  - En una prueba, un `order.status_changed` enviado por la tienda no llegó a ejecutarse en n8n sin dejar error en ningún lado; no se encontró la causa. Lo cubrirá la recuperación con `/api/integration/events?after_id=`, pendiente del endpoint de eventos procesados del back-office.
