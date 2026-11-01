@@ -486,3 +486,14 @@ Claude Code
 - **Cómo lo validé:**
   - En local: un pedido que llega en `pagado` y después recibe `pendiente_pago → pagado` devuelve `duplicado`, y el historial no cambia. Un segundo `enviado` con otro `event_id` también devuelve `duplicado` sin añadir fila.
   - `php -l` sin errores. Después borré los datos de prueba.
+
+## 2026-11-01 · José (B) · Tarea 2: revisión de César (A) al PR de incidencias
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** corregir en `feature/backoffice-incidencias` lo que vio César: dos altas a la vez con el mismo email nuevo hacían saltar el `UNIQUE` de `bo_customers` y la API respondía 500.
+- **Partes asistidas por IA:** `findOrCreateCustomer` en `api/http/customers.php`, que ahora usa una sola sentencia `INSERT ... ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)` en lugar de buscar y luego insertar.
+- **Errores detectados en la IA:** la versión anterior buscaba el cliente y después lo insertaba en dos pasos, así que dos peticiones a la vez podían intentar crear el mismo cliente. Lo detectó César en la revisión.
+- **Cambios hechos por mí:**
+  - Pasé al hilo la revisión de César y pedí corregirla.
+- **Cómo lo validé:**
+  - En local, con dos servidores de PHP a la vez, mandé cinco pares de altas de ticket simultáneas, cada par con el mismo email nuevo: las diez respondieron 201, se crearon 5 clientes (uno por email) y ningún ticket quedó sin cliente.
+  - Un alta de pedido con un email ya existente reutiliza el cliente. `php -l` sin errores. Después borré los datos de prueba.
