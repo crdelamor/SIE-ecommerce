@@ -470,3 +470,13 @@ Claude Code
 - **Cómo lo validé:**
   - En local: un pedido que llega en `pagado` y después recibe `pendiente_pago → pagado` devuelve `duplicado`, y el historial no cambia. Un segundo `enviado` con otro `event_id` también devuelve `duplicado` sin añadir fila.
   - `php -l` sin errores. Después borré los datos de prueba.
+
+## 2026-11-01 · José (B) · Tarea 2: parada del contenedor del back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** corregir el `Dockerfile` del back-office (rama `feature/backoffice-base`) a partir de lo que vio César al probarlo con su `docker-compose.yml`.
+- **Partes asistidas por IA:** el cambio del `CMD`, que ahora termina en `exec apache2-foreground`.
+- **Errores detectados en la IA:** el `CMD` en forma shell dejaba a `sh` como proceso principal. Al hacer `docker compose down`, la señal de parada no llegaba a Apache y Docker lo mataba a los 10 s (código 137). No lo vimos antes porque yo no tengo Docker instalado; lo detectó César.
+- **Cambios hechos por mí:**
+  - Pasé al hilo el comentario de César y pedí aplicarlo.
+- **Cómo lo validé:**
+  - No lo he podido probar: no tengo Docker. Queda pendiente que César lo compruebe con su compose (el contenedor debe pararse sin el código 137) y probarlo yo en el servidor.

@@ -21,7 +21,8 @@ COPY public/ /var/www/backoffice/public/
 # config.php solo lee variables de entorno, así que vale la plantilla
 COPY config.example.php /var/www/backoffice/config.php
 
-# Escucha en el 80 (servidor con docker-compose) o en PORT si la plataforma lo indica (Railway, para pruebas)
+# Escucha en el 80 (servidor con docker-compose) o en PORT si la plataforma lo indica (Railway, para pruebas).
+# exec deja a Apache como proceso principal para que reciba la señal de parada.
 CMD sed -i "s/Listen 80$/Listen ${PORT:-80}/" /etc/apache2/ports.conf \
  && sed -i "s/:80>/:${PORT:-80}>/" /etc/apache2/sites-available/000-default.conf \
- && apache2-foreground
+ && exec apache2-foreground
