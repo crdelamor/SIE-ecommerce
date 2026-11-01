@@ -420,9 +420,11 @@ Claude Code
   - Intentó lanzar el flujo con `n8n execute` sin un disparador manual y con el n8n local encendido (puerto 5679 ocupado); se añadió el nodo "Ejecutar ahora" y otro puerto para la ejecución desde la consola.
   - La primera versión de la matriz ponía Zapier como alternativa SaaS sin más; el enunciado no acepta herramientas 100 % no-code como Zapier, así que se cambió por Make y se dejó escrito.
   - `.env.*` del `.gitignore` también ignora `.env.example`; se añadió forzado en vez de cambiar el `.gitignore` común.
+  - Con varios pendientes a la vez, "Reenviar a Pedidos" fallaba ("Paired item data ... is unavailable") porque leía los ajustes con `.item` después de un nodo Code que crea elementos nuevos; se cambió a `.first()`. Con un solo pendiente no se veía.
 - **Cambios hechos por mí:**
   - Pedí adelantar lo que no dependía de nadie mientras José añade el endpoint de eventos procesados.
 - **Cómo lo validé:**
+  - Dos pendientes forzados (el `order.created` con la clave de la tienda cambiada, `tienda_no_disponible`, y su `order.status_changed`, `pedido_no_existe`): Reintentos los reenvió en orden y el pedido quedó creado y pagado.
   - Reintentos en local contra el back-office de José: un `order.status_changed` pendiente (`pedido_no_existe`) se aplicó al reintentarlo después de crear el pedido; un evento que no existe en la tienda se queda pendiente y no se reenvía.
   - Los totales de la matriz salen de un script (pesos que suman 100, puntuaciones de 1 a 5).
 - **Limitaciones:**

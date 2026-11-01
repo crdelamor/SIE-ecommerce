@@ -135,7 +135,7 @@
         300
       ],
       "parameters": {
-        "url": "={{ $('Ajustes').item.json.tienda_api_url }}/integration/events",
+        "url": "={{ $('Ajustes').first().json.tienda_api_url }}/integration/events",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendQuery": true,
@@ -188,7 +188,7 @@
       "notes": "Entra por el mismo webhook que la tienda: Pedidos valida, aplica y registra el resultado.",
       "parameters": {
         "method": "POST",
-        "url": "={{ $('Ajustes').item.json.pedidos_webhook_url }}",
+        "url": "={{ $('Ajustes').first().json.pedidos_webhook_url }}",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
