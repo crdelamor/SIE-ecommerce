@@ -146,7 +146,7 @@ Respuesta `200`:
 { "code": "PED-000014", "from_status": "pagado", "to_status": "enviado", "result": "actualizado" }
 ```
 
-Respuesta `200` si ese `event_id` ya se aplicó a este pedido (no se repite el cambio):
+Respuesta `200` si ese `event_id` ya se aplicó a este pedido, o si `status` es igual al estado actual (por ejemplo, el pedido llegó ya en `pagado` y después llega `pendiente_pago → pagado`). No se añade fila al historial:
 
 ```json
 { "code": "PED-000014", "result": "duplicado" }
