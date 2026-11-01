@@ -396,3 +396,16 @@ Claude Code
   - Cada endpoint y cada campo del contrato se contrastó con las secciones 2.2 y 2.3 del plan, y los estados del pedido con el `ENUM` de `orders` en `db/schema.sql` de la tienda.
   - `git check-ignore -v backoffice/config.php` confirma que el fichero queda fuera del repositorio.
   - Pendiente: revisión del contrato por A y C en el PR.
+
+## 2026-11-01 · José (B) · Tarea 2: revisión de César (A) al contrato del back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** aplicar en `docs/backoffice-api.md` (rama `feature/backoffice`) los comentarios de César al PR del contrato y llevarlos al código del bloque 5.
+- **Partes asistidas por IA:** los cambios del contrato (ejemplo en `pendiente_pago`, respuesta `desfasado`, orden de los pendientes, nuevo `GET /bo-api/integration-log/processed` y la limitación de `order_items`) y su implementación en `orders.php` e `integration_log.php` (rama `feature/backoffice-pedidos`).
+- **Errores detectados en la IA:**
+  - El primer contrato ponía el pedido nuevo en `pagado`, pero en la tienda se crea en `pendiente_pago` y el pago llega después como `order.status_changed`. Lo vio César en la revisión.
+  - La idempotencia por `event_id` no cubría los eventos que llegan desordenados: un reintento tardío podía devolver el pedido a un estado anterior. También lo detectó César.
+- **Cambios hechos por mí:**
+  - Pasé al hilo los comentarios de César y decidí aceptar los cuatro, con `desfasado` como valor nuevo de respuesta.
+- **Cómo lo validé:**
+  - Comparé cada cambio del contrato con los cuatro puntos de la revisión.
+  - Las pruebas del código están en la entrada siguiente.
