@@ -42,3 +42,9 @@ function db(): PDO
 
     return $pdo;
 }
+
+/** Error 1062 de MySQL: se ha saltado un UNIQUE (dos peticiones a la vez con el mismo dato). */
+function isDuplicateKey(PDOException $e): bool
+{
+    return ($e->errorInfo[1] ?? null) === 1062;
+}
