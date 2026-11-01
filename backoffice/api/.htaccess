@@ -1,0 +1,6 @@
+# Redirige todas las peticiones de /bo-api/... a index.php y bloquea el acceso directo al resto
+RewriteEngine On
+RewriteBase /bo-api/
+RewriteRule ^(lib|http)/ - [F,L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.php [QSA,L]
