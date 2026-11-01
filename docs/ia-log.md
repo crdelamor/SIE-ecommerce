@@ -444,3 +444,16 @@ Claude Code
 - **Cómo lo validé:**
   - Comparé cada cambio del contrato con los cuatro puntos de la revisión.
   - Las pruebas del código están en la entrada siguiente.
+
+## 2026-11-01 · José (B) · Tarea 2: eventos desordenados y procesados en el back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** llevar al código del bloque 5 (rama `feature/backoffice-pedidos`) los cambios del contrato que pidió César: respuesta `desfasado`, `GET /bo-api/integration-log/processed` y pendientes ordenados por `event_id`.
+- **Partes asistidas por IA:** `api/http/orders.php` (bloqueo del pedido con `FOR UPDATE` y comparación con el último `changed_at` del historial) y `api/http/integration_log.php` (nuevo endpoint y nuevo orden).
+- **Errores detectados en la IA:** ninguno en las pruebas de esta parte.
+- **Cambios hechos por mí:**
+  - Elegí `desfasado` como valor propio de la respuesta, en lugar de reutilizar `duplicado`, para que en el registro se distinga un evento repetido de uno que llegó tarde.
+- **Cómo lo validé:**
+  - En local: pedido en `pendiente_pago`, pago a las 10:02 y envío al día siguiente. Después, un `en_preparacion` con hora anterior al envío devuelve `desfasado`, queda en el historial y el pedido sigue en `enviado`. El mismo evento otra vez devuelve `duplicado`.
+  - `processed?after_id=N` devuelve solo los eventos cuyo último registro es `ok` o `duplicado`, en orden; uno que pasó de `pendiente` a `ok` con un reintento sí sale. Respeta `limit`, y sin `after_id` devuelve 422.
+  - Los pendientes salen ordenados por `event_id` aunque se registraran en otro orden.
+  - `php -l` sin errores. Después borré los datos de prueba.
