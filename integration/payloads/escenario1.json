@@ -1,0 +1,14 @@
+{
+  "event_id": 15,
+  "type": "order.created",
+  "entity_type": "order",
+  "entity_id": 10,
+  "occurred_at": "2026-11-01T11:55:47+01:00",
+  "source": "tienda",
+  "data": {
+    "code": "PED-000010",
+    "items": 2,
+    "total": 14.87,
+    "replaces": null
+  }
+}

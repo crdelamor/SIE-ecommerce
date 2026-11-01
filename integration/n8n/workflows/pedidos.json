@@ -1,0 +1,244 @@
+{
+  "id": "A0pedidos0000001",
+  "name": "Pedidos",
+  "active": false,
+  "settings": { "executionOrder": "v1", "timezone": "Europe/Madrid" },
+  "nodes": [
+    {
+      "id": "3f0a1c10-0001-4a00-8000-000000000001",
+      "name": "Webhook tienda",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300],
+      "webhookId": "6d1f2b7e-5c3a-4e8b-9a01-7f2c4d5e6a01",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "tienda",
+        "authentication": "headerAuth",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "credentials": { "httpHeaderAuth": { "id": "A0credWebhook001", "name": "Tienda X-Webhook-Secret" } }
+    },
+    {
+      "id": "3f0a1c10-0002-4a00-8000-000000000002",
+      "name": "Ajustes",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 300],
+      "notes": "URLs de la API de la tienda (en el hosting, https://www.theblacklotustcg.onl/api) y del back-office. Cambiarlas aquí al desplegar.",
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "a1", "name": "tienda_api_url", "value": "http://localhost:8000", "type": "string" },
+            { "id": "a2", "name": "bo_url", "value": "http://localhost:8080", "type": "string" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "3f0a1c10-0003-4a00-8000-000000000003",
+      "name": "Validar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 300],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Comprueba el sobre y los campos obligatorios de cada tipo (docs/integracion.md).\n// ruta: 0 incompleto, 1 order.created, 2 payment.simulated, 3 order.status_changed, 4 support.requested\nconst ev = $('Webhook tienda').item.json.body ?? {};\nconst data = ev.data ?? {};\nconst REQUIRED = {\n  'order.created': ['code'],\n  'payment.simulated': ['code', 'status'],\n  'order.status_changed': ['code', 'from', 'to'],\n  'support.requested': [],\n};\nconst empty = v => v === undefined || v === null || v === '';\nconst missing = ['type', 'occurred_at'].filter(k => empty(ev[k]));\nif (!(Number.isInteger(ev.event_id) && ev.event_id > 0)) missing.unshift('event_id');\nif (!empty(ev.type) && !(ev.type in REQUIRED)) missing.push('type');\nfor (const k of REQUIRED[ev.type] ?? []) if (empty(data[k])) missing.push('data.' + k);\n\nconst ruta = missing.length ? 0 : Object.keys(REQUIRED).indexOf(ev.type) + 1;\nreturn { json: { ...ev, data, missing, ruta } };"
+      }
+    },
+    {
+      "id": "3f0a1c10-0004-4a00-8000-000000000004",
+      "name": "Según el tipo",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [660, 300],
+      "parameters": { "mode": "expression", "numberOutputs": 5, "output": "={{ $json.ruta }}" }
+    },
+    {
+      "id": "3f0a1c10-0005-4a00-8000-000000000005",
+      "name": "Payload incompleto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 0],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { json: { result: 'error', error_type: 'payload_incompleto', message: 'Faltan o no son válidos: ' + $json.missing.join(', ') } };"
+      }
+    },
+    {
+      "id": "3f0a1c10-0006-4a00-8000-000000000006",
+      "name": "Pedir pedido a la tienda",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 160],
+      "onError": "continueErrorOutput",
+      "parameters": {
+        "url": "={{ $('Ajustes').item.json.tienda_api_url }}/integration/orders/{{ encodeURIComponent($json.data.code) }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": { "timeout": 10000 }
+      },
+      "credentials": { "httpHeaderAuth": { "id": "A0credTienda0001", "name": "Tienda X-Api-Key" } }
+    },
+    {
+      "id": "3f0a1c10-0007-4a00-8000-000000000007",
+      "name": "Transformar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 120],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Pedido de la tienda -> cuerpo de POST /bo-api/orders (docs/backoffice-api.md)\nconst o = $json;\nreturn { json: {\n  event_id: $('Validar').item.json.event_id,\n  code: o.code,\n  customer: { name: o.customer.name, email: o.customer.email },\n  status: o.status,\n  total: o.total,\n  placed_at: o.placed_at,\n  lines: o.lines.map(l => ({\n    product_name: l.product_name,\n    game: l.game ?? 'Desconocido', // el producto se borró de la tienda\n    set_name: l.set_name ?? null,\n    card_condition: l.card_condition ?? null,\n    language: l.language ?? null,\n    is_foil: l.is_foil ?? false,\n    quantity: l.quantity,\n    unit_price: l.unit_price,\n    line_total: l.line_total,\n  })),\n} };"
+      }
+    },
+    {
+      "id": "3f0a1c10-0008-4a00-8000-000000000008",
+      "name": "Crear en el back-office",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 120],
+      "onError": "continueErrorOutput",
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Ajustes').item.json.bo_url }}/bo-api/orders",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": { "timeout": 10000 }
+      },
+      "credentials": { "httpHeaderAuth": { "id": "A0credBackoff001", "name": "Back-office X-Api-Key" } }
+    },
+    {
+      "id": "3f0a1c10-0009-4a00-8000-000000000009",
+      "name": "Tienda no disponible",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 280],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { json: { result: 'pendiente', error_type: 'tienda_no_disponible', message: String($json.error?.message ?? 'La tienda no respondió').slice(0, 500) } };"
+      }
+    },
+    {
+      "id": "3f0a1c10-0010-4a00-8000-000000000010",
+      "name": "Pago (solo registro)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 400],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// El cambio a 'pagado' llega aparte como order.status_changed\nreturn { json: { result: 'ok', error_type: null, message: 'Pago ' + $json.data.status + '; el estado llega con order.status_changed' } };"
+      }
+    },
+    {
+      "id": "3f0a1c10-0011-4a00-8000-000000000011",
+      "name": "Actualizar estado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 560],
+      "onError": "continueErrorOutput",
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $('Ajustes').item.json.bo_url }}/bo-api/orders/{{ encodeURIComponent($json.data.code) }}/status",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ event_id: $json.event_id, status: $json.data.to, changed_at: $json.occurred_at }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "credentials": { "httpHeaderAuth": { "id": "A0credBackoff001", "name": "Back-office X-Api-Key" } }
+    },
+    {
+      "id": "3f0a1c10-0012-4a00-8000-000000000012",
+      "name": "Incidencias (flujo de C)",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [900, 720],
+      "notes": "support.requested lo procesa el flujo Incidencias de Celia. Pendiente de conectarlo.",
+      "parameters": {}
+    },
+    {
+      "id": "3f0a1c10-0013-4a00-8000-000000000013",
+      "name": "Correcto",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 300],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "return { json: { result: $json.result === 'duplicado' ? 'duplicado' : 'ok', error_type: null, message: 'Back-office: ' + ($json.result ?? 'ok') } };"
+      }
+    },
+    {
+      "id": "3f0a1c10-0014-4a00-8000-000000000014",
+      "name": "Clasificar error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 480],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Error del back-office: 404 = el pedido aún no está (se reintenta), 422/401 = no se reintenta\nconst err = $json.error ?? {};\nconst status = Number(err.httpCode ?? String(err.message ?? '').match(/^(\\d{3})/)?.[1] ?? 0);\nconst map = {\n  404: ['pendiente', 'pedido_no_existe'],\n  422: ['error', 'datos_no_validos'],\n  401: ['error', 'clave_no_valida'],\n};\nconst [result, error_type] = map[status] ?? ['pendiente', 'backoffice_no_disponible'];\nreturn { json: { result, error_type, message: String(err.message ?? 'El back-office no respondió').slice(0, 500) } };"
+      }
+    },
+    {
+      "id": "3f0a1c10-0015-4a00-8000-000000000015",
+      "name": "Registrar resultado",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1800, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Ajustes').item.json.bo_url }}/bo-api/integration-log",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ event_id: Number.isInteger($('Validar').item.json.event_id) && $('Validar').item.json.event_id > 0 ? $('Validar').item.json.event_id : null, event_type: String($('Validar').item.json.type ?? 'desconocido').slice(0, 50), workflow: 'Pedidos', result: $json.result, error_type: $json.error_type ?? null, message: $json.message ?? null, payload: $('Validar').item.json.data, n8n_execution_id: $execution.id }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "credentials": { "httpHeaderAuth": { "id": "A0credBackoff001", "name": "Back-office X-Api-Key" } }
+    }
+  ],
+  "connections": {
+    "Webhook tienda": { "main": [[{ "node": "Ajustes", "type": "main", "index": 0 }]] },
+    "Ajustes": { "main": [[{ "node": "Validar", "type": "main", "index": 0 }]] },
+    "Validar": { "main": [[{ "node": "Según el tipo", "type": "main", "index": 0 }]] },
+    "Según el tipo": {
+      "main": [
+        [{ "node": "Payload incompleto", "type": "main", "index": 0 }],
+        [{ "node": "Pedir pedido a la tienda", "type": "main", "index": 0 }],
+        [{ "node": "Pago (solo registro)", "type": "main", "index": 0 }],
+        [{ "node": "Actualizar estado", "type": "main", "index": 0 }],
+        [{ "node": "Incidencias (flujo de C)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Payload incompleto": { "main": [[{ "node": "Registrar resultado", "type": "main", "index": 0 }]] },
+    "Pedir pedido a la tienda": {
+      "main": [
+        [{ "node": "Transformar", "type": "main", "index": 0 }],
+        [{ "node": "Tienda no disponible", "type": "main", "index": 0 }]
+      ]
+    },
+    "Transformar": { "main": [[{ "node": "Crear en el back-office", "type": "main", "index": 0 }]] },
+    "Crear en el back-office": {
+      "main": [
+        [{ "node": "Correcto", "type": "main", "index": 0 }],
+        [{ "node": "Clasificar error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Tienda no disponible": { "main": [[{ "node": "Registrar resultado", "type": "main", "index": 0 }]] },
+    "Pago (solo registro)": { "main": [[{ "node": "Registrar resultado", "type": "main", "index": 0 }]] },
+    "Actualizar estado": {
+      "main": [
+        [{ "node": "Correcto", "type": "main", "index": 0 }],
+        [{ "node": "Clasificar error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Correcto": { "main": [[{ "node": "Registrar resultado", "type": "main", "index": 0 }]] },
+    "Clasificar error": { "main": [[{ "node": "Registrar resultado", "type": "main", "index": 0 }]] }
+  }
+}
