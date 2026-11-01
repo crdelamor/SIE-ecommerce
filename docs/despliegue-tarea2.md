@@ -48,22 +48,34 @@ Los flujos exportados en `integration/n8n/workflows/` solo hacen referencia a es
 
 "Reintentos" se puede dejar sin publicar en local y lanzar a mano con su nodo "Ejecutar ahora".
 
-### En la nube *(pendiente del servidor del Student Pack; se completará al desplegar)*
+### En el servidor: `deploy/docker-compose.yml`
 
-1. En el servidor, n8n con **PostgreSQL** (n8n ya no admite MySQL). Variables en `integration/n8n/.env.example`: copiarlo como `.env` en el servidor y rellenarlo allí.
-   - `N8N_ENCRYPTION_KEY`: generarla una vez y guardar una copia fuera del servidor. Si se pierde, n8n no puede leer las credenciales.
-   - `WEBHOOK_URL`: la URL pública con HTTPS (la necesitan la tienda y Telegram).
-2. Subdominio `n8n.theblacklotustcg.onl` apuntando al servidor (registro A en DonDominio) y HTTPS.
-3. Cuenta de administrador con contraseña fuerte; Celia y José, invitados como usuarios.
-4. Credenciales con los valores reales (nunca los de local) e importación de los flujos como en local.
-5. En el nodo **Ajustes** de cada flujo: `tienda_api_url` = `https://www.theblacklotustcg.onl/api`, `bo_url` = la URL del back-office y, en "Reintentos", `pedidos_webhook_url` = `https://n8n.theblacklotustcg.onl/webhook/tienda`. Publicar los dos flujos.
+Un solo `docker-compose` levanta los cuatro contenedores del servidor: **n8n** con su **PostgreSQL 17** (n8n ya no admite MySQL) y el **back-office** (`backoffice/Dockerfile`) con su **MySQL 8**. Cada sistema tiene su base de datos y su volumen; la tienda sigue en DonDominio.
+
+1. En el servidor, con Docker instalado, clonar el repositorio y:
+   ```
+   cd deploy
+   cp .env.example .env      # rellenarlo aquí; .env no se sube
+   docker compose up -d --build
+   ```
+   - Claves: `openssl rand -hex 32` para cada una.
+   - `N8N_ENCRYPTION_KEY`: guardar una copia fuera del servidor. Si se pierde, n8n no puede leer las credenciales.
+   - `N8N_WEBHOOK_URL`: la URL pública con HTTPS (la necesitan la tienda y Telegram).
+   - La primera vez, MySQL ejecuta `schema.sql` y `seed.sql` del back-office (tablas y gestor de prueba, sin pedidos).
+2. Subdominios `n8n.theblacklotustcg.onl` y `backoffice.theblacklotustcg.onl` apuntando al servidor (registros A en DonDominio) y HTTPS delante de los puertos `N8N_PORT` y `BO_PORT` *(pendiente: proxy con certificado, al desplegar)*.
+3. Cuenta de administrador de n8n con contraseña fuerte; Celia y José, invitados como usuarios.
+4. Credenciales con los valores reales (nunca los de local) e importación de los flujos (`docker compose exec n8n n8n import:workflow --input=...`).
+5. En el nodo **Ajustes** de cada flujo: `tienda_api_url` = `https://www.theblacklotustcg.onl/api`, `bo_url` = `http://backoffice` (nombre del servicio dentro de Docker) y, en "Reintentos", `pedidos_webhook_url` = `http://localhost:5678/webhook/tienda`. Publicar "Pedidos" y "Reintentos" y reiniciar n8n (`docker compose restart n8n`).
 6. En el `config.php` de la tienda en DonDominio: `webhook_url` = `https://n8n.theblacklotustcg.onl/webhook/tienda` y las claves reales.
-7. Comprobación igual que en local, con un pedido en la web publicada.
+7. Comprobación: un pedido en la web publicada y mirar *Executions* en n8n y `GET /bo-api/integration-log?result=ok`.
+
+**Probado en local** (Docker Desktop, 01/11/2026) con puertos 5688 y 8088 y la tienda en el equipo (`tienda_api_url` = `http://host.docker.internal:8001`): pedido y pago → pedido creado y pagado en el back-office del contenedor (`ok` ×3); tras `docker compose down` y `up`, siguen el pedido, los flujos y el webhook.
 
 ### Copias de seguridad
 
-- Flujos: `n8n export:workflow --all --separate --output=<carpeta>` (sin credenciales) y copiarlos a `integration/n8n/workflows/` si cambian.
-- Base de datos de n8n: `pg_dump` de la base `n8n`.
+- Flujos: `docker compose exec n8n n8n export:workflow --all --separate --output=/home/node/.n8n/backup` (sin credenciales) y copiarlos a `integration/n8n/workflows/` si cambian.
+- Base de datos de n8n: `docker compose exec n8n-db pg_dump -U n8n n8n > n8n.sql`.
+- Base de datos del back-office: `docker compose exec backoffice-db mysqldump -u root -p blacklotus_bo > backoffice.sql`.
 - La `N8N_ENCRYPTION_KEY`, guardada aparte.
 
 ## Parte B · Back-office
