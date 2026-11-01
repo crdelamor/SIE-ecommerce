@@ -473,3 +473,16 @@ Claude Code
   - `processed?after_id=N` devuelve solo los eventos cuyo último registro es `ok` o `duplicado`, en orden; uno que pasó de `pendiente` a `ok` con un reintento sí sale. Respeta `limit`, y sin `after_id` devuelve 422.
   - Los pendientes salen ordenados por `event_id` aunque se registraran en otro orden.
   - `php -l` sin errores. Después borré los datos de prueba.
+
+## 2026-11-01 · José (B) · Tarea 2: revisión de César (A) al PR de pedidos
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** aplicar los comentarios de César al PR de pedidos (`feature/backoffice-pedidos`). Tres de los cuatro puntos ya estaban hechos tras su revisión del contrato: eventos desordenados, lectura con `FOR UPDATE` dentro de la transacción y `GET /bo-api/integration-log/processed`. Faltaba el cambio al mismo estado.
+- **Partes asistidas por IA:** en `api/http/orders.php`, si el `status` que llega es igual al actual se responde `duplicado` sin añadir fila al historial; también la línea correspondiente en `docs/backoffice-api.md`.
+- **Errores detectados en la IA:**
+  - El código anterior guardaba `pagado → pagado` en el historial cuando el pedido llegaba ya pagado. Lo detectó César.
+  - En una prueba, un cambio sin `changed_at` salió como `desfasado` porque se usó la hora actual y los datos de prueba tenían fechas futuras. Era un problema de los datos de prueba, no del código; se repitió la prueba con fechas coherentes.
+- **Cambios hechos por mí:**
+  - Pasé al hilo la revisión de César y pedí aplicarla.
+- **Cómo lo validé:**
+  - En local: un pedido que llega en `pagado` y después recibe `pendiente_pago → pagado` devuelve `duplicado`, y el historial no cambia. Un segundo `enviado` con otro `event_id` también devuelve `duplicado` sin añadir fila.
+  - `php -l` sin errores. Después borré los datos de prueba.
