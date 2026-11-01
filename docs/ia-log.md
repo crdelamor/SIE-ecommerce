@@ -381,3 +381,18 @@ Claude Code
 - **Cómo lo validé:**
   - En la web publicada, con `curl`: el `POST /api/auth/logout` sin cuerpo daba 403 y la misma cookie seguía devolviendo los pedidos (200); con cuerpo `{}` da 200 y después la misma cookie recibe 401.
   - En local, login y logout con la API y `npm run build` sin errores.
+
+## 2026-11-01 · José (B) · Tarea 2: contrato de la API del back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** bloque 1 del back-office en la rama `feature/backoffice` (desde `develop`): escribir `docs/backoffice-api.md` con los endpoints de la sección 2.3 del plan v2 y añadir `backoffice/config.php` al `.gitignore`.
+- **Partes asistidas por IA:** la redacción de `docs/backoffice-api.md` (cabeceras, JSON de entrada y salida de ejemplo, códigos de respuesta y la lista de decisiones) y la descripción del PR.
+- **Errores detectados en la IA:**
+  - Al pasar el PDF del plan a texto, la tabla de la sección 2.2 salió con las columnas descolocadas (por ejemplo, los campos de `bo_customers` aparecían junto a `bo_orders`). Hubo que reconstruir qué campos van en cada tabla antes de escribir el contrato.
+  - Añadió cosas que el plan no fija: el `503` de `/bo-api/health`, el `405` y las prioridades `baja`/`media`/`alta`. Quedan como propuesta en la sección de decisiones para revisarlas con A y C.
+- **Cambios hechos por mí:**
+  - Decidí que ni los commits ni el PR lleven firma o coautoría de IA, y que el uso de IA se declare solo en este diario.
+  - Pedí la descripción del PR con las decisiones que tienen que revisar A y C, y abrí yo el PR desde GitHub.
+- **Cómo lo validé:**
+  - Cada endpoint y cada campo del contrato se contrastó con las secciones 2.2 y 2.3 del plan, y los estados del pedido con el `ENUM` de `orders` en `db/schema.sql` de la tienda.
+  - `git check-ignore -v backoffice/config.php` confirma que el fichero queda fuera del repositorio.
+  - Pendiente: revisión del contrato por A y C en el PR.
