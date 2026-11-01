@@ -25,4 +25,10 @@ return [
         'from_name' => 'The Black Lotus TCG',
         'site_url'  => 'https://www.tudominio.com',   // para el enlace a la confirmación
     ],
+    // Integración con n8n (Tarea 2). Sin 'webhook_url' no se envía nada y la tienda funciona igual.
+    'integration' => [
+        'webhook_url'    => '',   // URL de producción del nodo Webhook de n8n (https://...)
+        'webhook_secret' => '',   // va en la cabecera X-Webhook-Secret; el mismo valor en n8n
+        'api_key'        => '',   // la que manda n8n en X-Api-Key a /api/integration/*
+    ],
 ];

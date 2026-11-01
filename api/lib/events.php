@@ -3,10 +3,14 @@ declare(strict_types=1);
 
 /**
  * Registro de eventos. TODOS los eventos se guardan con logEvent().
+ * Los integrados con n8n se envían además al webhook al terminar la petición (lib/integration.php).
  *
  * Ejemplo:
  *   logEvent('order.created', 'order', $orderId, ['code' => $code, 'total' => $total]);
  */
+
+require_once __DIR__ . '/integration.php';
+
 function logEvent(string $type, ?string $entityType = null, ?int $entityId = null, array $payload = []): void
 {
     $stmt = db()->prepare(
@@ -22,4 +26,6 @@ function logEvent(string $type, ?string $entityType = null, ?int $entityId = nul
         // Identificador anónimo de la visita que enviará el front en la cabecera X-Session-Id
         'session_id'  => isset($_SERVER['HTTP_X_SESSION_ID']) ? substr($_SERVER['HTTP_X_SESSION_ID'], 0, 64) : null,
     ]);
+
+    queueIntegrationEvent((int) db()->lastInsertId(), $type);
 }
