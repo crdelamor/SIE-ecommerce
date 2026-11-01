@@ -214,6 +214,13 @@ $router->patch('/orders/{code}/status', function (array $params): void {
         // Evento desordenado (un reintento que llega tarde): se guarda en el
         // historial, pero no devuelve el pedido a un estado anterior
         $outdated = $lastChange !== null && $changedAt < $lastChange;
+
+        // Mismo estado que el actual (p. ej. el pedido ya llegó pagado): nada que cambiar
+        if (!$outdated && $body['status'] === $currentStatus) {
+            $pdo->rollBack();
+            jsonResponse(['code' => $order['code'], 'result' => 'duplicado']);
+        }
+
         if ($outdated) {
             $stmt = $pdo->prepare(
                 'SELECT to_status FROM bo_order_status_log
