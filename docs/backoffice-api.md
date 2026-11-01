@@ -89,7 +89,7 @@ Cuerpo:
   "event_id": 812,
   "code": "PED-000014",
   "customer": { "name": "Lucía Ficticia", "email": "lucia@example.com" },
-  "status": "pagado",
+  "status": "pendiente_pago",
   "total": 15.72,
   "placed_at": "2026-11-05T10:02:11+01:00",
   "lines": [
@@ -109,6 +109,10 @@ Cuerpo:
 ```
 
 Obligatorios: `event_id`, `code`, `customer.name`, `customer.email`, `status`, `total`, `placed_at` y al menos una línea con `product_name`, `game`, `quantity` (> 0), `unit_price` y `line_total`. `set_name`, `card_condition` y `language` pueden ser `null` (por ejemplo, en un sobre); `is_foil` es `false` si no llega.
+
+En la tienda el pedido se crea en `pendiente_pago`; el paso a `pagado` llega después como `order.status_changed` (lo lanza `PaymentService` al aprobar el pago).
+
+> Limitación: `order_items` de la tienda solo guarda `product_name`, `unit_price` y `line_total`. `game`, `set_name`, `card_condition`, `language` e `is_foil` los toma A del producto actual (y `game` de `categories.name`) en `GET /api/integration/orders/{code}`. Si el producto se edita después de la compra, la línea del back-office refleja el producto editado.
 
 Respuesta `201`:
 
@@ -148,6 +152,14 @@ Respuesta `200` si ese `event_id` ya se aplicó a este pedido (no se repite el c
 { "code": "PED-000014", "result": "duplicado" }
 ```
 
+Respuesta `200` si el evento llega desordenado, es decir, si su `changed_at` es anterior al último cambio del historial (por ejemplo, un reintento que llega tarde). Se guarda la fila en el historial, pero **no** se toca el estado actual del pedido:
+
+```json
+{ "code": "PED-000014", "from_status": "pendiente_pago", "to_status": "pagado", "result": "desfasado" }
+```
+
+`from_status` es el estado que tenía el pedido en ese momento del historial. Para n8n un evento `desfasado` está procesado: lo registra como `ok`.
+
 Errores: `401`, `404` si el pedido aún no está en el back-office (n8n lo deja como `pendiente` en el registro para reintentarlo), `422`.
 
 ### `GET /bo-api/orders/{code}`
@@ -180,7 +192,8 @@ Respuesta `200`:
     }
   ],
   "history": [
-    { "from_status": null, "to_status": "pagado", "changed_at": "2026-11-05T10:02:11+01:00", "event_id": 812 },
+    { "from_status": null, "to_status": "pendiente_pago", "changed_at": "2026-11-05T10:02:11+01:00", "event_id": 812 },
+    { "from_status": "pendiente_pago", "to_status": "pagado", "changed_at": "2026-11-05T10:02:40+01:00", "event_id": 813 },
     { "from_status": "pagado", "to_status": "enviado", "changed_at": "2026-11-06T09:30:00+01:00", "event_id": 815 }
   ]
 }
@@ -371,7 +384,7 @@ Errores: `401`, `422`.
 
 ### `GET /bo-api/integration-log?result=pendiente`
 
-Lista los registros con ese resultado. El flujo "Reintentos" la llama cada 5 minutos con `result=pendiente`. Solo devuelve los eventos cuyo **último** registro sigue en `pendiente`: si un reintento posterior quedó en `ok`, ese evento ya no sale.
+Lista los registros con ese resultado, ordenados por `event_id` ascendente (los que no tienen `event_id`, al final) para reintentarlos en orden. El flujo "Reintentos" la llama cada 5 minutos con `result=pendiente`. Solo devuelve los eventos cuyo **último** registro sigue en `pendiente`: si un reintento posterior quedó en `ok`, ese evento ya no sale.
 
 Parámetros: `result` (obligatorio, uno de los cuatro valores) y `limit` (opcional, 50 por defecto, máximo 200).
 
@@ -397,6 +410,20 @@ Respuesta `200`:
 ```
 
 Errores: `401`, `422` si falta `result` o no es válido.
+
+### `GET /bo-api/integration-log/processed?after_id=N`
+
+Lista los `event_id` mayores que `N` que el back-office ya tiene procesados, es decir, cuyo **último** registro es `ok` o `duplicado`. Sirve al flujo "Reintentos" para detectar huecos: si llegó el 811 pero no el 810, el 810 no aparece y se puede volver a pedir a la tienda.
+
+Parámetros: `after_id` (obligatorio, entero ≥ 0) y `limit` (opcional, 500 por defecto, máximo 1000).
+
+Respuesta `200`, ordenada de menor a mayor:
+
+```json
+{ "event_ids": [811, 812, 815] }
+```
+
+Errores: `401`, `422` si falta `after_id` o no es válido.
 
 ---
 
@@ -438,3 +465,5 @@ Errores: `401`.
 8. **El agente no decide el estado final.** `POST /proposals` siempre empieza en `pendiente_revision` y las transiciones de `PATCH /proposals/{id}` están cerradas.
 9. **`GET /orders/{code}` y `GET /customers/{id}/tickets` también piden `X-Api-Key`.** Aunque solo leen, el back-office tiene datos de clientes.
 10. **`reviewed_by` guarda el alias de Telegram** de quien aprueba (cuenta de pruebas), nunca un nombre real. Propuesto por A; lo confirma C.
+11. **Eventos desordenados** (revisión de A). Un cambio de estado con `changed_at` anterior al último del historial se guarda, pero no cambia el estado actual, y responde `desfasado`. Así un reintento tardío no devuelve el pedido a un estado anterior.
+12. **Eventos procesados** (revisión de A). `GET /integration-log/processed` devuelve todos los `event_id` procesados y no solo el último, para que los reintentos recuperen un evento perdido aunque haya llegado uno posterior.

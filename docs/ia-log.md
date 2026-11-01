@@ -414,3 +414,16 @@ Claude Code
   - Las 8 tablas `bo_*` están creadas, el gestor tiene un hash de `password_hash()` y no hay pedidos, incidencias ni registros (evidencia del "antes").
   - `php -l` sin errores en todos los ficheros PHP.
   - Pendiente: probar el `Dockerfile` (no tengo Docker instalado) y el despliegue de prueba en la nube.
+
+## 2026-11-01 · José (B) · Tarea 2: revisión de César (A) al contrato del back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** aplicar en `docs/backoffice-api.md` (rama `feature/backoffice`) los comentarios de César al PR del contrato y llevarlos al código del bloque 5.
+- **Partes asistidas por IA:** los cambios del contrato (ejemplo en `pendiente_pago`, respuesta `desfasado`, orden de los pendientes, nuevo `GET /bo-api/integration-log/processed` y la limitación de `order_items`) y su implementación en `orders.php` e `integration_log.php` (rama `feature/backoffice-pedidos`).
+- **Errores detectados en la IA:**
+  - El primer contrato ponía el pedido nuevo en `pagado`, pero en la tienda se crea en `pendiente_pago` y el pago llega después como `order.status_changed`. Lo vio César en la revisión.
+  - La idempotencia por `event_id` no cubría los eventos que llegan desordenados: un reintento tardío podía devolver el pedido a un estado anterior. También lo detectó César.
+- **Cambios hechos por mí:**
+  - Pasé al hilo los comentarios de César y decidí aceptar los cuatro, con `desfasado` como valor nuevo de respuesta.
+- **Cómo lo validé:**
+  - Comparé cada cambio del contrato con los cuatro puntos de la revisión.
+  - Las pruebas del código están en la entrada siguiente.
