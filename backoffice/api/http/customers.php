@@ -11,17 +11,17 @@ function isValidEmail(mixed $email): bool
     return is_string($email) && mb_strlen($email) <= 150 && filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
 }
 
-/** Id del cliente con ese email; si no existe, lo crea. */
+/**
+ * Id del cliente con ese email; si no existe, lo crea.
+ * Se hace en una sola sentencia para que dos altas a la vez con el mismo email
+ * no choquen con el UNIQUE: si ya existe, LAST_INSERT_ID(id) devuelve el suyo.
+ */
 function findOrCreateCustomer(string $name, string $email): int
 {
-    $stmt = db()->prepare('SELECT id FROM bo_customers WHERE email = ?');
-    $stmt->execute([$email]);
-    $id = $stmt->fetchColumn();
-    if ($id !== false) {
-        return (int) $id;
-    }
-
-    db()->prepare('INSERT INTO bo_customers (name, email) VALUES (?, ?)')->execute([$name, $email]);
+    db()->prepare(
+        'INSERT INTO bo_customers (name, email) VALUES (?, ?)
+         ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)'
+    )->execute([$name, $email]);
 
     return (int) db()->lastInsertId();
 }
