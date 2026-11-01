@@ -10,7 +10,7 @@ Nadie cambia este contrato sin avisar al grupo.
 
 | Tema | Regla |
 |---|---|
-| URL base | `https://<url-publica-del-back-office>/bo-api` (en local, `http://localhost:8080/bo-api`). La URL real va en `docs/despliegue-tarea2.md`. |
+| URL base | `https://backoffice.theblacklotustcg.onl/bo-api` (subdominio acordado; en local, `http://localhost:8080/bo-api` o el puerto que se use). El despliegue se describe en `docs/despliegue-tarea2.md`. |
 | Formato | JSON en UTF-8. Las peticiones con cuerpo llevan `Content-Type: application/json`. |
 | Autenticación | Cabecera `X-Api-Key: <clave del back-office>`. Es distinta de la clave de la tienda y solo está en las variables de entorno de la plataforma y en las credenciales de n8n. `GET /bo-api/health` no la pide; `GET /bo-api/metrics` acepta también la sesión del gestor. |
 | Importes | Número con 2 decimales (`15.72`). En la base de datos son `DECIMAL(10,2)`. |
@@ -319,17 +319,17 @@ Registra la decisión humana (botones Aprobar / Rechazar de Telegram) y, despué
 Cuerpo:
 
 ```json
-{ "final_status": "aprobado", "reviewed_by": "gestor@blacklotus.test" }
+{ "final_status": "aprobado", "reviewed_by": "@revisor_pruebas" }
 ```
 
 - `final_status`: `aprobado` o `rechazado` desde `pendiente_revision`; `ejecutado_simulado` solo desde `aprobado`.
-- `reviewed_by` es obligatorio al aprobar o rechazar. `reviewed_at` lo pone el back-office.
+- `reviewed_by` es obligatorio al aprobar o rechazar: el alias de Telegram (cuenta de pruebas) de quien aprueba, nunca un nombre real. `reviewed_at` lo pone el back-office.
 - Cualquier otro paso (por ejemplo, de `rechazado` a `aprobado`) da `422`.
 
 Respuesta `200`:
 
 ```json
-{ "id": 1, "final_status": "aprobado", "reviewed_by": "gestor@blacklotus.test", "reviewed_at": "2026-11-06T18:20:00+01:00" }
+{ "id": 1, "final_status": "aprobado", "reviewed_by": "@revisor_pruebas", "reviewed_at": "2026-11-06T18:20:00+01:00" }
 ```
 
 Errores: `401`, `404`, `422`.
@@ -357,7 +357,7 @@ Cuerpo:
 }
 ```
 
-Obligatorios: `event_type`, `workflow`, `result`. `event_id` puede ser `null` en un evento incompleto que llegó sin él. `error_type` y `message` se esperan cuando `result` no es `ok`. Los tipos de error los define `docs/integracion.md` (C).
+Obligatorios: `event_type`, `workflow`, `result`. `event_id` puede ser `null` en un evento incompleto que llegó sin él. `error_type` y `message` se esperan cuando `result` no es `ok`. Los tipos de error están en `docs/integracion.md` (C). Los del flujo de pedidos (A) son `payload_incompleto`, `secreto_invalido`, `pedido_no_existe`, `tienda_no_disponible` y `backoffice_no_disponible`.
 
 Cada ejecución es una fila nueva, también los reintentos: así se ve cuántas veces se intentó cada evento.
 
@@ -428,12 +428,13 @@ Errores: `401`.
 
 ## Decisiones tomadas en este contrato
 
-1. **Duplicados con 200, no con error.** El plan pide `200 duplicado`. Así n8n no entra en la rama de error por un evento repetido y puede apuntar `result: duplicado` en el registro.
-2. **Cliente por email.** `bo_customers` no tiene un id de la tienda, así que el email es la forma de no duplicar clientes entre pedidos y tickets.
-3. **`product_name` en las líneas.** La guía de arranque no lo nombraba, pero está en `bo_order_lines` (2.2) y sin él no se puede saber qué carta es.
+1. **Duplicados con 200, no con error** (acordado). El plan pide `200 duplicado`. Así n8n no entra en la rama de error por un evento repetido y puede apuntar `result: duplicado` en el registro.
+2. **Cliente por email** (acordado). `bo_customers` no tiene un id de la tienda, así que el email es la forma de no duplicar clientes entre pedidos y tickets.
+3. **`product_name` en las líneas** (acordado). La guía de arranque no lo nombraba, pero está en `bo_order_lines` (2.2) y sin él no se puede saber qué carta es.
 4. **`telegram_chat_id` en el cliente.** El plan lo pone en `bo_customers` y no en `bo_tickets`; `PATCH /tickets/{id}` lo guarda en el cliente del ticket.
 5. **Prioridades `baja`/`media`/`alta`.** El plan no las fija; se proponen estas tres y se cierran con C.
 6. **Las herramientas del agente no devuelven email ni chat.** El plan dice que al modelo solo le llegan motivo, mensaje y datos del pedido.
 7. **Idempotencia del cambio de estado por `event_id`.** `bo_order_status_log` guarda el `event_id`, así que un reintento del mismo cambio no crea otra fila de historial.
 8. **El agente no decide el estado final.** `POST /proposals` siempre empieza en `pendiente_revision` y las transiciones de `PATCH /proposals/{id}` están cerradas.
 9. **`GET /orders/{code}` y `GET /customers/{id}/tickets` también piden `X-Api-Key`.** Aunque solo leen, el back-office tiene datos de clientes.
+10. **`reviewed_by` guarda el alias de Telegram** de quien aprueba (cuenta de pruebas), nunca un nombre real. Propuesto por A; lo confirma C.
