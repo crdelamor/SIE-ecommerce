@@ -447,3 +447,29 @@ Claude Code
   - Historial del cliente sin email ni chat; cliente que no existe (404).
   - Propuesta del agente: se crea siempre en `pendiente_revision`, aunque el cuerpo traiga otro estado. No se puede ejecutar sin aprobar, aprobar sin `reviewed_by` ni rechazar una ya aprobada (422). Aprobar y después `ejecutado_simulado` funcionan (200).
   - Repetí el alta de pedido del bloque 5 tras mover la función del cliente. `php -l` sin errores. Después borré los datos de prueba.
+
+## 2026-11-01 · José (B) · Tarea 2: revisión de César (A) al contrato del back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** aplicar en `docs/backoffice-api.md` (rama `feature/backoffice`) los comentarios de César al PR del contrato y llevarlos al código del bloque 5.
+- **Partes asistidas por IA:** los cambios del contrato (ejemplo en `pendiente_pago`, respuesta `desfasado`, orden de los pendientes, nuevo `GET /bo-api/integration-log/processed` y la limitación de `order_items`) y su implementación en `orders.php` e `integration_log.php` (rama `feature/backoffice-pedidos`).
+- **Errores detectados en la IA:**
+  - El primer contrato ponía el pedido nuevo en `pagado`, pero en la tienda se crea en `pendiente_pago` y el pago llega después como `order.status_changed`. Lo vio César en la revisión.
+  - La idempotencia por `event_id` no cubría los eventos que llegan desordenados: un reintento tardío podía devolver el pedido a un estado anterior. También lo detectó César.
+- **Cambios hechos por mí:**
+  - Pasé al hilo los comentarios de César y decidí aceptar los cuatro, con `desfasado` como valor nuevo de respuesta.
+- **Cómo lo validé:**
+  - Comparé cada cambio del contrato con los cuatro puntos de la revisión.
+  - Las pruebas del código están en la entrada siguiente.
+
+## 2026-11-01 · José (B) · Tarea 2: eventos desordenados y procesados en el back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** llevar al código del bloque 5 (rama `feature/backoffice-pedidos`) los cambios del contrato que pidió César: respuesta `desfasado`, `GET /bo-api/integration-log/processed` y pendientes ordenados por `event_id`.
+- **Partes asistidas por IA:** `api/http/orders.php` (bloqueo del pedido con `FOR UPDATE` y comparación con el último `changed_at` del historial) y `api/http/integration_log.php` (nuevo endpoint y nuevo orden).
+- **Errores detectados en la IA:** ninguno en las pruebas de esta parte.
+- **Cambios hechos por mí:**
+  - Elegí `desfasado` como valor propio de la respuesta, en lugar de reutilizar `duplicado`, para que en el registro se distinga un evento repetido de uno que llegó tarde.
+- **Cómo lo validé:**
+  - En local: pedido en `pendiente_pago`, pago a las 10:02 y envío al día siguiente. Después, un `en_preparacion` con hora anterior al envío devuelve `desfasado`, queda en el historial y el pedido sigue en `enviado`. El mismo evento otra vez devuelve `duplicado`.
+  - `processed?after_id=N` devuelve solo los eventos cuyo último registro es `ok` o `duplicado`, en orden; uno que pasó de `pendiente` a `ok` con un reintento sí sale. Respeta `limit`, y sin `after_id` devuelve 422.
+  - Los pendientes salen ordenados por `event_id` aunque se registraran en otro orden.
+  - `php -l` sin errores. Después borré los datos de prueba.

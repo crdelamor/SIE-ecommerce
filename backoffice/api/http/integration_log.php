@@ -61,6 +61,34 @@ $router->post('/integration-log', function (): void {
     jsonResponse(['id' => (int) db()->lastInsertId()], 201);
 });
 
+// GET /bo-api/integration-log/processed?after_id=N - event_id ya procesados (último resultado ok o duplicado).
+// Con esta lista el flujo "Reintentos" detecta los eventos que se perdieron por el camino.
+$router->get('/integration-log/processed', function (): void {
+    $afterId = filter_var($_GET['after_id'] ?? null, FILTER_VALIDATE_INT, ['options' => ['min_range' => 0]]);
+    if ($afterId === false) {
+        jsonValidationError(['after_id']);
+    }
+    $limit = filter_var($_GET['limit'] ?? 500, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 1000]]);
+    if ($limit === false) {
+        jsonValidationError(['limit']);
+    }
+
+    $stmt = db()->prepare(
+        "SELECT l.event_id
+         FROM bo_integration_log l
+         WHERE l.event_id > ?
+           AND l.id = (SELECT MAX(l2.id) FROM bo_integration_log l2 WHERE l2.event_id = l.event_id)
+           AND l.result IN ('ok', 'duplicado')
+         ORDER BY l.event_id
+         LIMIT ?"
+    );
+    $stmt->bindValue(1, $afterId, PDO::PARAM_INT);
+    $stmt->bindValue(2, $limit, PDO::PARAM_INT);
+    $stmt->execute();
+
+    jsonResponse(['event_ids' => array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN))]);
+});
+
 // GET /bo-api/integration-log?result=pendiente&limit=50
 $router->get('/integration-log', function (): void {
     $result = $_GET['result'] ?? null;
@@ -80,7 +108,8 @@ $router->get('/integration-log', function (): void {
         $sql .= ' AND (l.event_id IS NULL
                        OR l.id = (SELECT MAX(l2.id) FROM bo_integration_log l2 WHERE l2.event_id = l.event_id))';
     }
-    $sql .= ' ORDER BY l.id LIMIT ?';
+    // En orden de evento, para reintentarlos en el mismo orden en que pasaron
+    $sql .= ' ORDER BY l.event_id IS NULL, l.event_id, l.id LIMIT ?';
 
     $stmt = db()->prepare($sql);
     $stmt->bindValue(1, $result);

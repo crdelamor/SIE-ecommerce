@@ -186,11 +186,34 @@ $router->patch('/orders/{code}/status', function (array $params): void {
     $pdo = db();
     $pdo->beginTransaction();
     try {
-        $pdo->prepare('UPDATE bo_orders SET status = ? WHERE id = ?')->execute([$body['status'], $orderId]);
+        // Bloquea el pedido para que dos cambios a la vez no se pisen
+        $stmt = $pdo->prepare('SELECT status FROM bo_orders WHERE id = ? FOR UPDATE');
+        $stmt->execute([$orderId]);
+        $currentStatus = $stmt->fetchColumn();
+
+        $stmt = $pdo->prepare('SELECT MAX(changed_at) FROM bo_order_status_log WHERE order_id = ?');
+        $stmt->execute([$orderId]);
+        $lastChange = $stmt->fetchColumn();
+
+        // Evento desordenado (un reintento que llega tarde): se guarda en el
+        // historial, pero no devuelve el pedido a un estado anterior
+        $outdated = $lastChange !== null && $changedAt < $lastChange;
+        if ($outdated) {
+            $stmt = $pdo->prepare(
+                'SELECT to_status FROM bo_order_status_log
+                 WHERE order_id = ? AND changed_at <= ? ORDER BY changed_at DESC, id DESC LIMIT 1'
+            );
+            $stmt->execute([$orderId, $changedAt]);
+            $fromStatus = $stmt->fetchColumn() ?: null;
+        } else {
+            $fromStatus = $currentStatus;
+            $pdo->prepare('UPDATE bo_orders SET status = ? WHERE id = ?')->execute([$body['status'], $orderId]);
+        }
+
         $pdo->prepare(
             'INSERT INTO bo_order_status_log (order_id, from_status, to_status, changed_at, event_id)
              VALUES (?, ?, ?, ?, ?)'
-        )->execute([$orderId, $order['status'], $body['status'], $changedAt, $body['event_id']]);
+        )->execute([$orderId, $fromStatus, $body['status'], $changedAt, $body['event_id']]);
         $pdo->commit();
     } catch (PDOException $e) {
         $pdo->rollBack();
@@ -202,9 +225,9 @@ $router->patch('/orders/{code}/status', function (array $params): void {
 
     jsonResponse([
         'code'        => $order['code'],
-        'from_status' => $order['status'],
+        'from_status' => $fromStatus,
         'to_status'   => $body['status'],
-        'result'      => 'actualizado',
+        'result'      => $outdated ? 'desfasado' : 'actualizado',
     ]);
 });
 
