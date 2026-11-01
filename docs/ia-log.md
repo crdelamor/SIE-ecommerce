@@ -414,3 +414,20 @@ Claude Code
   - Las 8 tablas `bo_*` están creadas, el gestor tiene un hash de `password_hash()` y no hay pedidos, incidencias ni registros (evidencia del "antes").
   - `php -l` sin errores en todos los ficheros PHP.
   - Pendiente: probar el `Dockerfile` (no tengo Docker instalado) y el despliegue de prueba en la nube.
+
+## 2026-11-01 · José (B) · Tarea 2: pedidos y registro de integración del back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** bloque 5 del back-office en la rama `feature/backoffice-pedidos`: `POST /bo-api/orders`, `PATCH /bo-api/orders/{code}/status`, `GET /bo-api/orders/{code}`, `POST /bo-api/integration-log` y `GET /bo-api/integration-log?result=pendiente`, tal como están en `docs/backoffice-api.md`. Es lo que necesita A para el escenario 1.
+- **Partes asistidas por IA:** `api/http/orders.php`, `api/http/integration_log.php` y las funciones comunes de validación y fechas añadidas a `api/lib/http.php` y `api/lib/db.php`.
+- **Errores detectados en la IA:**
+  - Las primeras pruebas del alta daban 400 («JSON no válido»). No era fallo del código: la terminal de Git Bash enviaba las tildes («Inglés», «Pokémon») sin UTF-8. Se repitieron las pruebas enviando el JSON desde un fichero.
+  - El código usa `mb_strlen` para contar caracteres con tildes, pero en mi PHP local la extensión `mbstring` no estaba activada. La imagen de Docker sí la trae; en local hay que activarla en `php.ini`.
+- **Cambios hechos por mí:**
+  - Pedí seguir con el bloque 5 en una rama aparte para que cada PR se pueda revisar por separado.
+- **Cómo lo validé:**
+  - En local, contra mi base `blacklotus_bo`: alta de un pedido con dos líneas (201), el mismo pedido otra vez (200 `duplicado`), un pedido con campos que faltan (422 con la lista de campos) y un cuerpo que no es JSON (400).
+  - Cambio de estado (200 con `from_status` y `to_status`), el mismo `event_id` otra vez (200 `duplicado`, sin otra fila de historial) y un pedido que no existe (404).
+  - La consulta del pedido devuelve las líneas, el historial y las fechas con zona, y no devuelve el email del cliente.
+  - Registro de integración: alta (201), datos no válidos (422) y lista de pendientes, donde no sale un evento que luego se reintentó con `ok`.
+  - Sin clave o con clave incorrecta, 401. `php -l` sin errores.
+  - Después borré los datos de prueba: el back-office queda vacío salvo el gestor.
