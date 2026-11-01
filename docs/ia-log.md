@@ -430,3 +430,5 @@ Claude Code
   - `deploy/docker-compose.yml` levantado en Docker Desktop con otro nombre de puertos (5688 y 8088) y sin tocar los contenedores de otra asignatura: pedido y pago llegaron al back-office del contenedor (`ok` ×3) y los datos siguieron tras `docker compose down` y `up`. n8n avisaba de que PostgreSQL 16 solo tiene soporte de compatibilidad: se pasó a la 17.
 - **Limitaciones:**
   - En una prueba, un `order.status_changed` enviado por la tienda no llegó a ejecutarse en n8n sin dejar error en ningún lado; no se encontró la causa. Lo cubrirá la recuperación con `/api/integration/events?after_id=`, pendiente del endpoint de eventos procesados del back-office.
+  - Escenario 2 desde la administración de la tienda: `pagado → en_preparacion → enviado → entregado` llega al back-office paso a paso con su historial; una cancelación de un pedido pagado devuelve el stock en la tienda (7 → 5 → 7) y deja el pedido `cancelado` en el back-office.
+  - `docs/diagramas/flujo-datos.svg` (y su PNG) dibujado a mano en SVG; se revisó la imagen generada y se recolocaron dos etiquetas que se cruzaban con las flechas.
