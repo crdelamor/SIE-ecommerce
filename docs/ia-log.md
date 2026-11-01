@@ -431,3 +431,16 @@ Claude Code
   - Registro de integración: alta (201), datos no válidos (422) y lista de pendientes, donde no sale un evento que luego se reintentó con `ok`.
   - Sin clave o con clave incorrecta, 401. `php -l` sin errores.
   - Después borré los datos de prueba: el back-office queda vacío salvo el gestor.
+
+## 2026-11-01 · José (B) · Tarea 2: revisión de César (A) al contrato del back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** aplicar en `docs/backoffice-api.md` (rama `feature/backoffice`) los comentarios de César al PR del contrato y llevarlos al código del bloque 5.
+- **Partes asistidas por IA:** los cambios del contrato (ejemplo en `pendiente_pago`, respuesta `desfasado`, orden de los pendientes, nuevo `GET /bo-api/integration-log/processed` y la limitación de `order_items`) y su implementación en `orders.php` e `integration_log.php` (rama `feature/backoffice-pedidos`).
+- **Errores detectados en la IA:**
+  - El primer contrato ponía el pedido nuevo en `pagado`, pero en la tienda se crea en `pendiente_pago` y el pago llega después como `order.status_changed`. Lo vio César en la revisión.
+  - La idempotencia por `event_id` no cubría los eventos que llegan desordenados: un reintento tardío podía devolver el pedido a un estado anterior. También lo detectó César.
+- **Cambios hechos por mí:**
+  - Pasé al hilo los comentarios de César y decidí aceptar los cuatro, con `desfasado` como valor nuevo de respuesta.
+- **Cómo lo validé:**
+  - Comparé cada cambio del contrato con los cuatro puntos de la revisión.
+  - Las pruebas del código están en la entrada siguiente.
