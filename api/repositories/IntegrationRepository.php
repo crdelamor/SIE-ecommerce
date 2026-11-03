@@ -44,6 +44,28 @@ final class IntegrationRepository
         return array_map([$this, 'envelope'], $stmt->fetchAll());
     }
 
+    /**
+     * Pasos del embudo entre dos fechas (incluidas): eventos y sesiones distintas de cada paso.
+     * Solo totales: ni ids, ni payloads, ni datos personales.
+     */
+    public function funnel(string $from, string $to): array
+    {
+        $steps = ['product.viewed', 'cart.item_added', 'checkout.started', 'order.created'];
+        $stmt = db()->prepare(
+            'SELECT type, COUNT(*) AS events, COUNT(DISTINCT session_id) AS sessions FROM events
+             WHERE type IN (?, ?, ?, ?) AND created_at >= ? AND created_at < DATE_ADD(?, INTERVAL 1 DAY)
+             GROUP BY type'
+        );
+        $stmt->execute([...$steps, $from, $to]);
+        $rows = array_column($stmt->fetchAll(), null, 'type');
+
+        return array_map(fn (string $type): array => [
+            'type'     => $type,
+            'events'   => (int) ($rows[$type]['events'] ?? 0),
+            'sessions' => (int) ($rows[$type]['sessions'] ?? 0),
+        ], $steps);
+    }
+
     public function findOrderIdByCode(string $code): ?int
     {
         $stmt = db()->prepare('SELECT id FROM orders WHERE code = :code');

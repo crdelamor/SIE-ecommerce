@@ -6,6 +6,7 @@ declare(strict_types=1);
  *
  *   GET /integration/orders/{code}
  *   GET /integration/events?after_id=&limit=
+ *   GET /integration/funnel?from=&to=
  */
 
 // lib/integration.php ya lo carga events.php (con IntegrationRepository)
@@ -72,4 +73,20 @@ $router->get('/integration/events', function (): void {
     }
 
     jsonResponse(['events' => (new IntegrationRepository())->findEventsAfter((int) $afterId, (int) $limit)]);
+});
+
+// ?from=2026-11-01&to=2026-11-30 (opcionales)  ->  200 { from, to, steps: [ { type, events, sessions }, ... ] }
+// Para la métrica de conversión del cuadro de mando: los eventos de navegación no salen de la tienda.
+$router->get('/integration/funnel', function (): void {
+    requireIntegrationKey();
+
+    $from = queryParam('from') ?? '2000-01-01';
+    $to = queryParam('to') ?? date('Y-m-d');
+    foreach ([$from, $to] as $date) {
+        if (DateTimeImmutable::createFromFormat('!Y-m-d', $date)?->format('Y-m-d') !== $date) {
+            jsonError('from y to van en formato AAAA-MM-DD', 400);
+        }
+    }
+
+    jsonResponse(['from' => $from, 'to' => $to, 'steps' => (new IntegrationRepository())->funnel($from, $to)]);
 });
