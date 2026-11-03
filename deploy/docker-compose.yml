@@ -43,6 +43,10 @@ services:
       TZ: Europe/Madrid
       N8N_DIAGNOSTICS_ENABLED: "false"
       N8N_PERSONALIZATION_ENABLED: "false"
+      # Mínimo privilegio: los nodos no leen variables de entorno y los Code no importan módulos
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "true"
+      NODE_FUNCTION_ALLOW_BUILTIN: ""
+      NODE_FUNCTION_ALLOW_EXTERNAL: ""
     volumes:
       - n8n_data:/home/node/.n8n
 
