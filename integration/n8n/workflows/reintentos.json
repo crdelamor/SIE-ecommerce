@@ -1,0 +1,298 @@
+{
+  "id": "A0reintentos0001",
+  "name": "Reintentos",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true,
+    "errorWorkflow": "A0errores0000001"
+  },
+  "nodes": [
+    {
+      "id": "4a1b2c30-0001-4b00-8000-000000000001",
+      "name": "Cada 5 minutos",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 5
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "4a1b2c30-0008-4b00-8000-000000000008",
+      "name": "Ejecutar ahora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        480
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "4a1b2c30-0002-4b00-8000-000000000002",
+      "name": "Ajustes",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        300
+      ],
+      "notes": "URLs de la API de la tienda, del back-office y del webhook del flujo Pedidos. Cambiarlas aquí al desplegar.",
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "tienda_api_url",
+              "value": "http://localhost:8000",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "bo_url",
+              "value": "http://localhost:8080",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "pedidos_webhook_url",
+              "value": "http://localhost:5678/webhook/tienda",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "4a1b2c30-0003-4b00-8000-000000000003",
+      "name": "Pendientes del registro",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "url": "={{ $json.bo_url }}/bo-api/integration-log",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "result",
+              "value": "pendiente"
+            },
+            {
+              "name": "limit",
+              "value": "50"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "A0credBackoff001",
+          "name": "Back-office X-Api-Key"
+        }
+      }
+    },
+    {
+      "id": "4a1b2c30-0004-4b00-8000-000000000004",
+      "name": "Uno por evento",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Los pendientes con event_id, del más antiguo al más reciente (los cambios de estado, en orden).\n// ponytail: se reintentan siempre, sin máximo de intentos; si un evento no se arregla nunca, se ve en el registro.\nconst items = $input.first().json.items ?? [];\nreturn items\n  .filter(i => Number.isInteger(i.event_id))\n  .sort((a, b) => a.event_id - b.event_id)\n  .map(i => ({ json: { event_id: i.event_id, event_type: i.event_type } }));"
+      }
+    },
+    {
+      "id": "4a1b2c30-0005-4b00-8000-000000000005",
+      "name": "Evento original de la tienda",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "url": "={{ $('Ajustes').first().json.tienda_api_url }}/integration/events",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "after_id",
+              "value": "={{ $json.event_id - 1 }}"
+            },
+            {
+              "name": "limit",
+              "value": "1"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "A0credTienda0001",
+          "name": "Tienda X-Api-Key"
+        }
+      }
+    },
+    {
+      "id": "4a1b2c30-0006-4b00-8000-000000000006",
+      "name": "Sobre",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Solo el evento que se buscaba (si la tienda devolviera otro, no se reenvía)\nreturn $input.all().flatMap((item, i) => {\n  const wanted = $('Uno por evento').all()[i].json.event_id;\n  const ev = (item.json.events ?? [])[0];\n  return ev && ev.event_id === wanted ? [{ json: ev }] : [];\n});"
+      }
+    },
+    {
+      "id": "4a1b2c30-0007-4b00-8000-000000000007",
+      "name": "Reenviar a Pedidos",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        300
+      ],
+      "notes": "Entra por el mismo webhook que la tienda: Pedidos valida, aplica y registra el resultado.",
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Ajustes').first().json.pedidos_webhook_url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 10000,
+          "batching": {
+            "batch": {
+              "batchSize": 1,
+              "batchInterval": 1000
+            }
+          }
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "A0credWebhook001",
+          "name": "Tienda X-Webhook-Secret"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Cada 5 minutos": {
+      "main": [
+        [
+          {
+            "node": "Ajustes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ajustes": {
+      "main": [
+        [
+          {
+            "node": "Pendientes del registro",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pendientes del registro": {
+      "main": [
+        [
+          {
+            "node": "Uno por evento",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Uno por evento": {
+      "main": [
+        [
+          {
+            "node": "Evento original de la tienda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Evento original de la tienda": {
+      "main": [
+        [
+          {
+            "node": "Sobre",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sobre": {
+      "main": [
+        [
+          {
+            "node": "Reenviar a Pedidos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar ahora": {
+      "main": [
+        [
+          {
+            "node": "Ajustes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}

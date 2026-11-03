@@ -1,0 +1,90 @@
+# Servidor de la nube: n8n (parte A) y back-office (parte B), cada uno con su base de datos.
+# La tienda sigue en DonDominio. Uso, desde esta carpeta:
+#   cp .env.example .env   (y rellenarlo; .env no se sube)
+#   docker compose up -d --build
+name: blacklotus
+
+services:
+  n8n-db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: n8n
+      POSTGRES_USER: n8n
+      POSTGRES_PASSWORD: ${N8N_DB_PASSWORD:?falta N8N_DB_PASSWORD en .env}
+    volumes:
+      - n8n_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U n8n -d n8n"]
+      interval: 5s
+      retries: 20
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:2.45.7
+    restart: unless-stopped
+    depends_on:
+      n8n-db:
+        condition: service_healthy
+    ports:
+      - "${N8N_PORT:-5678}:5678"
+    environment:
+      # PostgreSQL: n8n ya no admite MySQL. Sin base persistente se pierden flujos e historial.
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: n8n-db
+      DB_POSTGRESDB_DATABASE: n8n
+      DB_POSTGRESDB_USER: n8n
+      DB_POSTGRESDB_PASSWORD: ${N8N_DB_PASSWORD}
+      # Cifra las credenciales guardadas: fija y con copia fuera del servidor
+      N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?falta N8N_ENCRYPTION_KEY en .env}
+      # URL pública con la que n8n construye las URLs de los webhooks
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL:?falta N8N_WEBHOOK_URL en .env}
+      N8N_SECURE_COOKIE: ${N8N_SECURE_COOKIE:-true}
+      GENERIC_TIMEZONE: Europe/Madrid
+      TZ: Europe/Madrid
+      N8N_DIAGNOSTICS_ENABLED: "false"
+      N8N_PERSONALIZATION_ENABLED: "false"
+      # Mínimo privilegio: los nodos no leen variables de entorno y los Code no importan módulos
+      N8N_BLOCK_ENV_ACCESS_IN_NODE: "true"
+      NODE_FUNCTION_ALLOW_BUILTIN: ""
+      NODE_FUNCTION_ALLOW_EXTERNAL: ""
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  backoffice-db:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: blacklotus_bo
+      MYSQL_USER: blacklotus_bo
+      MYSQL_PASSWORD: ${BO_DB_PASSWORD:?falta BO_DB_PASSWORD en .env}
+      MYSQL_ROOT_PASSWORD: ${BO_DB_ROOT_PASSWORD:?falta BO_DB_ROOT_PASSWORD en .env}
+    volumes:
+      - backoffice_db:/var/lib/mysql
+      # Solo se ejecutan la primera vez (volumen vacío): tablas y gestor de prueba, sin pedidos
+      - ../backoffice/db/schema.sql:/docker-entrypoint-initdb.d/1-schema.sql:ro
+      - ../backoffice/db/seed.sql:/docker-entrypoint-initdb.d/2-seed.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u root -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      retries: 30
+
+  backoffice:
+    build: ../backoffice
+    restart: unless-stopped
+    depends_on:
+      backoffice-db:
+        condition: service_healthy
+    ports:
+      - "${BO_PORT:-8080}:80"
+    environment:
+      BO_DB_HOST: backoffice-db
+      BO_DB_PORT: "3306"
+      BO_DB_NAME: blacklotus_bo
+      BO_DB_USER: blacklotus_bo
+      BO_DB_PASSWORD: ${BO_DB_PASSWORD}
+      BO_API_KEY: ${BO_API_KEY:?falta BO_API_KEY en .env}
+
+volumes:
+  n8n_db:
+  n8n_data:
+  backoffice_db:

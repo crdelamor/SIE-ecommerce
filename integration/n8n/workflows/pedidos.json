@@ -2,7 +2,11 @@
   "id": "A0pedidos0000001",
   "name": "Pedidos",
   "active": false,
-  "settings": { "executionOrder": "v1", "timezone": "Europe/Madrid" },
+  "settings": { "executionOrder": "v1", "timezone": "Europe/Madrid",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true,
+    "errorWorkflow": "A0errores0000001" },
   "nodes": [
     {
       "id": "3f0a1c10-0001-4a00-8000-000000000001",
@@ -64,7 +68,7 @@
       "position": [900, 0],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "return { json: { result: 'error', error_type: 'payload_incompleto', message: 'Faltan o no son válidos: ' + $json.missing.join(', ') } };"
+        "jsCode": "return { json: { result: 'error', error_type: 'payload_incompleto', message: 'Validar: faltan o no son válidos: ' + $json.missing.join(', ') } };"
       }
     },
     {
@@ -120,7 +124,7 @@
       "position": [1120, 280],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "return { json: { result: 'pendiente', error_type: 'tienda_no_disponible', message: String($json.error?.message ?? 'La tienda no respondió').slice(0, 500) } };"
+        "jsCode": "return { json: { result: 'pendiente', error_type: 'tienda_no_disponible', message: 'Pedir pedido a la tienda: ' + String($json.error?.message ?? 'La tienda no respondió').slice(0, 500) } };"
       }
     },
     {
@@ -181,7 +185,7 @@
       "position": [1560, 480],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// Error del back-office: 404 = el pedido aún no está (se reintenta), 422/401 = no se reintenta\nconst err = $json.error ?? {};\nconst status = Number(err.httpCode ?? String(err.message ?? '').match(/^(\\d{3})/)?.[1] ?? 0);\nconst map = {\n  404: ['pendiente', 'pedido_no_existe'],\n  422: ['error', 'datos_no_validos'],\n  401: ['error', 'clave_no_valida'],\n};\nconst [result, error_type] = map[status] ?? ['pendiente', 'backoffice_no_disponible'];\nreturn { json: { result, error_type, message: String(err.message ?? 'El back-office no respondió').slice(0, 500) } };"
+        "jsCode": "// Error del back-office: 404 = el pedido aún no está (se reintenta), 422/401 = no se reintenta\nconst err = $json.error ?? {};\nconst status = Number(err.httpCode ?? String(err.message ?? '').match(/^(\\d{3})/)?.[1] ?? 0);\nconst map = {\n  404: ['pendiente', 'pedido_no_existe'],\n  422: ['error', 'datos_no_validos'],\n  401: ['error', 'clave_no_valida'],\n};\nconst [result, error_type] = map[status] ?? ['pendiente', 'backoffice_no_disponible'];\nreturn { json: { result, error_type, message: $prevNode.name + ': ' + String(err.message ?? 'El back-office no respondió').slice(0, 500) } };"
       }
     },
     {
