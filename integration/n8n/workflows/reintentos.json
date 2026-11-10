@@ -126,7 +126,7 @@
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "// Los pendientes con event_id, del más antiguo al más reciente (los cambios de estado, en orden).\n// ponytail: se reintentan siempre, sin máximo de intentos; si un evento no se arregla nunca, se ve en el registro.\nconst items = $input.first().json.items ?? [];\nreturn items\n  .filter(i => Number.isInteger(i.event_id))\n  .sort((a, b) => a.event_id - b.event_id)\n  .map(i => ({ json: { event_id: i.event_id, event_type: i.event_type } }));"
+        "jsCode": "// Los pendientes con event_id, del más antiguo al más reciente (los cambios de estado, en orden).\nconst items = $input.first().json.items ?? [];\nreturn items\n  .filter(i => Number.isInteger(i.event_id))\n  .sort((a, b) => a.event_id - b.event_id)\n  .map(i => ({ json: { event_id: i.event_id, event_type: i.event_type } }));"
       }
     },
     {
