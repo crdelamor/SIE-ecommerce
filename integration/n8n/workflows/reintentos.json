@@ -214,6 +214,146 @@
           "name": "Tienda X-Webhook-Secret"
         }
       }
+    },
+    {
+      "id": "4a1b2c30-0009-4b00-8000-000000000009",
+      "name": "Cursor",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        620
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Huecos: eventos de la tienda sin ningún registro en el back-office (no llegaron a n8n).\n// Se revisan a partir del último event_id ya revisado, que se guarda en los datos estáticos del flujo\n// (n8n solo los conserva en las ejecuciones automáticas; en una manual se empieza desde 0).\nconst sd = $getWorkflowStaticData('global');\nreturn [{ json: { cursor: sd.huecos_cursor ?? 0 } }];"
+      }
+    },
+    {
+      "id": "4a1b2c30-0010-4b00-8000-000000000010",
+      "name": "Eventos de la tienda",
+      "position": [
+        880,
+        620
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "url": "={{ $('Ajustes').first().json.tienda_api_url }}/integration/events",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "after_id",
+              "value": "={{ $json.cursor }}"
+            },
+            {
+              "name": "limit",
+              "value": "100"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "A0credTienda0001",
+          "name": "Tienda X-Api-Key"
+        }
+      }
+    },
+    {
+      "id": "4a1b2c30-0011-4b00-8000-000000000011",
+      "name": "Procesados",
+      "position": [
+        1100,
+        620
+      ],
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "url": "={{ $('Ajustes').first().json.bo_url }}/bo-api/integration-log/processed",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "after_id",
+              "value": "={{ $('Cursor').first().json.cursor }}"
+            },
+            {
+              "name": "limit",
+              "value": "1000"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "A0credBackoff001",
+          "name": "Back-office X-Api-Key"
+        }
+      }
+    },
+    {
+      "id": "4a1b2c30-0012-4b00-8000-000000000012",
+      "name": "Con error",
+      "position": [
+        1320,
+        620
+      ],
+      "notes": "Hasta 200 eventos cuyo último registro es error. Con más, alguno se reenviaría y volvería a quedar en error.",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "url": "={{ $('Ajustes').first().json.bo_url }}/bo-api/integration-log",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "result",
+              "value": "error"
+            },
+            {
+              "name": "limit",
+              "value": "200"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "A0credBackoff001",
+          "name": "Back-office X-Api-Key"
+        }
+      }
+    },
+    {
+      "id": "4a1b2c30-0013-4b00-8000-000000000013",
+      "name": "Huecos",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        620
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "// Un evento tiene registro si su último resultado es ok/duplicado (Procesados), pendiente o error.\n// Los pendientes ya los reenvía el otro ramal y los errores no se arreglan reenviando.\n// support.requested se excluye: lo registra el flujo Incidencias (C), no Pedidos.\nconst EXCLUIDOS = ['support.requested'];\n// Los de los últimos 2 minutos tampoco se tocan: pueden estar llegando ahora por el webhook.\nconst limite = Date.now() - 2 * 60 * 1000;\n\nconst events = $('Eventos de la tienda').first().json.events ?? [];\nconst conRegistro = new Set([\n  ...($('Procesados').first().json.event_ids ?? []),\n  ...($('Pendientes del registro').first().json.items ?? []).map(i => i.event_id),\n  ...($('Con error').first().json.items ?? []).map(i => i.event_id),\n]);\n\nlet cursor = $('Cursor').first().json.cursor;\nlet avanza = true;\nconst huecos = [];\nfor (const ev of events) {\n  if (conRegistro.has(ev.event_id) || EXCLUIDOS.includes(ev.type)) {\n    if (avanza) cursor = ev.event_id;\n    continue;\n  }\n  avanza = false; // el cursor no pasa de un evento sin registro hasta que lo tenga\n  if (new Date(ev.occurred_at).getTime() <= limite) huecos.push({ json: ev });\n}\n$getWorkflowStaticData('global').huecos_cursor = cursor;\nreturn huecos;"
+      }
     }
   ],
   "connections": {
@@ -244,6 +384,11 @@
         [
           {
             "node": "Uno por evento",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Cursor",
             "type": "main",
             "index": 0
           }
@@ -288,6 +433,61 @@
         [
           {
             "node": "Ajustes",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cursor": {
+      "main": [
+        [
+          {
+            "node": "Eventos de la tienda",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Eventos de la tienda": {
+      "main": [
+        [
+          {
+            "node": "Procesados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Procesados": {
+      "main": [
+        [
+          {
+            "node": "Con error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Con error": {
+      "main": [
+        [
+          {
+            "node": "Huecos",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Huecos": {
+      "main": [
+        [
+          {
+            "node": "Reenviar a Pedidos",
             "type": "main",
             "index": 0
           }

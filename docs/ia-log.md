@@ -447,7 +447,7 @@ Claude Code
 - **Errores detectados en la IA:**
   - Intentó lanzar el flujo con `n8n execute` sin un disparador manual y con el n8n local encendido (puerto 5679 ocupado); se añadió el nodo "Ejecutar ahora" y otro puerto para la ejecución desde la consola.
   - La primera versión de la matriz ponía Zapier como alternativa SaaS sin más; el enunciado no acepta herramientas 100 % no-code como Zapier, así que se cambió por Make y se dejó escrito.
-  - `.env.*` del `.gitignore` también ignora `.env.example`; se añadió forzado en vez de cambiar el `.gitignore` común.
+  - `.env.*` del `.gitignore` también ignora `.env.example`; se añadió forzado en vez de cambiar el `.gitignore` común. En la revisión José pidió la excepción `!.env.example` en el `.gitignore` y se cambió.
   - Con varios pendientes a la vez, "Reenviar a Pedidos" fallaba ("Paired item data ... is unavailable") porque leía los ajustes con `.item` después de un nodo Code que crea elementos nuevos; se cambió a `.first()`. Con un solo pendiente no se veía.
 - **Cambios hechos por mí:**
   - Pedí adelantar lo que no dependía de nadie mientras José añade el endpoint de eventos procesados.
@@ -456,7 +456,26 @@ Claude Code
   - Reintentos en local contra el back-office de José: un `order.status_changed` pendiente (`pedido_no_existe`) se aplicó al reintentarlo después de crear el pedido; un evento que no existe en la tienda se queda pendiente y no se reenvía.
   - Los totales de la matriz salen de un script (pesos que suman 100, puntuaciones de 1 a 5).
   - `deploy/docker-compose.yml` levantado en Docker Desktop con otro nombre de puertos (5688 y 8088) y sin tocar los contenedores de otra asignatura: pedido y pago llegaron al back-office del contenedor (`ok` ×3) y los datos siguieron tras `docker compose down` y `up`. n8n avisaba de que PostgreSQL 16 solo tiene soporte de compatibilidad: se pasó a la 17.
-- **Limitaciones:**
-  - En una prueba, un `order.status_changed` enviado por la tienda no llegó a ejecutarse en n8n sin dejar error en ningún lado; no se encontró la causa. Lo cubrirá la recuperación con `/api/integration/events?after_id=`, pendiente del endpoint de eventos procesados del back-office.
   - Escenario 2 desde la administración de la tienda: `pagado → en_preparacion → enviado → entregado` llega al back-office paso a paso con su historial; una cancelación de un pedido pagado devuelve el stock en la tienda (7 → 5 → 7) y deja el pedido `cancelado` en el back-office.
   - `docs/diagramas/flujo-datos.svg` (y su PNG) dibujado a mano en SVG; se revisó la imagen generada y se recolocaron dos etiquetas que se cruzaban con las flechas.
+- **Limitaciones:**
+  - En una prueba, un `order.status_changed` enviado por la tienda no llegó a ejecutarse en n8n sin dejar error en ningún lado; no se encontró la causa. Lo cubre la recuperación de huecos de la entrada siguiente.
+
+## 2026-11-10 · César (A) · Tarea 2: cambios tras la revisión de José (#28 a #31)
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** aplicar los puntos de la revisión de José en `feature/integracion`, `feature/integracion-pedidos` y `feature/integracion-reintentos`, y en `feature/matriz-decision` (#31): tabla de la plataforma de despliegue (Student Pack con `docker-compose`, Render, Railway y DonDominio), descarte de "una tabla más en la tienda" y de ampliar `/#/admin`, y la hoja de Google en lugar de Airtable.
+- **Partes asistidas por IA:** los cambios en `api/lib/integration.php`, en los nodos de "Pedidos" y "Reintentos" y en el compose, y las pruebas con datos simulados.
+- **Errores detectados en la IA** (los encontró José en la revisión):
+  - El envío a n8n esperaba hasta 2 s por cada evento de la petición; con n8n caído, una compra con tres eventos tardaba 6 s. Ahora se corta en el primer fallo y el resto lo recupera Reintentos. Si no existe `fastcgi_finish_request()` se usa `litespeed_finish_request()`.
+  - "Pedidos" dejaba en `pendiente` cualquier error de la tienda, también un 401 o un 404, que no se arreglan reintentando. Ahora un 4xx queda en `error` (`clave_no_valida`, `pedido_no_existe_en_tienda` o `datos_no_validos`) y solo la red y los 5xx quedan en `pendiente`.
+  - Reintentos solo reenviaba los `pendiente` del registro: un evento que no llegó a n8n no se recuperaba nunca. Se añade el ramal de huecos con `GET /bo-api/integration-log/processed?after_id=N`.
+  - Quedaba en "Reintentos" un comentario interno de la herramienta (`ponytail:`); se quitó.
+  - El compose publicaba los puertos de n8n y del back-office en todas las interfaces; ahora solo en `127.0.0.1`, para que desde Internet solo se entre por el proxy.
+- **Cambios hechos por mí:**
+  - El endpoint de tickets y el paso de `support.requested` a un flujo propio son de la parte de Celia (C) según el plan; no los hago yo. Reintentos excluye `support.requested` de forma explícita al buscar huecos.
+- **Cómo lo validé:**
+  - Envío con un receptor que tarda 5 s y tres eventos en cola: 6,0 s antes del cambio y 2,0 s después.
+  - Código del nodo "Error de la tienda" con seis errores simulados: 401, 404 y 400 → `error`; 503, conexión rechazada y sin error → `pendiente`.
+  - Nodos "Cursor" y "Huecos" con respuestas simuladas: reenvía solo los eventos sin ningún registro, no toca `support.requested`, los errores ni los de los últimos 2 minutos, y el cursor no pasa del primer hueco.
+- **Limitaciones:**
+  - El ramal de huecos no está probado todavía en n8n contra el back-office. El cursor se guarda en los datos estáticos del flujo, que n8n solo conserva en las ejecuciones automáticas.
