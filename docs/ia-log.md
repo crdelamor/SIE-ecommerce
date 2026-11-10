@@ -397,6 +397,24 @@ Claude Code
   - `git check-ignore -v backoffice/config.php` confirma que el fichero queda fuera del repositorio.
   - Pendiente: revisión del contrato por A y C en el PR.
 
+## 2026-11-01 · José (B) · Tarea 2: base de datos, esqueleto de la API y Dockerfile del back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** bloques 2, 3 y 4 del back-office en la rama `feature/backoffice-base`: esquema y datos iniciales (`backoffice/db/`), esqueleto de la API con `X-Api-Key` y `GET /bo-api/health`, y `Dockerfile` para el despliegue en la nube.
+- **Partes asistidas por IA:** `schema.sql` (8 tablas `bo_*` del apartado 2.2 del plan), `seed.sql`, `config.example.php` (lee las claves de variables de entorno), `api/index.php`, `api/.htaccess`, `api/lib/` (`db.php`, `http.php`, `auth.php`, `router.php`), `api/http/health.php`, `Dockerfile`, `.dockerignore` y la portada provisional `public/index.php`. También los pasos para preparar MySQL y PHP en local.
+- **Errores detectados en la IA:**
+  - En el `.htaccess` de la API faltaba `RewriteBase /bo-api/`, necesario porque en el contenedor la API se sirve con un `Alias` de Apache. Se corrigió antes del commit.
+  - Propuso arrancar en el puerto 8080, que en mi equipo ya estaba ocupado por otro programa; usamos el 8090.
+  - El esqueleto copia la forma del router y de las respuestas de la tienda, pero sin incluir ningún fichero de `/api`, como pide el plan.
+- **Cambios hechos por mí:**
+  - Configuré MySQL 8.4 como servicio de Windows, activé `pdo_mysql` en PHP y creé la base `blacklotus_bo` con su propio usuario, distinto del de la tienda.
+  - Generé yo el hash del gestor de prueba y escribí yo las contraseñas y la clave de la API en `backoffice/config.php`, que no se sube; la IA no las vio.
+- **Cómo lo validé:**
+  - `GET /bo-api/health` con la base de datos: `{"status":"ok","database":"ok"}`. Sin base de datos devuelve 503.
+  - Una ruta sin clave o con una clave incorrecta devuelve 401; con la clave buena pasa la comprobación (404 porque los pedidos aún no están programados). Un método no permitido devuelve 405.
+  - Las 8 tablas `bo_*` están creadas, el gestor tiene un hash de `password_hash()` y no hay pedidos, incidencias ni registros (evidencia del "antes").
+  - `php -l` sin errores en todos los ficheros PHP.
+  - Pendiente: probar el `Dockerfile` (no tengo Docker instalado) y el despliegue de prueba en la nube.
+
 ## 2026-11-01 · José (B) · Tarea 2: revisión de César (A) al contrato del back-office
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
 - **Tarea:** aplicar en `docs/backoffice-api.md` (rama `feature/backoffice`) los comentarios de César al PR del contrato y llevarlos al código del bloque 5.
@@ -409,3 +427,13 @@ Claude Code
 - **Cómo lo validé:**
   - Comparé cada cambio del contrato con los cuatro puntos de la revisión.
   - Las pruebas del código están en la entrada siguiente.
+
+## 2026-11-01 · José (B) · Tarea 2: parada del contenedor del back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** corregir el `Dockerfile` del back-office (rama `feature/backoffice-base`) a partir de lo que vio César al probarlo con su `docker-compose.yml`.
+- **Partes asistidas por IA:** el cambio del `CMD`, que ahora termina en `exec apache2-foreground`.
+- **Errores detectados en la IA:** el `CMD` en forma shell dejaba a `sh` como proceso principal. Al hacer `docker compose down`, la señal de parada no llegaba a Apache y Docker lo mataba a los 10 s (código 137). No lo vimos antes porque yo no tengo Docker instalado; lo detectó César.
+- **Cambios hechos por mí:**
+  - Pasé al hilo el comentario de César y pedí aplicarlo.
+- **Cómo lo validé:**
+  - No lo he podido probar: no tengo Docker. Queda pendiente que César lo compruebe con su compose (el contenedor debe pararse sin el código 137) y probarlo yo en el servidor.
