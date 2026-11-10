@@ -5,8 +5,8 @@ declare(strict_types=1);
  * Integración con n8n (Tarea 2, A).
  *
  * logEvent() deja en cola los eventos integrados y, al terminar la petición, se envían al
- * webhook de n8n con el sobre común (docs/integracion.md). Si n8n no responde en 2 s la compra
- * sigue igual: el evento ya está en `events` y el flujo "Reintentos" lo recupera con
+ * webhook de n8n con el sobre común (docs/integracion.md). Si n8n no responde en 2 s se deja de
+ * enviar y la compra sigue igual: el evento ya está en `events` y el flujo "Reintentos" lo recupera con
  * GET /api/integration/events?after_id=.
  */
 
@@ -50,8 +50,11 @@ function sendIntegrationEvents(array $ids): void
         if (db()->inTransaction()) {
             return;
         }
+        // El cliente recibe su respuesta sin esperar a n8n (PHP-FPM o LiteSpeed, según el hosting)
         if (function_exists('fastcgi_finish_request')) {
-            fastcgi_finish_request(); // el cliente recibe su respuesta sin esperar a n8n
+            fastcgi_finish_request();
+        } elseif (function_exists('litespeed_finish_request')) {
+            litespeed_finish_request();
         }
 
         $config = integrationConfig();
@@ -63,7 +66,10 @@ function sendIntegrationEvents(array $ids): void
                 'timeout' => 2,
             ]]));
             if ($sent === false) {
-                error_log("Integración: n8n no ha recibido el evento {$event['event_id']} ({$event['type']})");
+                // Se corta en el primer fallo para no esperar 2 s por cada evento:
+                // este y los siguientes los recoge "Reintentos" con /events?after_id=
+                error_log("Integración: n8n no ha recibido el evento {$event['event_id']} ({$event['type']}); el resto lo recupera Reintentos");
+                break;
             }
         }
     } catch (Throwable $e) {

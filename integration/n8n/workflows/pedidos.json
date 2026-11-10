@@ -118,13 +118,13 @@
     },
     {
       "id": "3f0a1c10-0009-4a00-8000-000000000009",
-      "name": "Tienda no disponible",
+      "name": "Error de la tienda",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [1120, 280],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "return { json: { result: 'pendiente', error_type: 'tienda_no_disponible', message: 'Pedir pedido a la tienda: ' + String($json.error?.message ?? 'La tienda no respondió').slice(0, 500) } };"
+        "jsCode": "// Error de la tienda: la red o un 5xx se reintentan (pendiente); un 4xx no se arregla reintentando (error)\nconst err = $json.error ?? {};\nconst status = Number(err.httpCode ?? String(err.message ?? '').match(/^(\\d{3})/)?.[1] ?? 0);\nconst map = {\n  401: ['error', 'clave_no_valida'],\n  404: ['error', 'pedido_no_existe_en_tienda'],\n};\nconst [result, error_type] = map[status] ?? (status >= 400 && status < 500 ? ['error', 'datos_no_validos'] : ['pendiente', 'tienda_no_disponible']);\nreturn { json: { result, error_type, message: 'Pedir pedido a la tienda: ' + String(err.message ?? 'La tienda no respondió').slice(0, 500) } };"
       }
     },
     {
@@ -163,7 +163,7 @@
       "type": "n8n-nodes-base.noOp",
       "typeVersion": 1,
       "position": [900, 720],
-      "notes": "support.requested lo procesa el flujo Incidencias de Celia. Pendiente de conectarlo.",
+      "notes": "support.requested lo procesa y lo registra el flujo Incidencias de Celia (C). Hasta que exista, aquí no se registra y Reintentos lo excluye de forma explícita.",
       "parameters": {}
     },
     {
@@ -224,7 +224,7 @@
     "Pedir pedido a la tienda": {
       "main": [
         [{ "node": "Transformar", "type": "main", "index": 0 }],
-        [{ "node": "Tienda no disponible", "type": "main", "index": 0 }]
+        [{ "node": "Error de la tienda", "type": "main", "index": 0 }]
       ]
     },
     "Transformar": { "main": [[{ "node": "Crear en el back-office", "type": "main", "index": 0 }]] },
@@ -234,7 +234,7 @@
         [{ "node": "Clasificar error", "type": "main", "index": 0 }]
       ]
     },
-    "Tienda no disponible": { "main": [[{ "node": "Registrar resultado", "type": "main", "index": 0 }]] },
+    "Error de la tienda": { "main": [[{ "node": "Registrar resultado", "type": "main", "index": 0 }]] },
     "Pago (solo registro)": { "main": [[{ "node": "Registrar resultado", "type": "main", "index": 0 }]] },
     "Actualizar estado": {
       "main": [
