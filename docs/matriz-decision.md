@@ -16,7 +16,9 @@ Comparación de alternativas para el caso de la Tarea 2: que los pedidos e incid
 | **A1** | Híbrida: back-office propio + n8n autoalojado | Back-office PHP + MySQL propio y n8n en un servidor de la nube; la tienda envía eventos por webhook | e. arquitectura híbrida + f. plataforma de automatización |
 | **A2** | SaaS | Make como integrador y un CRM SaaS (por ejemplo, HubSpot) como back-office (Zapier queda fuera: el enunciado no acepta herramientas 100 % no-code) | b. solución SaaS |
 | **A3** | ERP parametrizable | Odoo Community autoalojado (módulos de ventas y helpdesk) y n8n o su API XML-RPC para integrarlo | c. ERP/CRM parametrizable |
-| **A4** | Low-code | Una hoja de cálculo o Airtable como "back-office" y n8n moviendo los datos | d. plataforma low-code/no-code |
+| **A4** | Low-code | Una hoja de Google como "back-office" y n8n moviendo los datos | d. plataforma low-code/no-code |
+
+No entran en la matriz **una tabla más en la base de datos de la tienda** ni **ampliar la administración de la tienda (`/#/admin`)**: no son un sistema distinto con almacenamiento y acceso propios, que es lo que pide el enunciado.
 
 ## Criterios y pesos
 
@@ -62,7 +64,7 @@ Puntuación de 1 (muy mal) a 5 (muy bien) en cada criterio. Total = suma de punt
 - **A1 Híbrida.** Integración y trazabilidad máximas: el contrato de eventos es nuestro, cada ejecución queda en `bo_integration_log` y en el historial de n8n. Coste casi nulo (n8n y el back-office son software libre o propio, en un servidor con créditos de estudiante). Los datos están en nuestro servidor, lo que facilita el RGPD. Lo malo: hay que programar el back-office y mantener el servidor (copias de seguridad, actualizaciones de n8n), y un único servidor escala poco.
 - **A2 SaaS.** Rápida de montar y sin mantenimiento, y escala sola. Pero el coste es una suscripción mensual que crece con las ejecuciones o los usuarios, los datos de clientes salen a proveedores externos (a menudo fuera de la UE, con transferencias internacionales que justificar) y todo depende de sus planes y precios. Además, el enunciado no acepta tecnologías 100 % no-code como Zapier: habría que añadir igualmente código propio para la validación y la lógica.
 - **A3 ERP (Odoo Community).** La más completa en funcionalidad (ventas, clientes, helpdesk) y sin licencia en la edición Community. Pero es la que más cuesta implantar y mantener: parametrizar módulos, aprender su modelo de datos y su API, y un servidor con más recursos. Es desproporcionada para una tienda de este tamaño.
-- **A4 Low-code.** La más rápida de montar, pero una hoja de cálculo no es un sistema con acceso y almacenamiento propios de verdad: sin control de acceso fino, sin claves únicas que eviten duplicados, sin integridad entre pedidos y líneas, y con poca trazabilidad.
+- **A4 Low-code.** La más rápida de montar, pero apenas lleva programación, n8n necesita credenciales OAuth de Google y una hoja de cálculo no es un sistema con acceso y almacenamiento propios de verdad: sin control de acceso fino, sin claves únicas que eviten duplicados, sin integridad entre pedidos y líneas, y con poca trazabilidad.
 
 ## Análisis de sensibilidad
 
@@ -85,3 +87,14 @@ Riesgos que asumimos y cómo se cubren:
 | Mantenimiento del servidor | Un solo `docker-compose`, copias de seguridad de la base de datos y de los flujos exportados en el repositorio |
 | Seguridad de las claves | Secretos solo en variables de entorno y credenciales de n8n; claves distintas para la tienda y el back-office |
 | Crecimiento | Si el volumen creciera mucho, n8n admite modo cola con varios procesos, y el back-office podría pasar a un ERP (A3) usando el mismo contrato de eventos |
+
+## Plataforma de despliegue
+
+El enunciado exige que n8n y el back-office estén desplegados fuera de nuestros ordenadores. n8n necesita una base de datos persistente (PostgreSQL) para no perder los flujos ni el historial de ejecuciones, que es parte de la trazabilidad.
+
+| Plataforma | Qué ofrece | Problema | Decisión |
+|---|---|---|---|
+| **Servidor con los créditos del GitHub Student Developer Pack + `docker-compose`** | Un servidor propio con n8n + PostgreSQL y el back-office + MySQL, cada uno con su volumen (`deploy/docker-compose.yml`) | Hay que mantener el servidor (actualizaciones y copias de seguridad) | **Elegida** |
+| Render (plan gratuito) | Imagen oficial `n8nio/n8n` | El servicio se duerme, el disco es efímero y la base de datos PostgreSQL gratuita caduca a los 30 días | Descartada |
+| Railway | Plantilla de n8n con base de datos | Solo una prueba gratuita (30 días o 5 $) | Descartada |
+| DonDominio (hosting de la tienda) | Ya lo tenemos pagado | Solo admite PHP y MySQL: no puede ejecutar n8n (Node.js) y el back-office no sería un sistema separado de la tienda | Descartada |
