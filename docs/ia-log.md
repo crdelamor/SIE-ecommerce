@@ -415,6 +415,23 @@ Claude Code
   - `php -l` sin errores en todos los ficheros PHP.
   - Pendiente: probar el `Dockerfile` (no tengo Docker instalado) y el despliegue de prueba en la nube.
 
+## 2026-11-01 · José (B) · Tarea 2: pedidos y registro de integración del back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** bloque 5 del back-office en la rama `feature/backoffice-pedidos`: `POST /bo-api/orders`, `PATCH /bo-api/orders/{code}/status`, `GET /bo-api/orders/{code}`, `POST /bo-api/integration-log` y `GET /bo-api/integration-log?result=pendiente`, tal como están en `docs/backoffice-api.md`. Es lo que necesita A para el escenario 1.
+- **Partes asistidas por IA:** `api/http/orders.php`, `api/http/integration_log.php` y las funciones comunes de validación y fechas añadidas a `api/lib/http.php` y `api/lib/db.php`.
+- **Errores detectados en la IA:**
+  - Las primeras pruebas del alta daban 400 («JSON no válido»). No era fallo del código: la terminal de Git Bash enviaba las tildes («Inglés», «Pokémon») sin UTF-8. Se repitieron las pruebas enviando el JSON desde un fichero.
+  - El código usa `mb_strlen` para contar caracteres con tildes, pero en mi PHP local la extensión `mbstring` no estaba activada. La imagen de Docker sí la trae; en local hay que activarla en `php.ini`.
+- **Cambios hechos por mí:**
+  - Pedí seguir con el bloque 5 en una rama aparte para que cada PR se pueda revisar por separado.
+- **Cómo lo validé:**
+  - En local, contra mi base `blacklotus_bo`: alta de un pedido con dos líneas (201), el mismo pedido otra vez (200 `duplicado`), un pedido con campos que faltan (422 con la lista de campos) y un cuerpo que no es JSON (400).
+  - Cambio de estado (200 con `from_status` y `to_status`), el mismo `event_id` otra vez (200 `duplicado`, sin otra fila de historial) y un pedido que no existe (404).
+  - La consulta del pedido devuelve las líneas, el historial y las fechas con zona, y no devuelve el email del cliente.
+  - Registro de integración: alta (201), datos no válidos (422) y lista de pendientes, donde no sale un evento que luego se reintentó con `ok`.
+  - Sin clave o con clave incorrecta, 401. `php -l` sin errores.
+  - Después borré los datos de prueba: el back-office queda vacío salvo el gestor.
+
 ## 2026-11-01 · José (B) · Tarea 2: revisión de César (A) al contrato del back-office
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
 - **Tarea:** aplicar en `docs/backoffice-api.md` (rama `feature/backoffice`) los comentarios de César al PR del contrato y llevarlos al código del bloque 5.
@@ -427,6 +444,32 @@ Claude Code
 - **Cómo lo validé:**
   - Comparé cada cambio del contrato con los cuatro puntos de la revisión.
   - Las pruebas del código están en la entrada siguiente.
+
+## 2026-11-01 · José (B) · Tarea 2: eventos desordenados y procesados en el back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** llevar al código del bloque 5 (rama `feature/backoffice-pedidos`) los cambios del contrato que pidió César: respuesta `desfasado`, `GET /bo-api/integration-log/processed` y pendientes ordenados por `event_id`.
+- **Partes asistidas por IA:** `api/http/orders.php` (bloqueo del pedido con `FOR UPDATE` y comparación con el último `changed_at` del historial) y `api/http/integration_log.php` (nuevo endpoint y nuevo orden).
+- **Errores detectados en la IA:** ninguno en las pruebas de esta parte.
+- **Cambios hechos por mí:**
+  - Elegí `desfasado` como valor propio de la respuesta, en lugar de reutilizar `duplicado`, para que en el registro se distinga un evento repetido de uno que llegó tarde.
+- **Cómo lo validé:**
+  - En local: pedido en `pendiente_pago`, pago a las 10:02 y envío al día siguiente. Después, un `en_preparacion` con hora anterior al envío devuelve `desfasado`, queda en el historial y el pedido sigue en `enviado`. El mismo evento otra vez devuelve `duplicado`.
+  - `processed?after_id=N` devuelve solo los eventos cuyo último registro es `ok` o `duplicado`, en orden; uno que pasó de `pendiente` a `ok` con un reintento sí sale. Respeta `limit`, y sin `after_id` devuelve 422.
+  - Los pendientes salen ordenados por `event_id` aunque se registraran en otro orden.
+  - `php -l` sin errores. Después borré los datos de prueba.
+
+## 2026-11-01 · José (B) · Tarea 2: revisión de César (A) al PR de pedidos
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** aplicar los comentarios de César al PR de pedidos (`feature/backoffice-pedidos`). Tres de los cuatro puntos ya estaban hechos tras su revisión del contrato: eventos desordenados, lectura con `FOR UPDATE` dentro de la transacción y `GET /bo-api/integration-log/processed`. Faltaba el cambio al mismo estado.
+- **Partes asistidas por IA:** en `api/http/orders.php`, si el `status` que llega es igual al actual se responde `duplicado` sin añadir fila al historial; también la línea correspondiente en `docs/backoffice-api.md`.
+- **Errores detectados en la IA:**
+  - El código anterior guardaba `pagado → pagado` en el historial cuando el pedido llegaba ya pagado. Lo detectó César.
+  - En una prueba, un cambio sin `changed_at` salió como `desfasado` porque se usó la hora actual y los datos de prueba tenían fechas futuras. Era un problema de los datos de prueba, no del código; se repitió la prueba con fechas coherentes.
+- **Cambios hechos por mí:**
+  - Pasé al hilo la revisión de César y pedí aplicarla.
+- **Cómo lo validé:**
+  - En local: un pedido que llega en `pagado` y después recibe `pendiente_pago → pagado` devuelve `duplicado`, y el historial no cambia. Un segundo `enviado` con otro `event_id` también devuelve `duplicado` sin añadir fila.
+  - `php -l` sin errores. Después borré los datos de prueba.
 
 ## 2026-11-01 · José (B) · Tarea 2: parada del contenedor del back-office
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
