@@ -24,8 +24,7 @@ function validateNewOrder(array $body): array
     if (!isText($customer['name'] ?? null, 120)) {
         $errors[] = 'customer.name';
     }
-    $email = $customer['email'] ?? null;
-    if (!is_string($email) || mb_strlen($email) > 150 || filter_var($email, FILTER_VALIDATE_EMAIL) === false) {
+    if (!isValidEmail($customer['email'] ?? null)) {
         $errors[] = 'customer.email';
     }
     if (!in_array($body['status'] ?? null, ORDER_STATUSES, true)) {
@@ -79,21 +78,6 @@ function validateNewOrder(array $body): array
     }
 
     return $errors;
-}
-
-/** Id del cliente con ese email; si no existe, lo crea. */
-function findOrCreateCustomer(string $name, string $email): int
-{
-    $stmt = db()->prepare('SELECT id FROM bo_customers WHERE email = ?');
-    $stmt->execute([$email]);
-    $id = $stmt->fetchColumn();
-    if ($id !== false) {
-        return (int) $id;
-    }
-
-    db()->prepare('INSERT INTO bo_customers (name, email) VALUES (?, ?)')->execute([$name, $email]);
-
-    return (int) db()->lastInsertId();
 }
 
 function findOrderByCode(string $code): ?array

@@ -432,6 +432,22 @@ Claude Code
   - Sin clave o con clave incorrecta, 401. `php -l` sin errores.
   - Después borré los datos de prueba: el back-office queda vacío salvo el gestor.
 
+## 2026-11-01 · José (B) · Tarea 2: incidencias y propuestas del agente en el back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** bloque 6 del back-office en la rama `feature/backoffice-incidencias`: `POST /bo-api/tickets`, `PATCH /bo-api/tickets/{id}`, `GET /bo-api/customers/{id}/tickets`, `POST /bo-api/proposals` y `PATCH /bo-api/proposals/{id}`, según `docs/backoffice-api.md`. Es lo que necesita C para el escenario 3 y el agente.
+- **Partes asistidas por IA:** `api/http/tickets.php`, `api/http/customers.php` (donde pasa la búsqueda o alta del cliente por email, que antes estaba en `orders.php`) y `api/http/proposals.php`.
+- **Errores detectados en la IA:**
+  - La búsqueda del cliente por email estaba dentro de `orders.php` y los tickets también la necesitan. Funcionaba solo por el orden en que se cargan los ficheros, así que se movió a `customers.php`.
+  - En `POST /bo-api/tickets` el contrato pide `event_id`, pero la tabla `bo_tickets` del plan no tiene ese campo: se valida pero no se guarda. La trazabilidad del evento queda en `bo_integration_log`. Lo comento con C.
+- **Cambios hechos por mí:**
+  - Pedí seguir con el bloque 6 en una rama aparte, como los anteriores.
+- **Cómo lo validé:**
+  - En local, contra mi base `blacklotus_bo`: alta de ticket (201), el mismo `shop_ticket_id` otra vez (200 `duplicado`) y campos que faltan (422).
+  - `PATCH` del ticket: prioridad y estado, chat de Telegram (se guarda en el cliente), cierre con `closed_at`, cuerpo vacío o prioridad no válida (422) y ticket que no existe (404).
+  - Historial del cliente sin email ni chat; cliente que no existe (404).
+  - Propuesta del agente: se crea siempre en `pendiente_revision`, aunque el cuerpo traiga otro estado. No se puede ejecutar sin aprobar, aprobar sin `reviewed_by` ni rechazar una ya aprobada (422). Aprobar y después `ejecutado_simulado` funcionan (200).
+  - Repetí el alta de pedido del bloque 5 tras mover la función del cliente. `php -l` sin errores. Después borré los datos de prueba.
+
 ## 2026-11-01 · José (B) · Tarea 2: revisión de César (A) al contrato del back-office
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
 - **Tarea:** aplicar en `docs/backoffice-api.md` (rama `feature/backoffice`) los comentarios de César al PR del contrato y llevarlos al código del bloque 5.
@@ -470,6 +486,17 @@ Claude Code
 - **Cómo lo validé:**
   - En local: un pedido que llega en `pagado` y después recibe `pendiente_pago → pagado` devuelve `duplicado`, y el historial no cambia. Un segundo `enviado` con otro `event_id` también devuelve `duplicado` sin añadir fila.
   - `php -l` sin errores. Después borré los datos de prueba.
+
+## 2026-11-01 · José (B) · Tarea 2: revisión de César (A) al PR de incidencias
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** corregir en `feature/backoffice-incidencias` lo que vio César: dos altas a la vez con el mismo email nuevo hacían saltar el `UNIQUE` de `bo_customers` y la API respondía 500.
+- **Partes asistidas por IA:** `findOrCreateCustomer` en `api/http/customers.php`, que ahora usa una sola sentencia `INSERT ... ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)` en lugar de buscar y luego insertar.
+- **Errores detectados en la IA:** la versión anterior buscaba el cliente y después lo insertaba en dos pasos, así que dos peticiones a la vez podían intentar crear el mismo cliente. Lo detectó César en la revisión.
+- **Cambios hechos por mí:**
+  - Pasé al hilo la revisión de César y pedí corregirla.
+- **Cómo lo validé:**
+  - En local, con dos servidores de PHP a la vez, mandé cinco pares de altas de ticket simultáneas, cada par con el mismo email nuevo: las diez respondieron 201, se crearon 5 clientes (uno por email) y ningún ticket quedó sin cliente.
+  - Un alta de pedido con un email ya existente reutiliza el cliente. `php -l` sin errores. Después borré los datos de prueba.
 
 ## 2026-11-01 · José (B) · Tarea 2: parada del contenedor del back-office
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
