@@ -477,5 +477,7 @@ Claude Code
   - Envío con un receptor que tarda 5 s y tres eventos en cola: 6,0 s antes del cambio y 2,0 s después.
   - Código del nodo "Error de la tienda" con seis errores simulados: 401, 404 y 400 → `error`; 503, conexión rechazada y sin error → `pendiente`.
   - Nodos "Cursor" y "Huecos" con respuestas simuladas: reenvía solo los eventos sin ningún registro, no toca `support.requested`, los errores ni los de los últimos 2 minutos, y el cursor no pasa del primer hueco.
+  - En n8n local (2.45.7, "Reintentos" publicado con su disparador de 5 minutos) contra el back-office de José (`feature/backoffice-pedidos`) con la base vacía: la primera vuelta recuperó los 47 eventos de la tienda (35 `ok` y 12 `duplicado`, 14 pedidos creados). Después, con el registro del evento 54 borrado y un `support.requested` nuevo (55), la segunda vuelta reenvió solo el 54, se saltó el 55 y dejó el cursor en 53; la tercera no reenvió nada y lo pasó a 55.
+  - Un `order.created` con un código que no existe en la tienda queda `error` / `pedido_no_existe_en_tienda` con el mensaje "Pedir pedido a la tienda: 404 …".
 - **Limitaciones:**
-  - El ramal de huecos no está probado todavía en n8n contra el back-office. El cursor se guarda en los datos estáticos del flujo, que n8n solo conserva en las ejecuciones automáticas.
+  - El cursor se guarda en los datos estáticos del flujo, que n8n solo conserva en las ejecuciones automáticas; con "Ejecutar ahora" se empieza desde 0 (se revisa todo, sin reenviar lo que ya tiene registro).
