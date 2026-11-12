@@ -302,7 +302,7 @@ Cuerpo:
 ```json
 {
   "ticket_id": 1,
-  "case_type": "producto_danado",
+  "case_type": "dano_envio",
   "consulted_data": {
     "order": "PED-000014",
     "lines": 1,
@@ -370,7 +370,7 @@ Cuerpo:
 }
 ```
 
-Obligatorios: `event_type`, `workflow`, `result`. `event_id` puede ser `null` en un evento incompleto que llegó sin él. `error_type` y `message` se esperan cuando `result` no es `ok`. Los tipos de error están en `docs/integracion.md` (C). Los del flujo de pedidos (A) son `payload_incompleto`, `secreto_invalido`, `pedido_no_existe`, `tienda_no_disponible` y `backoffice_no_disponible`.
+Obligatorios: `event_type`, `workflow`, `result`. `event_id` puede ser `null` en un evento incompleto que llegó sin él. `error_type` y `message` se esperan cuando `result` no es `ok`. Los tipos de error están en `docs/integracion.md`.
 
 Cada ejecución es una fila nueva, también los reintentos: así se ve cuántas veces se intentó cada evento.
 

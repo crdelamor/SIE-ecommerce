@@ -507,3 +507,18 @@ Claude Code
   - Pasé al hilo el comentario de César y pedí aplicarlo.
 - **Cómo lo validé:**
   - No lo he podido probar: no tengo Docker. Queda pendiente que César lo compruebe con su compose (el contenedor debe pararse sin el código 137) y probarlo yo en el servidor.
+
+## 2026-11-13 · José (B) · Tarea 2: integración del back-office en develop
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** llevar el back-office a `develop` con un PR desde `feature/backoffice-pedidos` y aplicar dos cambios del contrato que pidió Celia.
+- **Partes asistidas por IA:**
+  - Detectar que los PR #25, #26 y #27 se habían fusionado cada uno en su rama base y que `develop` solo tenía el contrato (#24).
+  - Comprobar que `feature/backoffice-pedidos` se fusiona sin conflictos con `develop`.
+  - En `docs/backoffice-api.md`: el ejemplo de `POST /bo-api/proposals` usa ahora `case_type` `dano_envio`, y los tipos de error se remiten a `docs/integracion.md` en lugar de repetirlos.
+- **Errores detectados en la IA:** en un borrador de mensaje para César propuso arrancar el compose desde `feature/backoffice-pedidos`, que no tiene el `docker-compose.yml`. Se corrigió antes de enviarlo.
+- **Cambios hechos por mí:**
+  - Pedí los dos cambios del contrato a partir de lo que dijo Celia.
+  - Reviso el diff del PR antes de fusionarlo.
+- **Cómo lo validé:**
+  - La clave `dano_envio` es la que usa `api/services/SupportService.php`.
+  - Simulé la fusión con `develop` (`git merge-tree`) sin conflictos.
