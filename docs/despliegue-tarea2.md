@@ -4,7 +4,7 @@ Cómo se ponen en marcha n8n (parte A) y el back-office (parte B), en local para
 
 | Sistema | Local | Nube |
 |---|---|---|
-| Tienda | `php -S localhost:8000 index.php` desde `api/` | https://www.theblacklotustcg.onl/ (DonDominio) |
+| Tienda | `php -S localhost:8000` desde la raíz del repositorio (la API queda en `/api`, como en el hosting) | https://www.theblacklotustcg.onl/ (DonDominio) |
 | n8n | http://localhost:5678 | `https://n8n.theblacklotustcg.onl` *(pendiente del servidor)* |
 | Back-office | `php -S localhost:8080 api/index.php` desde `backoffice/` | `https://backoffice.theblacklotustcg.onl` *(pendiente del servidor)* |
 
@@ -73,7 +73,7 @@ Un solo `docker-compose` levanta los cuatro contenedores del servidor: **n8n** c
 
 ### Copias de seguridad
 
-- Flujos: `docker compose exec n8n n8n export:workflow --all --separate --output=/home/node/.n8n/backup` (sin credenciales) y copiarlos a `integration/n8n/workflows/` si cambian.
+- Flujos: `docker compose exec n8n n8n export:workflow --all --separate --output=/home/node/.n8n/backup` (sin credenciales) y copiarlos a `integration/n8n/workflows/` si cambian, devolviendo antes el `chatId` de "Errores" a `PENDIENTE_CHAT_ID` y las URLs de **Ajustes** a las de local.
 - Base de datos de n8n: `docker compose exec n8n-db pg_dump -U n8n n8n > n8n.sql`.
 - Base de datos del back-office: `docker compose exec backoffice-db mysqldump -u root -p blacklotus_bo > backoffice.sql`.
 - La `N8N_ENCRYPTION_KEY`, guardada aparte.
