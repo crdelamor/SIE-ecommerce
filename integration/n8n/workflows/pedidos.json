@@ -30,7 +30,7 @@
       "parameters": {
         "assignments": {
           "assignments": [
-            { "id": "a1", "name": "tienda_api_url", "value": "http://localhost:8000", "type": "string" },
+            { "id": "a1", "name": "tienda_api_url", "value": "http://localhost:8000/api", "type": "string" },
             { "id": "a2", "name": "bo_url", "value": "http://localhost:8080", "type": "string" }
           ]
         },
