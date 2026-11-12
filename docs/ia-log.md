@@ -481,3 +481,19 @@ Claude Code
   - Un `order.created` con un código que no existe en la tienda queda `error` / `pedido_no_existe_en_tienda` con el mensaje "Pedir pedido a la tienda: 404 …".
 - **Limitaciones:**
   - El cursor se guarda en los datos estáticos del flujo, que n8n solo conserva en las ejecuciones automáticas; con "Ejecutar ahora" se empieza desde 0 (se revisa todo, sin reenviar lo que ya tiene registro).
+
+## 2026-11-12 · César (A) · Tarea 2: prueba de #28 a #31 fusionados
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** probar los cuatro PR de la parte A juntos, en el orden de fusión propuesto (back-office de José, #31, #28, #29 y #30) sobre `develop`, y probar el flujo "Errores" con el bot de Telegram de pruebas.
+- **Partes asistidas por IA:** el montaje de la prueba (rama temporal con las fusiones, base del back-office desde cero) y el script que crea los pedidos y cambia los estados.
+- **Errores detectados en la IA:**
+  - El valor local de `tienda_api_url` en "Pedidos" y "Reintentos" era `http://localhost:8000`, que solo funciona arrancando la tienda desde `api/`. El README la arranca desde la raíz (la API queda en `/api`) y en producción también lleva `/api`, así que n8n recibía `404 Ruta no encontrada`. Ahora es `http://localhost:8000/api` y la guía de despliegue dice lo mismo que el README.
+  - La guía no avisaba de que, al exportar los flujos del servidor, el `chatId` de "Errores" y las URLs de **Ajustes** salen con los valores reales. Ahora lo dice.
+- **Cambios hechos por mí:**
+  - Decidir que el arreglo de la URL va en nuestros ficheros (flujos y guía) y no en el README, que es común.
+- **Cómo lo validé:**
+  - Fusión de prueba: `docs/ia-log.md` choca con `feature/backoffice-pedidos` (las dos ramas añaden entradas al final); se resuelve dejando las de las dos. Nada más choca. `php -l` sin errores en `api/` y `backoffice/`; los JSON de flujos y payloads son válidos.
+  - Escenarios 1 y 2: pedido con dos líneas pagado y llevado hasta `entregado` desde la administración, y otro sin pagar cancelado; los dos quedan igual en el back-office. `cancelado → pagado` da 409 sin evento, el payload incompleto queda `error` / `payload_incompleto` y el webhook sin secreto da 403.
+  - El cambio a `pagado` llegó antes que su pedido (`pendiente` / `pedido_no_existe`) y la siguiente vuelta de Reintentos lo dejó `ok`.
+  - Huecos con eventos reales: dos eventos se enviaron mientras n8n arrancaba (no los recibió) y otros fallaron por la URL; Reintentos los recuperó todos (3 pedidos más en el back-office, 2 `duplicado`) y el cursor no pasó del primero sin registro.
+  - "Errores": con el back-office parado, "Pedidos" falla al registrar y llega al canal de pruebas de Telegram "Error en n8n / Flujo: Pedidos / Paso: Registrar resultado / Causa: The service refused the connection…". Al volver el back-office, Reintentos recupera el pedido.
