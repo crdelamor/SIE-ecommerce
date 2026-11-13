@@ -62,6 +62,23 @@ final class SupportTicketRepository
         return ['tickets' => $tickets, 'total' => $total];
     }
 
+    /**
+     * Incidencia para n8n (Tarea 2). El código del pedido solo sale si el ticket quedó
+     * vinculado al pedido (mismo email); si no, null, para no unirlo al pedido de otro.
+     */
+    public function findForIntegration(int $id): ?array
+    {
+        $stmt = db()->prepare(
+            'SELECT t.id, t.name, t.email, t.subject, t.message, t.status, t.created_at, o.code AS order_code
+             FROM support_tickets t
+             LEFT JOIN orders o ON o.id = t.order_id
+             WHERE t.id = :id'
+        );
+        $stmt->execute(['id' => $id]);
+
+        return $stmt->fetch() ?: null;
+    }
+
     /** Guarda la incidencia (estado inicial: abierta) y devuelve su id. */
     public function create(?int $orderId, string $name, string $email, string $subject, string $message): int
     {
