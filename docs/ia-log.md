@@ -647,3 +647,22 @@ Claude Code
 - **Cambios hechos por mí:** decidí qué puntos son para antes de fusionar y cuáles pueden esperar a mi PR (la rama `support.requested` de "Pedidos" la cambio yo con el flujo "Incidencias").
 - **Cómo lo validé:** en la prueba de fusión solo choca `docs/ia-log.md` (entradas al final, se dejan las dos); mis cambios se aplican sin conflictos y los PHP pasan `php -l`. Comprobé que el código ya referencia `docs/integracion.md`, que es mío y aún no está subido.
 - **#32 (back-office a develop, 2026-11-13):** es el mismo código que revisé, más los dos cambios del contrato que pedí. Repetí la prueba de fusión con el #32 en vez de `feature/backoffice-pedidos` y salió igual (solo choca el ia-log); los PHP del back-office pasan `php -l`. A raíz del mensaje de César, completé en `docs/integracion.md` el caso de `datos_no_validos` (también cuando la tienda da otro 4xx).
+
+## 2026-11-13 · Celia (C) · Tarea 2: flujo "Incidencias" (escenario 3, sin agente)
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** primera parte del flujo "Incidencias" en la rama `feature/agente-incidencias` (desde `feature/agente-soporte`): `support.requested` → validación → incidencia desde la tienda → ticket en el back-office → registro. El agente va en el paso siguiente.
+- **Partes asistidas por IA:** el borrador de `incidencias.json` siguiendo el estilo de `pedidos.json` de César, el cambio del nodo de Pedidos y los scripts de comprobación.
+- **Errores detectados en la IA:** al editar `reintentos.json` con un script, el primer intento no encontraba el texto por cómo se escapaban los saltos de línea; se repitió con un script en fichero.
+- **Cambios hechos por mí:**
+  - Decidí que Pedidos llame a Incidencias sin esperar a que termine, porque cuando esté la aprobación por Telegram puede tardar horas.
+  - Quité `support.requested` de los excluidos de Reintentos (lo había propuesto en la revisión del #28), porque ahora Incidencias sí lo registra.
+  - Mismas credenciales y mismos tipos de error que en Pedidos; nuevo `ticket_no_existe_en_tienda` para el 404 de la tienda.
+- **Cómo lo validé:**
+  - Comprobación sin n8n: los tres flujos son JSON válido, las conexiones apuntan a nodos que existen y el código de cada nodo compila.
+  - Ejecuté el código de los nodos con `escenario3.json` y la respuesta real de `GET /api/integration/tickets/5`: el cuerpo que sale para `POST /bo-api/tickets` cumple lo que valida el back-office. El ticket 6 (email distinto) sale con `order_code: null`.
+  - Los errores salen con su tipo: 401 → `clave_no_valida`, 404 → `ticket_no_existe_en_tienda`, red/5xx → `pendiente`, 422 del back-office → `datos_no_validos`.
+  - Prueba real en mi PC con n8n 2.45.7 (instalado aparte con un Node 24 portátil, sin tocar el Node del frontend), la tienda y el back-office de José con su base `blacklotus_bo` en mi MariaDB. Credenciales y secretos de prueba solo en n8n y en los `config.php` locales.
+  - Incidencia enviada desde el formulario (ticket 7, evento 229): Pedidos → Incidencias → ticket creado en el back-office con su pedido y registro `ok`.
+  - El mismo evento otra vez → `duplicado`; ticket con otro email → ticket sin pedido (`order_code` nulo); ticket que no existe → `error` + `ticket_no_existe_en_tienda`; sin `entity_id` → `error` + `payload_incompleto`; secreto malo → 403.
+  - Con la tienda apagada el evento 227 quedó `pendiente` + `tienda_no_disponible`; al encenderla, Reintentos lo reenvió y quedó `ok`. Reintentos también recuperó incidencias antiguas que nunca habían llegado (ramal de huecos), así que quitar la exclusión funciona.
+- **Revisión del #33 (José):** faltaba `event_id` en la línea del apartado 3 que dice qué se manda a `POST /bo-api/tickets` (el flujo ya lo mandaba). Lo añadí a la documentación en esta rama y marqué como hecho el punto 7 del apartado 6.
