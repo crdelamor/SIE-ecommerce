@@ -461,6 +461,20 @@ Claude Code
   - Comparé cada cambio del contrato con los cuatro puntos de la revisión.
   - Las pruebas del código están en la entrada siguiente.
 
+## 2026-11-01 · César (A) · Tarea 2: envío de eventos a n8n y endpoints de integración
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** bloque 1 de la parte A en `feature/integracion`: envío de los eventos integrados al webhook de n8n desde `logEvent()` y los endpoints `GET /api/integration/orders/{code}` y `GET /api/integration/events?after_id=`.
+- **Partes asistidas por IA:** el código de `api/lib/integration.php`, `api/repositories/IntegrationRepository.php` y `api/http/integration.php`, el cambio en `api/lib/events.php` y la sección `integration` de `config.example.php`.
+- **Errores detectados en la IA:**
+  - Daba por hecho que el pedido llega a n8n ya pagado; en la tienda nace en `pendiente_pago` y el pago llega como `order.status_changed` (lo comenté también en el PR #24).
+  - `order_items` no guarda los datos TCG: el endpoint los lee del producto actual. Queda como limitación.
+- **Cambios hechos por mí:**
+  - Decidí que el envío se haga al terminar la petición y solo con los eventos que existen en `events`, para no avisar nunca de una compra deshecha.
+  - Avisé al grupo antes de tocar `api/lib/events.php` y `config.example.php`, que son comunes.
+- **Cómo lo validé:**
+  - En local, con un receptor PHP que hace de n8n: un pedido y su pago envían los 3 eventos con el sobre y el secreto; `checkout.started` no se envía.
+  - Con el receptor tardando 5 s la compra tarda 2,2 s y se crea igual; el fallo queda en el log.
+  - Endpoints: 401 sin clave o con clave mala, 404 con un código inexistente, 400 sin `after_id` o con `limit` fuera de rango.
 ## 2026-11-01 · José (B) · Tarea 2: eventos desordenados y procesados en el back-office
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
 - **Tarea:** llevar al código del bloque 5 (rama `feature/backoffice-pedidos`) los cambios del contrato que pidió César: respuesta `desfasado`, `GET /bo-api/integration-log/processed` y pendientes ordenados por `event_id`.
