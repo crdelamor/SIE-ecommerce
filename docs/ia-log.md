@@ -397,6 +397,57 @@ Claude Code
   - `git check-ignore -v backoffice/config.php` confirma que el fichero queda fuera del repositorio.
   - Pendiente: revisión del contrato por A y C en el PR.
 
+## 2026-11-01 · José (B) · Tarea 2: base de datos, esqueleto de la API y Dockerfile del back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** bloques 2, 3 y 4 del back-office en la rama `feature/backoffice-base`: esquema y datos iniciales (`backoffice/db/`), esqueleto de la API con `X-Api-Key` y `GET /bo-api/health`, y `Dockerfile` para el despliegue en la nube.
+- **Partes asistidas por IA:** `schema.sql` (8 tablas `bo_*` del apartado 2.2 del plan), `seed.sql`, `config.example.php` (lee las claves de variables de entorno), `api/index.php`, `api/.htaccess`, `api/lib/` (`db.php`, `http.php`, `auth.php`, `router.php`), `api/http/health.php`, `Dockerfile`, `.dockerignore` y la portada provisional `public/index.php`. También los pasos para preparar MySQL y PHP en local.
+- **Errores detectados en la IA:**
+  - En el `.htaccess` de la API faltaba `RewriteBase /bo-api/`, necesario porque en el contenedor la API se sirve con un `Alias` de Apache. Se corrigió antes del commit.
+  - Propuso arrancar en el puerto 8080, que en mi equipo ya estaba ocupado por otro programa; usamos el 8090.
+  - El esqueleto copia la forma del router y de las respuestas de la tienda, pero sin incluir ningún fichero de `/api`, como pide el plan.
+- **Cambios hechos por mí:**
+  - Configuré MySQL 8.4 como servicio de Windows, activé `pdo_mysql` en PHP y creé la base `blacklotus_bo` con su propio usuario, distinto del de la tienda.
+  - Generé yo el hash del gestor de prueba y escribí yo las contraseñas y la clave de la API en `backoffice/config.php`, que no se sube; la IA no las vio.
+- **Cómo lo validé:**
+  - `GET /bo-api/health` con la base de datos: `{"status":"ok","database":"ok"}`. Sin base de datos devuelve 503.
+  - Una ruta sin clave o con una clave incorrecta devuelve 401; con la clave buena pasa la comprobación (404 porque los pedidos aún no están programados). Un método no permitido devuelve 405.
+  - Las 8 tablas `bo_*` están creadas, el gestor tiene un hash de `password_hash()` y no hay pedidos, incidencias ni registros (evidencia del "antes").
+  - `php -l` sin errores en todos los ficheros PHP.
+  - Pendiente: probar el `Dockerfile` (no tengo Docker instalado) y el despliegue de prueba en la nube.
+
+## 2026-11-01 · José (B) · Tarea 2: pedidos y registro de integración del back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** bloque 5 del back-office en la rama `feature/backoffice-pedidos`: `POST /bo-api/orders`, `PATCH /bo-api/orders/{code}/status`, `GET /bo-api/orders/{code}`, `POST /bo-api/integration-log` y `GET /bo-api/integration-log?result=pendiente`, tal como están en `docs/backoffice-api.md`. Es lo que necesita A para el escenario 1.
+- **Partes asistidas por IA:** `api/http/orders.php`, `api/http/integration_log.php` y las funciones comunes de validación y fechas añadidas a `api/lib/http.php` y `api/lib/db.php`.
+- **Errores detectados en la IA:**
+  - Las primeras pruebas del alta daban 400 («JSON no válido»). No era fallo del código: la terminal de Git Bash enviaba las tildes («Inglés», «Pokémon») sin UTF-8. Se repitieron las pruebas enviando el JSON desde un fichero.
+  - El código usa `mb_strlen` para contar caracteres con tildes, pero en mi PHP local la extensión `mbstring` no estaba activada. La imagen de Docker sí la trae; en local hay que activarla en `php.ini`.
+- **Cambios hechos por mí:**
+  - Pedí seguir con el bloque 5 en una rama aparte para que cada PR se pueda revisar por separado.
+- **Cómo lo validé:**
+  - En local, contra mi base `blacklotus_bo`: alta de un pedido con dos líneas (201), el mismo pedido otra vez (200 `duplicado`), un pedido con campos que faltan (422 con la lista de campos) y un cuerpo que no es JSON (400).
+  - Cambio de estado (200 con `from_status` y `to_status`), el mismo `event_id` otra vez (200 `duplicado`, sin otra fila de historial) y un pedido que no existe (404).
+  - La consulta del pedido devuelve las líneas, el historial y las fechas con zona, y no devuelve el email del cliente.
+  - Registro de integración: alta (201), datos no válidos (422) y lista de pendientes, donde no sale un evento que luego se reintentó con `ok`.
+  - Sin clave o con clave incorrecta, 401. `php -l` sin errores.
+  - Después borré los datos de prueba: el back-office queda vacío salvo el gestor.
+
+## 2026-11-01 · José (B) · Tarea 2: incidencias y propuestas del agente en el back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** bloque 6 del back-office en la rama `feature/backoffice-incidencias`: `POST /bo-api/tickets`, `PATCH /bo-api/tickets/{id}`, `GET /bo-api/customers/{id}/tickets`, `POST /bo-api/proposals` y `PATCH /bo-api/proposals/{id}`, según `docs/backoffice-api.md`. Es lo que necesita C para el escenario 3 y el agente.
+- **Partes asistidas por IA:** `api/http/tickets.php`, `api/http/customers.php` (donde pasa la búsqueda o alta del cliente por email, que antes estaba en `orders.php`) y `api/http/proposals.php`.
+- **Errores detectados en la IA:**
+  - La búsqueda del cliente por email estaba dentro de `orders.php` y los tickets también la necesitan. Funcionaba solo por el orden en que se cargan los ficheros, así que se movió a `customers.php`.
+  - En `POST /bo-api/tickets` el contrato pide `event_id`, pero la tabla `bo_tickets` del plan no tiene ese campo: se valida pero no se guarda. La trazabilidad del evento queda en `bo_integration_log`. Lo comento con C.
+- **Cambios hechos por mí:**
+  - Pedí seguir con el bloque 6 en una rama aparte, como los anteriores.
+- **Cómo lo validé:**
+  - En local, contra mi base `blacklotus_bo`: alta de ticket (201), el mismo `shop_ticket_id` otra vez (200 `duplicado`) y campos que faltan (422).
+  - `PATCH` del ticket: prioridad y estado, chat de Telegram (se guarda en el cliente), cierre con `closed_at`, cuerpo vacío o prioridad no válida (422) y ticket que no existe (404).
+  - Historial del cliente sin email ni chat; cliente que no existe (404).
+  - Propuesta del agente: se crea siempre en `pendiente_revision`, aunque el cuerpo traiga otro estado. No se puede ejecutar sin aprobar, aprobar sin `reviewed_by` ni rechazar una ya aprobada (422). Aprobar y después `ejecutado_simulado` funcionan (200).
+  - Repetí el alta de pedido del bloque 5 tras mover la función del cliente. `php -l` sin errores. Después borré los datos de prueba.
+
 ## 2026-11-01 · José (B) · Tarea 2: revisión de César (A) al contrato del back-office
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
 - **Tarea:** aplicar en `docs/backoffice-api.md` (rama `feature/backoffice`) los comentarios de César al PR del contrato y llevarlos al código del bloque 5.
@@ -424,3 +475,64 @@ Claude Code
   - En local, con un receptor PHP que hace de n8n: un pedido y su pago envían los 3 eventos con el sobre y el secreto; `checkout.started` no se envía.
   - Con el receptor tardando 5 s la compra tarda 2,2 s y se crea igual; el fallo queda en el log.
   - Endpoints: 401 sin clave o con clave mala, 404 con un código inexistente, 400 sin `after_id` o con `limit` fuera de rango.
+## 2026-11-01 · José (B) · Tarea 2: eventos desordenados y procesados en el back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** llevar al código del bloque 5 (rama `feature/backoffice-pedidos`) los cambios del contrato que pidió César: respuesta `desfasado`, `GET /bo-api/integration-log/processed` y pendientes ordenados por `event_id`.
+- **Partes asistidas por IA:** `api/http/orders.php` (bloqueo del pedido con `FOR UPDATE` y comparación con el último `changed_at` del historial) y `api/http/integration_log.php` (nuevo endpoint y nuevo orden).
+- **Errores detectados en la IA:** ninguno en las pruebas de esta parte.
+- **Cambios hechos por mí:**
+  - Elegí `desfasado` como valor propio de la respuesta, en lugar de reutilizar `duplicado`, para que en el registro se distinga un evento repetido de uno que llegó tarde.
+- **Cómo lo validé:**
+  - En local: pedido en `pendiente_pago`, pago a las 10:02 y envío al día siguiente. Después, un `en_preparacion` con hora anterior al envío devuelve `desfasado`, queda en el historial y el pedido sigue en `enviado`. El mismo evento otra vez devuelve `duplicado`.
+  - `processed?after_id=N` devuelve solo los eventos cuyo último registro es `ok` o `duplicado`, en orden; uno que pasó de `pendiente` a `ok` con un reintento sí sale. Respeta `limit`, y sin `after_id` devuelve 422.
+  - Los pendientes salen ordenados por `event_id` aunque se registraran en otro orden.
+  - `php -l` sin errores. Después borré los datos de prueba.
+
+## 2026-11-01 · José (B) · Tarea 2: revisión de César (A) al PR de pedidos
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** aplicar los comentarios de César al PR de pedidos (`feature/backoffice-pedidos`). Tres de los cuatro puntos ya estaban hechos tras su revisión del contrato: eventos desordenados, lectura con `FOR UPDATE` dentro de la transacción y `GET /bo-api/integration-log/processed`. Faltaba el cambio al mismo estado.
+- **Partes asistidas por IA:** en `api/http/orders.php`, si el `status` que llega es igual al actual se responde `duplicado` sin añadir fila al historial; también la línea correspondiente en `docs/backoffice-api.md`.
+- **Errores detectados en la IA:**
+  - El código anterior guardaba `pagado → pagado` en el historial cuando el pedido llegaba ya pagado. Lo detectó César.
+  - En una prueba, un cambio sin `changed_at` salió como `desfasado` porque se usó la hora actual y los datos de prueba tenían fechas futuras. Era un problema de los datos de prueba, no del código; se repitió la prueba con fechas coherentes.
+- **Cambios hechos por mí:**
+  - Pasé al hilo la revisión de César y pedí aplicarla.
+- **Cómo lo validé:**
+  - En local: un pedido que llega en `pagado` y después recibe `pendiente_pago → pagado` devuelve `duplicado`, y el historial no cambia. Un segundo `enviado` con otro `event_id` también devuelve `duplicado` sin añadir fila.
+  - `php -l` sin errores. Después borré los datos de prueba.
+
+## 2026-11-01 · José (B) · Tarea 2: revisión de César (A) al PR de incidencias
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** corregir en `feature/backoffice-incidencias` lo que vio César: dos altas a la vez con el mismo email nuevo hacían saltar el `UNIQUE` de `bo_customers` y la API respondía 500.
+- **Partes asistidas por IA:** `findOrCreateCustomer` en `api/http/customers.php`, que ahora usa una sola sentencia `INSERT ... ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)` en lugar de buscar y luego insertar.
+- **Errores detectados en la IA:** la versión anterior buscaba el cliente y después lo insertaba en dos pasos, así que dos peticiones a la vez podían intentar crear el mismo cliente. Lo detectó César en la revisión.
+- **Cambios hechos por mí:**
+  - Pasé al hilo la revisión de César y pedí corregirla.
+- **Cómo lo validé:**
+  - En local, con dos servidores de PHP a la vez, mandé cinco pares de altas de ticket simultáneas, cada par con el mismo email nuevo: las diez respondieron 201, se crearon 5 clientes (uno por email) y ningún ticket quedó sin cliente.
+  - Un alta de pedido con un email ya existente reutiliza el cliente. `php -l` sin errores. Después borré los datos de prueba.
+
+## 2026-11-01 · José (B) · Tarea 2: parada del contenedor del back-office
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** corregir el `Dockerfile` del back-office (rama `feature/backoffice-base`) a partir de lo que vio César al probarlo con su `docker-compose.yml`.
+- **Partes asistidas por IA:** el cambio del `CMD`, que ahora termina en `exec apache2-foreground`.
+- **Errores detectados en la IA:** el `CMD` en forma shell dejaba a `sh` como proceso principal. Al hacer `docker compose down`, la señal de parada no llegaba a Apache y Docker lo mataba a los 10 s (código 137). No lo vimos antes porque yo no tengo Docker instalado; lo detectó César.
+- **Cambios hechos por mí:**
+  - Pasé al hilo el comentario de César y pedí aplicarlo.
+- **Cómo lo validé:**
+  - No lo he podido probar: no tengo Docker. Queda pendiente que César lo compruebe con su compose (el contenedor debe pararse sin el código 137) y probarlo yo en el servidor.
+
+## 2026-11-13 · José (B) · Tarea 2: integración del back-office en develop
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** llevar el back-office a `develop` con un PR desde `feature/backoffice-pedidos` y aplicar dos cambios del contrato que pidió Celia.
+- **Partes asistidas por IA:**
+  - Detectar que los PR #25, #26 y #27 se habían fusionado cada uno en su rama base y que `develop` solo tenía el contrato (#24).
+  - Comprobar que `feature/backoffice-pedidos` se fusiona sin conflictos con `develop`.
+  - En `docs/backoffice-api.md`: el ejemplo de `POST /bo-api/proposals` usa ahora `case_type` `dano_envio`, y los tipos de error se remiten a `docs/integracion.md` en lugar de repetirlos.
+- **Errores detectados en la IA:** en un borrador de mensaje para César propuso arrancar el compose desde `feature/backoffice-pedidos`, que no tiene el `docker-compose.yml`. Se corrigió antes de enviarlo.
+- **Cambios hechos por mí:**
+  - Pedí los dos cambios del contrato a partir de lo que dijo Celia.
+  - Reviso el diff del PR antes de fusionarlo.
+- **Cómo lo validé:**
+  - La clave `dano_envio` es la que usa `api/services/SupportService.php`.
+  - Simulé la fusión con `develop` (`git merge-tree`) sin conflictos.
