@@ -1,0 +1,15 @@
+{
+  "event_id": 17,
+  "type": "order.status_changed",
+  "entity_type": "order",
+  "entity_id": 10,
+  "occurred_at": "2026-11-01T11:55:52+01:00",
+  "source": "tienda",
+  "data": {
+    "to": "pagado",
+    "code": "PED-000010",
+    "from": "pendiente_pago",
+    "admin_id": null,
+    "restocked": false
+  }
+}

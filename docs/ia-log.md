@@ -475,6 +475,21 @@ Claude Code
   - En local, con un receptor PHP que hace de n8n: un pedido y su pago envían los 3 eventos con el sobre y el secreto; `checkout.started` no se envía.
   - Con el receptor tardando 5 s la compra tarda 2,2 s y se crea igual; el fallo queda en el log.
   - Endpoints: 401 sin clave o con clave mala, 404 con un código inexistente, 400 sin `after_id` o con `limit` fuera de rango.
+
+## 2026-11-01 · César (A) · Tarea 2: flujo "Pedidos" de n8n
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** bloque 2 de la parte A en `feature/integracion-pedidos`: el flujo "Pedidos" de n8n (escenarios 1 y 2) y los payloads de ejemplo.
+- **Partes asistidas por IA:** el JSON del flujo (`integration/n8n/workflows/pedidos.json`), los nodos Code de validación, transformación y clasificación de errores, la instalación de n8n en local y las pruebas.
+- **Errores detectados en la IA:**
+  - La primera versión pedía el pedido a `/api/integration/...`, pero en local la API no lleva el prefijo `/api`: la URL base de la tienda pasó a ser un ajuste (`tienda_api_url`).
+  - La validación aceptaba un `event_id` que no era un número ("abc"); ahora exige un entero positivo.
+  - Probó el flujo antes de que n8n activara la versión nueva y dio un falso error; ahora se espera a que el webhook de la versión actual esté activado.
+  - npm 11 se saltó los scripts de instalación de n8n y hubo que ejecutar los de `sqlite3` e `isolated-vm`.
+- **Cambios hechos por mí:**
+  - Pedí instalar n8n y guardar sus datos en el disco D, no en C.
+- **Cómo lo validé:**
+  - En local, con n8n 2.45.7, la API de la tienda y un back-office falso que sigue `docs/backoffice-api.md`: un pedido con 2 líneas se crea con sus datos TCG y pasa a `pagado` con su historial; el mismo evento otra vez queda `duplicado`; `incompleto.json` queda `error` + `payload_incompleto`; un webhook sin secreto o con secreto malo da 403.
+  - Con el back-office parado, el error se clasifica como `backoffice_no_disponible` y la ejecución queda en error en n8n (no se puede registrar en el back-office).
 ## 2026-11-01 · José (B) · Tarea 2: eventos desordenados y procesados en el back-office
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
 - **Tarea:** llevar al código del bloque 5 (rama `feature/backoffice-pedidos`) los cambios del contrato que pidió César: respuesta `desfasado`, `GET /bo-api/integration-log/processed` y pendientes ordenados por `event_id`.
