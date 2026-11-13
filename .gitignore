@@ -3,6 +3,7 @@ api/config.php
 backoffice/config.php
 .env
 .env.*
+!.env.example
 
 # Dependencias y build del frontend
 node_modules/

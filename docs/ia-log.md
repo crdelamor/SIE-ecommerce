@@ -490,6 +490,64 @@ Claude Code
 - **Cómo lo validé:**
   - En local, con n8n 2.45.7, la API de la tienda y un back-office falso que sigue `docs/backoffice-api.md`: un pedido con 2 líneas se crea con sus datos TCG y pasa a `pagado` con su historial; el mismo evento otra vez queda `duplicado`; `incompleto.json` queda `error` + `payload_incompleto`; un webhook sin secreto o con secreto malo da 403.
   - Con el back-office parado, el error se clasifica como `backoffice_no_disponible` y la ejecución queda en error en n8n (no se puede registrar en el back-office).
+
+## 2026-11-01 · César (A) · Tarea 2: flujo "Reintentos", variables de n8n y matriz de decisión
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** bloque 3 de la parte A: flujo "Reintentos" (`feature/integracion-reintentos`), `integration/n8n/.env.example` y `docs/matriz-decision.md` (`feature/matriz-decision`).
+- **Partes asistidas por IA:** el JSON del flujo, la plantilla de variables, la redacción de la matriz y el cálculo de los totales ponderados y de la sensibilidad.
+- **Errores detectados en la IA:**
+  - Intentó lanzar el flujo con `n8n execute` sin un disparador manual y con el n8n local encendido (puerto 5679 ocupado); se añadió el nodo "Ejecutar ahora" y otro puerto para la ejecución desde la consola.
+  - La primera versión de la matriz ponía Zapier como alternativa SaaS sin más; el enunciado no acepta herramientas 100 % no-code como Zapier, así que se cambió por Make y se dejó escrito.
+  - `.env.*` del `.gitignore` también ignora `.env.example`; se añadió forzado en vez de cambiar el `.gitignore` común. En la revisión José pidió la excepción `!.env.example` en el `.gitignore` y se cambió.
+  - Con varios pendientes a la vez, "Reenviar a Pedidos" fallaba ("Paired item data ... is unavailable") porque leía los ajustes con `.item` después de un nodo Code que crea elementos nuevos; se cambió a `.first()`. Con un solo pendiente no se veía.
+- **Cambios hechos por mí:**
+  - Pedí adelantar lo que no dependía de nadie mientras José añade el endpoint de eventos procesados.
+- **Cómo lo validé:**
+  - Dos pendientes forzados (el `order.created` con la clave de la tienda cambiada, `tienda_no_disponible`, y su `order.status_changed`, `pedido_no_existe`): Reintentos los reenvió en orden y el pedido quedó creado y pagado.
+  - Reintentos en local contra el back-office de José: un `order.status_changed` pendiente (`pedido_no_existe`) se aplicó al reintentarlo después de crear el pedido; un evento que no existe en la tienda se queda pendiente y no se reenvía.
+  - Los totales de la matriz salen de un script (pesos que suman 100, puntuaciones de 1 a 5).
+  - `deploy/docker-compose.yml` levantado en Docker Desktop con otro nombre de puertos (5688 y 8088) y sin tocar los contenedores de otra asignatura: pedido y pago llegaron al back-office del contenedor (`ok` ×3) y los datos siguieron tras `docker compose down` y `up`. n8n avisaba de que PostgreSQL 16 solo tiene soporte de compatibilidad: se pasó a la 17.
+  - Escenario 2 desde la administración de la tienda: `pagado → en_preparacion → enviado → entregado` llega al back-office paso a paso con su historial; una cancelación de un pedido pagado devuelve el stock en la tienda (7 → 5 → 7) y deja el pedido `cancelado` en el back-office.
+  - `docs/diagramas/flujo-datos.svg` (y su PNG) dibujado a mano en SVG; se revisó la imagen generada y se recolocaron dos etiquetas que se cruzaban con las flechas.
+- **Limitaciones:**
+  - En una prueba, un `order.status_changed` enviado por la tienda no llegó a ejecutarse en n8n sin dejar error en ningún lado; no se encontró la causa. Lo cubre la recuperación de huecos de la entrada siguiente.
+
+## 2026-11-10 · César (A) · Tarea 2: cambios tras la revisión de José (#28 a #31)
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** aplicar los puntos de la revisión de José en `feature/integracion`, `feature/integracion-pedidos` y `feature/integracion-reintentos`, y en `feature/matriz-decision` (#31): tabla de la plataforma de despliegue (Student Pack con `docker-compose`, Render, Railway y DonDominio), descarte de "una tabla más en la tienda" y de ampliar `/#/admin`, y la hoja de Google en lugar de Airtable.
+- **Partes asistidas por IA:** los cambios en `api/lib/integration.php`, en los nodos de "Pedidos" y "Reintentos" y en el compose, y las pruebas con datos simulados.
+- **Errores detectados en la IA** (los encontró José en la revisión):
+  - El envío a n8n esperaba hasta 2 s por cada evento de la petición; con n8n caído, una compra con tres eventos tardaba 6 s. Ahora se corta en el primer fallo y el resto lo recupera Reintentos. Si no existe `fastcgi_finish_request()` se usa `litespeed_finish_request()`.
+  - "Pedidos" dejaba en `pendiente` cualquier error de la tienda, también un 401 o un 404, que no se arreglan reintentando. Ahora un 4xx queda en `error` (`clave_no_valida`, `pedido_no_existe_en_tienda` o `datos_no_validos`) y solo la red y los 5xx quedan en `pendiente`.
+  - Reintentos solo reenviaba los `pendiente` del registro: un evento que no llegó a n8n no se recuperaba nunca. Se añade el ramal de huecos con `GET /bo-api/integration-log/processed?after_id=N`.
+  - Quedaba en "Reintentos" un comentario interno de la herramienta (`ponytail:`); se quitó.
+  - El compose publicaba los puertos de n8n y del back-office en todas las interfaces; ahora solo en `127.0.0.1`, para que desde Internet solo se entre por el proxy.
+- **Cambios hechos por mí:**
+  - El endpoint de tickets y el paso de `support.requested` a un flujo propio son de la parte de Celia (C) según el plan; no los hago yo. Reintentos excluye `support.requested` de forma explícita al buscar huecos.
+- **Cómo lo validé:**
+  - Envío con un receptor que tarda 5 s y tres eventos en cola: 6,0 s antes del cambio y 2,0 s después.
+  - Código del nodo "Error de la tienda" con seis errores simulados: 401, 404 y 400 → `error`; 503, conexión rechazada y sin error → `pendiente`.
+  - Nodos "Cursor" y "Huecos" con respuestas simuladas: reenvía solo los eventos sin ningún registro, no toca `support.requested`, los errores ni los de los últimos 2 minutos, y el cursor no pasa del primer hueco.
+  - En n8n local (2.45.7, "Reintentos" publicado con su disparador de 5 minutos) contra el back-office de José (`feature/backoffice-pedidos`) con la base vacía: la primera vuelta recuperó los 47 eventos de la tienda (35 `ok` y 12 `duplicado`, 14 pedidos creados). Después, con el registro del evento 54 borrado y un `support.requested` nuevo (55), la segunda vuelta reenvió solo el 54, se saltó el 55 y dejó el cursor en 53; la tercera no reenvió nada y lo pasó a 55.
+  - Un `order.created` con un código que no existe en la tienda queda `error` / `pedido_no_existe_en_tienda` con el mensaje "Pedir pedido a la tienda: 404 …".
+- **Limitaciones:**
+  - El cursor se guarda en los datos estáticos del flujo, que n8n solo conserva en las ejecuciones automáticas; con "Ejecutar ahora" se empieza desde 0 (se revisa todo, sin reenviar lo que ya tiene registro).
+
+## 2026-11-12 · César (A) · Tarea 2: prueba de #28 a #31 fusionados
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** probar los cuatro PR de la parte A juntos, en el orden de fusión propuesto (back-office de José, #31, #28, #29 y #30) sobre `develop`, y probar el flujo "Errores" con el bot de Telegram de pruebas.
+- **Partes asistidas por IA:** el montaje de la prueba (rama temporal con las fusiones, base del back-office desde cero) y el script que crea los pedidos y cambia los estados.
+- **Errores detectados en la IA:**
+  - El valor local de `tienda_api_url` en "Pedidos" y "Reintentos" era `http://localhost:8000`, que solo funciona arrancando la tienda desde `api/`. El README la arranca desde la raíz (la API queda en `/api`) y en producción también lleva `/api`, así que n8n recibía `404 Ruta no encontrada`. Ahora es `http://localhost:8000/api` y la guía de despliegue dice lo mismo que el README.
+  - La guía no avisaba de que, al exportar los flujos del servidor, el `chatId` de "Errores" y las URLs de **Ajustes** salen con los valores reales. Ahora lo dice.
+- **Cambios hechos por mí:**
+  - Decidir que el arreglo de la URL va en nuestros ficheros (flujos y guía) y no en el README, que es común.
+- **Cómo lo validé:**
+  - Fusión de prueba: `docs/ia-log.md` choca con `feature/backoffice-pedidos` (las dos ramas añaden entradas al final); se resuelve dejando las de las dos. Nada más choca. `php -l` sin errores en `api/` y `backoffice/`; los JSON de flujos y payloads son válidos.
+  - Escenarios 1 y 2: pedido con dos líneas pagado y llevado hasta `entregado` desde la administración, y otro sin pagar cancelado; los dos quedan igual en el back-office. `cancelado → pagado` da 409 sin evento, el payload incompleto queda `error` / `payload_incompleto` y el webhook sin secreto da 403.
+  - El cambio a `pagado` llegó antes que su pedido (`pendiente` / `pedido_no_existe`) y la siguiente vuelta de Reintentos lo dejó `ok`.
+  - Huecos con eventos reales: dos eventos se enviaron mientras n8n arrancaba (no los recibió) y otros fallaron por la URL; Reintentos los recuperó todos (3 pedidos más en el back-office, 2 `duplicado`) y el cursor no pasó del primero sin registro.
+  - "Errores": con el back-office parado, "Pedidos" falla al registrar y llega al canal de pruebas de Telegram "Error en n8n / Flujo: Pedidos / Paso: Registrar resultado / Causa: The service refused the connection…". Al volver el back-office, Reintentos recupera el pedido.
 ## 2026-11-01 · José (B) · Tarea 2: eventos desordenados y procesados en el back-office
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
 - **Tarea:** llevar al código del bloque 5 (rama `feature/backoffice-pedidos`) los cambios del contrato que pidió César: respuesta `desfasado`, `GET /bo-api/integration-log/processed` y pendientes ordenados por `event_id`.

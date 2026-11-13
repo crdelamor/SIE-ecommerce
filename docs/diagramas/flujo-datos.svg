@@ -1,0 +1,150 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="760" viewBox="0 0 1240 760" font-family="Segoe UI, Arial, sans-serif">
+  <title>Flujo de datos: tienda → n8n → back-office</title>
+  <defs>
+    <marker id="f" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#333"/>
+    </marker>
+    <marker id="fr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#d9822b"/>
+    </marker>
+    <style>
+      .col { fill: #f6f8fb; stroke: #b8c2d0; stroke-width: 1.5; }
+      .hd { font-size: 19px; font-weight: 700; fill: #1f4e79; }
+      .sub { font-size: 13px; fill: #555; }
+      .box { fill: #fff; stroke: #1f4e79; stroke-width: 1.5; }
+      .db { fill: #eef4fb; stroke: #1f4e79; stroke-width: 1.5; }
+      .rt { fill: #fff7ee; stroke: #d9822b; stroke-width: 1.5; stroke-dasharray: 6 4; }
+      .t { font-size: 14px; fill: #1a1a1a; }
+      .tb { font-size: 14px; font-weight: 700; fill: #1a1a1a; }
+      .ts { font-size: 12px; fill: #444; }
+      .code { font-family: Consolas, monospace; font-size: 12px; fill: #333; }
+      .ln { stroke: #333; stroke-width: 1.6; fill: none; marker-end: url(#f); }
+      .lr { stroke: #d9822b; stroke-width: 1.6; fill: none; stroke-dasharray: 6 4; marker-end: url(#fr); }
+      .num { fill: #2e75b6; }
+      .numt { font-size: 13px; font-weight: 700; fill: #fff; }
+      .lab { font-size: 13px; fill: #1a1a1a; }
+      .labr { font-size: 13px; fill: #a85d12; }
+    </style>
+  </defs>
+
+  <rect width="1240" height="760" fill="#fff"/>
+
+  <!-- Columnas -->
+  <rect class="col" x="30" y="60" width="320" height="620" rx="12"/>
+  <text class="hd" x="50" y="90">Tienda</text>
+  <text class="sub" x="50" y="110">DonDominio · PHP + MySQL</text>
+
+  <rect class="col" x="440" y="60" width="360" height="620" rx="12"/>
+  <text class="hd" x="460" y="90">n8n</text>
+  <text class="sub" x="460" y="110">Servidor en la nube · PostgreSQL propio</text>
+
+  <rect class="col" x="890" y="60" width="320" height="620" rx="12"/>
+  <text class="hd" x="910" y="90">Back-office</text>
+  <text class="sub" x="910" y="110">Servidor en la nube · MySQL propio</text>
+
+  <!-- Tienda -->
+  <rect class="box" x="60" y="135" width="260" height="56" rx="8"/>
+  <text class="tb" x="190" y="160" text-anchor="middle">Cliente o administrador</text>
+  <text class="ts" x="190" y="179" text-anchor="middle">compra, paga o cambia el estado</text>
+
+  <rect class="db" x="60" y="235" width="260" height="84" rx="8"/>
+  <text class="tb" x="190" y="261" text-anchor="middle">Base de datos de la tienda</text>
+  <text class="ts" x="190" y="281" text-anchor="middle">pedido + evento en la misma</text>
+  <text class="ts" x="190" y="298" text-anchor="middle">transacción (tabla events)</text>
+
+  <rect class="box" x="60" y="420" width="260" height="84" rx="8"/>
+  <text class="tb" x="190" y="445" text-anchor="middle">API de integración · X-Api-Key</text>
+  <text class="code" x="190" y="467" text-anchor="middle">/api/integration/orders/{code}</text>
+  <text class="code" x="190" y="486" text-anchor="middle">/api/integration/events?after_id=</text>
+
+  <!-- n8n: flujo Pedidos -->
+  <text class="tb" x="470" y="140">Flujo "Pedidos"</text>
+  <rect class="box" x="470" y="150" width="300" height="46" rx="8"/>
+  <text class="t" x="620" y="170" text-anchor="middle">Webhook · comprueba</text>
+  <text class="code" x="620" y="187" text-anchor="middle">X-Webhook-Secret</text>
+
+  <rect class="box" x="470" y="216" width="300" height="40" rx="8"/>
+  <text class="t" x="620" y="241" text-anchor="middle">Validar el sobre y los campos</text>
+
+  <rect class="box" x="470" y="276" width="300" height="40" rx="8"/>
+  <text class="t" x="620" y="301" text-anchor="middle">Según el tipo de evento</text>
+
+  <rect class="box" x="470" y="336" width="300" height="40" rx="8"/>
+  <text class="t" x="620" y="361" text-anchor="middle">Pedir el pedido y transformarlo</text>
+
+  <rect class="box" x="470" y="410" width="300" height="40" rx="8"/>
+  <text class="t" x="620" y="435" text-anchor="middle">Registrar el resultado (todas las ramas)</text>
+
+  <!-- n8n: Reintentos -->
+  <rect class="rt" x="470" y="540" width="300" height="100" rx="8"/>
+  <text class="tb" x="620" y="565" text-anchor="middle">Flujo "Reintentos" · cada 5 min</text>
+  <text class="ts" x="620" y="587" text-anchor="middle">lee los pendientes del registro,</text>
+  <text class="ts" x="620" y="604" text-anchor="middle">pide a la tienda el evento original</text>
+  <text class="ts" x="620" y="621" text-anchor="middle">y lo vuelve a enviar al webhook</text>
+
+  <!-- Back-office -->
+  <rect class="box" x="920" y="235" width="260" height="84" rx="8"/>
+  <text class="tb" x="1050" y="260" text-anchor="middle">API /bo-api · X-Api-Key</text>
+  <text class="ts" x="1050" y="281" text-anchor="middle">201 creado · 200 duplicado</text>
+  <text class="ts" x="1050" y="298" text-anchor="middle">404 no existe · 422 datos no válidos</text>
+
+  <rect class="db" x="920" y="370" width="260" height="128" rx="8"/>
+  <text class="tb" x="1050" y="395" text-anchor="middle">Base de datos propia</text>
+  <text class="code" x="1050" y="418" text-anchor="middle">bo_customers · bo_orders</text>
+  <text class="code" x="1050" y="438" text-anchor="middle">bo_order_lines</text>
+  <text class="code" x="1050" y="458" text-anchor="middle">bo_order_status_log</text>
+  <text class="code" x="1050" y="478" text-anchor="middle">bo_integration_log</text>
+
+  <rect class="box" x="920" y="552" width="260" height="56" rx="8"/>
+  <text class="tb" x="1050" y="576" text-anchor="middle">Pantallas del gestor</text>
+  <text class="ts" x="1050" y="595" text-anchor="middle">pedidos, registro y cuadro de mando</text>
+
+  <!-- Flechas internas -->
+  <path class="ln" d="M190,191 L190,233"/>
+  <path class="ln" d="M620,196 L620,214"/>
+  <path class="ln" d="M620,256 L620,274"/>
+  <path class="ln" d="M620,316 L620,334"/>
+  <path class="ln" d="M620,376 L620,408"/>
+  <path class="ln" d="M1050,319 L1050,368"/>
+  <path class="ln" d="M1050,498 L1050,550"/>
+
+  <!-- 1. Evento al webhook -->
+  <path class="ln" d="M320,262 C390,262 400,173 468,173"/>
+  <circle class="num" cx="385" cy="214" r="11"/><text class="numt" x="385" y="219" text-anchor="middle">1</text>
+  <text class="lab" x="356" y="244">evento</text>
+  <text class="lab" x="356" y="260">(sobre JSON)</text>
+
+  <!-- 2 y 3. Pedir el pedido a la tienda -->
+  <path class="ln" d="M470,352 C400,352 390,440 322,440"/>
+  <circle class="num" cx="400" cy="380" r="11"/><text class="numt" x="400" y="385" text-anchor="middle">2</text>
+  <text class="lab" x="356" y="410">GET pedido</text>
+  <path class="ln" d="M320,478 C400,478 410,368 468,368"/>
+  <circle class="num" cx="430" cy="470" r="11"/><text class="numt" x="430" y="475" text-anchor="middle">3</text>
+  <text class="lab" x="333" y="528">cliente y líneas TCG</text>
+
+  <!-- 4. Crear o actualizar en el back-office -->
+  <path class="ln" d="M770,352 C840,352 850,262 918,262"/>
+  <circle class="num" cx="840" cy="300" r="11"/><text class="numt" x="840" y="305" text-anchor="middle">4</text>
+  <text class="lab" x="790" y="235">POST /orders</text>
+  <text class="lab" x="790" y="251">PATCH /status</text>
+
+  <!-- 5. Registro -->
+  <path class="ln" d="M770,430 C850,430 850,300 918,300"/>
+  <circle class="num" cx="850" cy="400" r="11"/><text class="numt" x="850" y="405" text-anchor="middle">5</text>
+  <text class="lab" x="780" y="470">POST /integration-log</text>
+
+  <!-- Reintentos -->
+  <path class="lr" d="M770,575 C860,575 870,320 940,321"/>
+  <text class="labr" x="790" y="530">pendientes</text>
+  <path class="lr" d="M470,612 C300,612 190,590 190,506"/>
+  <text class="labr" x="205" y="560">evento original</text>
+  <path class="lr" d="M470,630 C452,630 452,190 468,180"/>
+  <text class="labr" x="470" y="662">reenvío al webhook (línea de la izquierda)</text>
+
+  <!-- Leyenda -->
+  <line x1="40" y1="715" x2="80" y2="715" stroke="#333" stroke-width="1.6"/>
+  <text class="ts" x="90" y="719">flujo normal (1 a 5)</text>
+  <line x1="260" y1="715" x2="300" y2="715" stroke="#d9822b" stroke-width="1.6" stroke-dasharray="6 4"/>
+  <text class="ts" x="310" y="719">recuperación de pendientes</text>
+  <text class="ts" x="530" y="719">Los eventos de navegación no salen de la tienda. support.requested lo procesa el flujo "Incidencias" (parte C).</text>
+</svg>
