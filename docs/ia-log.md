@@ -609,3 +609,41 @@ Claude Code
 - **Cómo lo validé:**
   - La clave `dano_envio` es la que usa `api/services/SupportService.php`.
   - Simulé la fusión con `develop` (`git merge-tree`) sin conflictos.
+
+## 2026-11-12 · Celia (C) · Tarea 2: contrato de integración y endpoint de incidencias
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** fase 0 de la parte C en la rama `feature/agente-soporte` (desde `feature/integracion` de César, porque uso su `requireIntegrationKey()`): escribir `docs/integracion.md`, añadir `GET /api/integration/tickets/{id}` y guardar `integration/payloads/escenario3.json`.
+- **Partes asistidas por IA:** la lectura de los PR #24 a #31 para ponerme al día, la redacción de `docs/integracion.md` (sobre, datos de los 4 eventos, endpoints de la tienda, tipos de error, salida del agente y `case_type`) y el código del endpoint en `api/http/support.php` y `SupportTicketRepository.php`.
+- **Errores detectados en la IA:**
+  - En la primera versión del contrato la salida del agente llevaba `priority` y `customer_reply`, pero `bo_agent_proposals` no tiene esas columnas. Lo vio al releer el `schema.sql` de José: la prioridad va al ticket con `PATCH /bo-api/tickets/{id}` y la respuesta al cliente dentro de `proposed_action`, sin cambiar la tabla.
+- **Cambios hechos por mí:**
+  - Decidí que `order_code` lo resuelva la tienda en el endpoint (solo sale si el ticket está vinculado al pedido) en vez de mirar `order_linked` en n8n, como pedía José en el #28.
+  - Decidí no añadir `event_id` a `bo_tickets` (la trazabilidad queda en `bo_integration_log`) y respondí en el contrato al resto de puntos pendientes de C.
+- **Cómo lo validé:**
+  - Las pruebas las ejecutó Claude en mi PC, con la API en local (`php -S`) y una `api_key` de prueba solo en mi `api/config.php`: dos incidencias desde `POST /support`, una con el email del pedido (sale `order_code`) y otra con un email distinto (sale `null`). Sin clave o con clave mala, 401; id que no existe o no numérico, 404.
+  - `escenario3.json` es el evento real 227 de esa prueba, sacado con `GET /api/integration/events`.
+  - `php -l` sin errores.
+
+## 2026-11-12 · Celia (C) · Tarea 2: modelo del agente y bot de Telegram
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** cerrar la decisión 5 del plan (modelo de IA del agente) y crear el bot de Telegram de pruebas (fase 0 de C).
+- **Partes asistidas por IA:** los pasos para crear el bot con @BotFather y la clave en Google AI Studio, y la comparación de los límites del plan gratuito.
+- **Errores detectados en la IA:**
+  - No conocía los modelos actuales de Gemini (son posteriores a sus datos) y no pudo confirmar el nombre exacto: lo saqué yo de AI Studio.
+  - Primero apuntaba a Gemini 3.8 Flash; al ver la tabla de límites solo tenía 20 peticiones al día, demasiado poco para un agente que hace 4 o 5 llamadas por incidencia.
+- **Cambios hechos por mí:**
+  - Elegí **Gemini 3.5 Flash Lite** (`gemini-3.5-flash-lite`), plan gratuito de Google AI Studio: 15 peticiones por minuto, 250K tokens por minuto y 500 peticiones al día (límites vistos en AI Studio el 2026-11-12). Si en las pruebas falla con las herramientas o el JSON, se probará `gemini-3.8-flash` (5 por minuto, 20 al día).
+  - Creé la clave de API `blacklotus-tarea2` en un proyecto de nivel gratuito, sin facturación. La clave solo va en la credencial de n8n.
+  - Creé el bot de pruebas `@blacklotus_soporte_bot`. El token solo va en la credencial de n8n, nunca en el repositorio.
+- **Cómo lo validé:**
+  - Comprobé en AI Studio el identificador del modelo (Playground) y sus límites (Límite de frecuencia).
+  - Riesgo para la memoria: en el plan gratuito Google puede usar las peticiones para mejorar sus productos; al modelo solo le llegan datos ficticios, sin email ni dirección.
+
+## 2026-11-12 · Celia (C) · Tarea 2: revisión de los PR #28 a #31
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** revisar los PR de César (#28 a #31) y el estado de las ramas del back-office de José, para dar el visto bueno.
+- **Partes asistidas por IA:** la lectura del código y de los flujos exportados, una prueba de fusión de todas las ramas en una copia aparte (back-office → #31 → #28 → #29 → #30 y mis cambios encima) y el borrador de los mensajes.
+- **Errores detectados en la IA:** ninguno en esta revisión.
+- **Cambios hechos por mí:** decidí qué puntos son para antes de fusionar y cuáles pueden esperar a mi PR (la rama `support.requested` de "Pedidos" la cambio yo con el flujo "Incidencias").
+- **Cómo lo validé:** en la prueba de fusión solo choca `docs/ia-log.md` (entradas al final, se dejan las dos); mis cambios se aplican sin conflictos y los PHP pasan `php -l`. Comprobé que el código ya referencia `docs/integracion.md`, que es mío y aún no está subido.
+- **#32 (back-office a develop, 2026-11-13):** es el mismo código que revisé, más los dos cambios del contrato que pedí. Repetí la prueba de fusión con el #32 en vez de `feature/backoffice-pedidos` y salió igual (solo choca el ia-log); los PHP del back-office pasan `php -l`. A raíz del mensaje de César, completé en `docs/integracion.md` el caso de `datos_no_validos` (también cuando la tienda da otro 4xx).
