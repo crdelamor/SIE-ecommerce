@@ -647,3 +647,19 @@ Claude Code
 - **Cambios hechos por mí:** decidí qué puntos son para antes de fusionar y cuáles pueden esperar a mi PR (la rama `support.requested` de "Pedidos" la cambio yo con el flujo "Incidencias").
 - **Cómo lo validé:** en la prueba de fusión solo choca `docs/ia-log.md` (entradas al final, se dejan las dos); mis cambios se aplican sin conflictos y los PHP pasan `php -l`. Comprobé que el código ya referencia `docs/integracion.md`, que es mío y aún no está subido.
 - **#32 (back-office a develop, 2026-11-13):** es el mismo código que revisé, más los dos cambios del contrato que pedí. Repetí la prueba de fusión con el #32 en vez de `feature/backoffice-pedidos` y salió igual (solo choca el ia-log); los PHP del back-office pasan `php -l`. A raíz del mensaje de César, completé en `docs/integracion.md` el caso de `datos_no_validos` (también cuando la tienda da otro 4xx).
+
+## 2026-11-14 · César (A) · Tarea 2: máximo de reintentos en "Reintentos"
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** que un evento `pendiente` que no se arregla deje de reenviarse. Al conectar la tienda publicada, los dos cambios de estado de PED-000006 se reenviaban cada 5 minutos sin fin (49 veces cada uno en 4 horas). Ese pedido es anterior a la integración y su `order.created` ya no está en la tienda.
+- **Partes asistidas por IA:**
+  - Contar los intentos de cada evento en los datos estáticos del flujo.
+  - El nodo «¿Agotado?» y el registro `error` / `reintentos_agotados` pasadas 12 vueltas (1 hora).
+  - El arnés de prueba del código del nodo.
+- **Errores detectados en la IA:**
+  - El nodo «Sobre» emparejaba cada respuesta de la tienda con su evento por la posición en la lista. Con «¿Agotado?» en medio, esa posición deja de coincidir y un evento bueno se perdía sin reenviarse. Ahora usa `itemMatching`, que sigue la relación entre elementos de n8n.
+- **Cambios hechos por mí:**
+  - Decidí el máximo (1 hora) y que el evento quede en `error` para revisarlo a mano, en vez de borrarlo.
+  - Cerré a mano por la API del back-office, con `reintentos_agotados`, los dos eventos de PED-000006 que ya estaban en el servidor.
+- **Cómo lo validé:**
+  - Arnés con el código del nodo: 12 vueltas se reenvían, la 13.ª va a «Reintentos agotados», los eventos resueltos se olvidan y el cursor del ramal de huecos no cambia.
+  - n8n 2.45.7 en local, con el back-office de `develop` desde cero y dos pendientes reales de la tienda local: el 74, con 12 intentos, queda `error` / `reintentos_agotados` y no se reenvía. El 75 se reenvía y queda `ok` (pedido creado), aunque en la lista va detrás del 74. Los contadores se vacían al resolverse.
