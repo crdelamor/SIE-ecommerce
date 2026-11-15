@@ -12,7 +12,7 @@ Nadie cambia este contrato sin avisar al grupo.
 |---|---|
 | URL base | `https://backoffice.theblacklotustcg.onl/bo-api` (subdominio acordado; en local, `http://localhost:8080/bo-api` o el puerto que se use). El despliegue se describe en `docs/despliegue-tarea2.md`. |
 | Formato | JSON en UTF-8. Las peticiones con cuerpo llevan `Content-Type: application/json`. |
-| Autenticación | Cabecera `X-Api-Key: <clave del back-office>`. Es distinta de la clave de la tienda y solo está en las variables de entorno de la plataforma y en las credenciales de n8n. `GET /bo-api/health` no la pide; `GET /bo-api/metrics` aceptará también la sesión del gestor cuando esté el login de las pantallas. |
+| Autenticación | Cabecera `X-Api-Key: <clave del back-office>`. Es distinta de la clave de la tienda y solo está en las variables de entorno de la plataforma y en las credenciales de n8n. `GET /bo-api/health` no la pide; `GET /bo-api/metrics` acepta también la sesión del gestor (login de `backoffice/public/login.php`), que es la que usa el cuadro de mando. |
 | Importes | Número con 2 decimales (`15.72`). En la base de datos son `DECIMAL(10,2)`. |
 | Fechas | ISO 8601 con zona (`2026-11-05T10:02:11+01:00`). |
 | Booleanos | `true` / `false` (en la base de datos, `TINYINT(1)`). |
@@ -443,7 +443,7 @@ Errores: `401`, `422` si falta `after_id` o no es válido.
 
 ### `GET /bo-api/metrics?days=30`
 
-Datos del cuadro de mando, calculados en el momento con consultas a las tablas `bo_*`. Ninguna cifra está escrita a mano. Pide `X-Api-Key`; la sesión del gestor se añade con el login de las pantallas. Qué mide cada campo, cómo se calcula y por qué: `docs/metricas.md`.
+Datos del cuadro de mando, calculados en el momento con consultas a las tablas `bo_*`. Ninguna cifra está escrita a mano. Pide `X-Api-Key` o la sesión del gestor: si llega la cabecera, manda la cabecera. Qué mide cada campo, cómo se calcula y por qué: `docs/metricas.md`.
 
 `days` (opcional, de 1 a 365, 30 por defecto) es el número de días de las series diarias (`orders_per_day` e `integration_per_day`), que acaban hoy y tienen 0 en los días sin datos, y de `sync_delay`. El resto de métricas usa todo el histórico. Las medias y porcentajes sin datos para calcularse van como `null`.
 

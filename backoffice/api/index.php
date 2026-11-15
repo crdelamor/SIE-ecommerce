@@ -10,6 +10,7 @@ declare(strict_types=1);
 require __DIR__ . '/lib/http.php';
 require __DIR__ . '/lib/db.php';
 require __DIR__ . '/lib/auth.php';
+require __DIR__ . '/lib/session.php';
 require __DIR__ . '/lib/router.php';
 
 date_default_timezone_set('Europe/Madrid');
@@ -35,8 +36,10 @@ if ($prefix !== false) {
 }
 $path = '/' . trim($path, '/');
 
-// Todo pide X-Api-Key menos el health
-if ($path !== '/health') {
+// Todo pide X-Api-Key menos el health. Las métricas valen también con la sesión del gestor.
+if ($path === '/metrics') {
+    requireApiKeyOrManager();
+} elseif ($path !== '/health') {
     requireApiKey();
 }
 
