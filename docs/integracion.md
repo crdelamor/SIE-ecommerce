@@ -83,7 +83,7 @@ Todos piden la cabecera `X-Api-Key` con la clave de integración de la tienda (`
 
 - `order_code` solo viene si el ticket quedó vinculado al pedido (mismo email). Si el cliente escribió un código que no es suyo, llega `null`, así un ticket nunca se une al pedido de otra persona en el back-office.
 - Sin dirección ni teléfono: el back-office no los necesita.
-- El flujo "Incidencias" lo pasa a `POST /bo-api/tickets` así: `shop_ticket_id` = `id`, `reason` = `subject`, `opened_at`, `order_code` y `customer`. El `message` no se guarda en el back-office: solo se le pasa al agente.
+- El flujo "Incidencias" lo pasa a `POST /bo-api/tickets` así: `event_id` = `event_id` del sobre (obligatorio, aunque no se guarda en `bo_tickets`), `shop_ticket_id` = `id`, `reason` = `subject`, `opened_at`, `order_code` y `customer`. El `message` no se guarda en el back-office: solo se le pasa al agente.
 
 ## 4. Registro de integración
 
@@ -169,5 +169,5 @@ Respuesta a los puntos que me dejó José en el PR #24 y el #27:
 4. Las propuestas se crean siempre en `pendiente_revision` y solo pasan a `aprobado`/`rechazado`, y de `aprobado` a `ejecutado_simulado`: de acuerdo.
 5. `reviewed_by` guarda el alias de Telegram de quien aprueba (cuenta de pruebas), nunca un nombre real: de acuerdo.
 6. `event_id` en el alta del ticket: no hace falta añadirlo a `bo_tickets`. La idempotencia va por `shop_ticket_id` y la trazabilidad del evento queda en `bo_integration_log`.
-7. El ejemplo de `POST /bo-api/proposals` usa `producto_danado`; con esta lista sería `dano_envio`.
-8. `support.requested` llega al webhook de "Pedidos". "Pedidos" se lo pasará al flujo "Incidencias" (nodo *Execute Workflow*) y "Incidencias" registra su resultado con `workflow: Incidencias`. Hasta que esté hecho, "Reintentos" lo deja fuera.
+7. El ejemplo de `POST /bo-api/proposals` usaba `producto_danado`; con esta lista es `dano_envio`. Hecho: corregido en `docs/backoffice-api.md` en el #32.
+8. `support.requested` llega al webhook de "Pedidos". "Pedidos" se lo pasa al flujo "Incidencias" (nodo *Execute Workflow*, sin esperar a que acabe) y "Incidencias" registra su resultado con `workflow: Incidencias`. Así "Reintentos" ya no lo deja fuera: una incidencia que no llegó o quedó `pendiente` se reenvía por "Pedidos" como el resto.
