@@ -666,3 +666,24 @@ Claude Code
   - El mismo evento otra vez → `duplicado`; ticket con otro email → ticket sin pedido (`order_code` nulo); ticket que no existe → `error` + `ticket_no_existe_en_tienda`; sin `entity_id` → `error` + `payload_incompleto`; secreto malo → 403.
   - Con la tienda apagada el evento 227 quedó `pendiente` + `tienda_no_disponible`; al encenderla, Reintentos lo reenvió y quedó `ok`. Reintentos también recuperó incidencias antiguas que nunca habían llegado (ramal de huecos), así que quitar la exclusión funciona.
 - **Revisión del #33 (José):** faltaba `event_id` en la línea del apartado 3 que dice qué se manda a `POST /bo-api/tickets` (el flujo ya lo mandaba). Lo añadí a la documentación en esta rama y marqué como hecho el punto 7 del apartado 6.
+
+## 2026-11-13 · Celia (C) · Tarea 2: agente de IA en "Incidencias"
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** añadir a "Incidencias" el agente de IA (Gemini) con sus herramientas, la salida estructurada y la aprobación por Telegram, en la rama `feature/agente-ia`.
+- **Partes asistidas por IA:** el borrador de los nodos nuevos, el prompt del agente, el esquema de la salida y los scripts de comprobación. Los nombres de los parámetros de cada nodo se sacaron de los ficheros del propio n8n 2.45.7 instalado.
+- **Errores detectados en la IA:** la primera versión del script reformateaba todo `incidencias.json` y el diff salía entero; se cambió para que solo añada los nodos nuevos.
+- **Cambios hechos por mí:**
+  - Las herramientas llevan la URL fija a la incidencia, al pedido y al cliente, para que el agente no pueda consultar los de otra persona.
+  - `registrar_propuesta` es un nodo del flujo y no una herramienta del modelo: así la propuesta se guarda una vez y tal como la valida el parser.
+  - El mensaje del cliente se trata como datos en el prompt (por si intenta darle órdenes al agente).
+  - Para `consultar_historial_cliente` hacía falta el `customer_id`: lo añadí a la respuesta de `POST /bo-api/tickets` del back-office (aviso a José).
+  - `reviewed_by` sale de Ajustes, porque los botones de Telegram no dicen quién los pulsa.
+- **Cómo lo validé:**
+  - Comprobación del flujo: las conexiones apuntan a nodos que existen y el código de cada nodo compila; los nodos de código nuevos dan el cuerpo que pide `POST /bo-api/proposals` con una salida de ejemplo.
+  - `POST /bo-api/tickets` devuelve `customer_id` (probado con el ticket 7, `duplicado`) y `php -l` pasa.
+  - El flujo se importa y publica en mi n8n local sin errores. Falta la prueba con Gemini y Telegram: necesito crear antes las credenciales.
+- **Revisión del 15/11:** al repasar el contrato vi que el apartado 4 ya tenía `agente_no_disponible` y `salida_agente_no_valida`, y el flujo no los registraba. Añadí la salida de error del agente, que registra una segunda fila para el evento. `agente_no_disponible` pasa a `error`, porque al reenviarlo daría `duplicado` y no volvería al agente. Añadí también `reintentos_agotados` a la tabla, como pidió César en el #36.
+- **Prueba en n8n local (15/11):** la primera incidencia (ticket 8) falló en "Datos para el agente": `$('...').first()` no devuelve nada en nodos con dos salidas (la de error). Lo cambié por `.item`, como en el resto del flujo, y el mensaje de Telegram ya no lee del agente, que ahora también tiene dos salidas. Con el ticket 9 el flujo llega al agente; Gemini respondió 400 porque la credencial aún no tenía mi clave, y la rama de error registró `agente_no_disponible` como debía. Falta la prueba con la clave buena.
+- **Prueba con la clave de Gemini (ticket 11):** el agente usó las tres herramientas y devolvió una propuesta válida, que se guardó en el back-office. Avisó en `risks` de que el pedido figura `pendiente_pago` aunque el cliente dice que le llegó, y de que tiene 8 incidencias anteriores (mis pruebas). El envío a Telegram falló con *can't parse entities*: *Send and Wait* manda siempre en Markdown y los `_` de `dano_envio` lo rompen. Ahora el mensaje se arma en "Preparar propuesta" con esos caracteres escapados.
+- **Telegram en local (tickets 12 a 14):** con el escapado ya no falla el Markdown. Telegram rechaza los botones con `http://localhost:5678` (*Wrong HTTP URL*); en local arranco n8n con `WEBHOOK_URL=http://127.0.0.1.nip.io:5678/`, que apunta al mismo PC. Queda pendiente que el bot de la credencial local encuentre el grupo (*chat not found*).
+- **Prueba completa en local (ticket 16, ejecución 121):** el bot y el chat del grupo estaban bien (la primera vez el bot aún no estaba dentro del grupo). Llegó al grupo el mensaje con la propuesta y los botones; al pulsar Aprobar, la propuesta 6 pasó a `aprobado` (`reviewed_by` `@revisor_pruebas`) y después a `ejecutado_simulado`. Añadí a la guía de despliegue cómo probar los botones en local.
