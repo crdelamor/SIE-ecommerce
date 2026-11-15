@@ -11,7 +11,7 @@ const TICKET_PRIORITIES = ['baja', 'media', 'alta'];
 
 function findTicketByShopId(int $shopTicketId): ?array
 {
-    $stmt = db()->prepare('SELECT id, shop_ticket_id FROM bo_tickets WHERE shop_ticket_id = ?');
+    $stmt = db()->prepare('SELECT id, shop_ticket_id, customer_id FROM bo_tickets WHERE shop_ticket_id = ?');
     $stmt->execute([$shopTicketId]);
 
     return $stmt->fetch() ?: null;
@@ -22,6 +22,7 @@ function ticketDuplicateResponse(array $ticket): void
     jsonResponse([
         'id'             => (int) $ticket['id'],
         'shop_ticket_id' => (int) $ticket['shop_ticket_id'],
+        'customer_id'    => (int) $ticket['customer_id'],
         'result'         => 'duplicado',
     ]);
 }
@@ -86,7 +87,7 @@ $router->post('/tickets', function (): void {
         throw $e;
     }
 
-    jsonResponse(['id' => $ticketId, 'shop_ticket_id' => $body['shop_ticket_id'], 'result' => 'creado'], 201);
+    jsonResponse(['id' => $ticketId, 'shop_ticket_id' => $body['shop_ticket_id'], 'customer_id' => $customerId, 'result' => 'creado'], 201);
 });
 
 // PATCH /bo-api/tickets/{id} - estado, prioridad o chat de Telegram
