@@ -753,3 +753,23 @@ Claude Code
 - **Cómo lo validé:** `php -l`; el endpoint con los tickets 16, 18 y 999; el aviso con un texto con `_` sale escapado. Prueba real: incidencia 19 de la clienta de prueba con Telegram enlazado → propuesta en el grupo → Aprobar → me llegó "Sobre tu incidencia 19: ..." al chat privado del bot y la propuesta 9 quedó `ejecutado_simulado`.
 - **Revisión de los #34 y #36 de César (15/11):** tras resolver él los conflictos, comprobé que se fusionan con develop sin conflictos y que mantienen lo nuestro (guía con Incidencias, Gemini y chat; `reintentos.json` sin excluir `support.requested`). Aprobados los dos.
 - **Conflictos y prueba de los caminos que faltaban (15/11):** el #38 y el #39 solo chocaban con develop en el ia-log; en la rama del #15 se dejan todas las entradas (primero las de César del 13 y 14/11). El #39 no se toca: lo comprobé con `git merge-tree` y, fusionado antes el #38, entra sin conflictos. En n8n local, la incidencia 20 (Laura, con Telegram enlazado) rechazada desde el grupo: propuesta `rechazado` y no se le manda nada. La 21 (cliente sin Telegram) aprobada: pasa de `aprobado` a `ejecutado_simulado` sin el nodo "Avisar al cliente".
+
+## 2026-11-15 · José (B) · Tarea 2: métricas del cuadro de mando
+- **Herramienta:** Claude Code desde VS Code.
+- **Tarea:** `GET /bo-api/metrics` con las métricas del cuadro de mando y su justificación en `docs/metricas.md` (rama `feature/backoffice-metricas`, PR #40).
+- **Partes asistidas por IA:**
+  - El repaso de las tablas `bo_*` para ver qué métricas se pueden sacar de datos reales.
+  - Las consultas de `backoffice/api/http/metrics.php` (ventas, preparación y envío, integración, soporte y agente).
+  - La búsqueda de fuentes y el borrador de `docs/metricas.md`.
+  - La actualización del contrato en `docs/backoffice-api.md`.
+- **Errores detectados en la IA:**
+  - Los mapas vacíos (errores por tipo, motivos, tipos de caso) salían en el JSON como `[]` en vez de `{}`. Se corrigió con `asMap()`.
+  - Las pruebas en local no detectaron que el MySQL del servidor va en UTC: los datos de prueba tenían `placed_at` y `synced_at` creados con el mismo `NOW()`. César lo detectó al revisar el #40: `synced_at`, `created_at` y `reviewed_at` (`NOW()` y `DEFAULT CURRENT_TIMESTAMP`) salían en UTC y `placed_at` en hora de Madrid, y el retraso de sincronización daba unos −3400 s, escondidos por `GREATEST(…, 0)`.
+- **Cambios hechos por mí:**
+  - Elegí hacer un cuadro de mando completo: las 7 métricas del contrato más el retraso de sincronización, la preparación y envío, la mezcla de producto, los clientes que repiten y la supervisión del agente (tasa de aprobación, confianza y tiempo de revisión).
+  - Decidí dejar las métricas de navegación (tiempo de visita y visitas sin compra) para un PR aparte, porque necesitan que los datos lleguen por n8n y tocan ficheros de César.
+  - Revisé las métricas y las fuentes de `docs/metricas.md` antes de subirlas.
+  - Con la propuesta de César, `db.php` fija la zona horaria de la sesión de MySQL (`SET time_zone` con el desfase de Madrid) y `backoffice/db/fix-hora-utc.sql` corrige una sola vez las filas que ya estaban guardadas en UTC.
+- **Cómo lo validé:**
+  - Back-office en local con MariaDB 10.11 (`ONLY_FULL_GROUP_BY` activado) y datos de prueba: con las tablas vacías todas las medias salen `null` y las series con 0; con 4 pedidos, 2 incidencias y 3 propuestas, las cifras coinciden con las calculadas a mano.
+  - Sin `X-Api-Key` da 401; con `days=0` o `days=abc`, 422.

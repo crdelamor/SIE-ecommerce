@@ -12,7 +12,7 @@ Nadie cambia este contrato sin avisar al grupo.
 |---|---|
 | URL base | `https://backoffice.theblacklotustcg.onl/bo-api` (subdominio acordado; en local, `http://localhost:8080/bo-api` o el puerto que se use). El despliegue se describe en `docs/despliegue-tarea2.md`. |
 | Formato | JSON en UTF-8. Las peticiones con cuerpo llevan `Content-Type: application/json`. |
-| Autenticación | Cabecera `X-Api-Key: <clave del back-office>`. Es distinta de la clave de la tienda y solo está en las variables de entorno de la plataforma y en las credenciales de n8n. `GET /bo-api/health` no la pide; `GET /bo-api/metrics` acepta también la sesión del gestor. |
+| Autenticación | Cabecera `X-Api-Key: <clave del back-office>`. Es distinta de la clave de la tienda y solo está en las variables de entorno de la plataforma y en las credenciales de n8n. `GET /bo-api/health` no la pide; `GET /bo-api/metrics` aceptará también la sesión del gestor cuando esté el login de las pantallas. |
 | Importes | Número con 2 decimales (`15.72`). En la base de datos son `DECIMAL(10,2)`. |
 | Fechas | ISO 8601 con zona (`2026-11-05T10:02:11+01:00`). |
 | Booleanos | `true` / `false` (en la base de datos, `TINYINT(1)`). |
@@ -441,27 +441,50 @@ Errores: `401`, `422` si falta `after_id` o no es válido.
 
 ## Cuadro de mando
 
-### `GET /bo-api/metrics`
+### `GET /bo-api/metrics?days=30`
 
-Datos del cuadro de mando, calculados en el momento con consultas a las tablas `bo_*`. Ninguna cifra está escrita a mano. Acepta `X-Api-Key` o la sesión del gestor. La justificación de cada métrica va en `docs/metricas.md`.
+Datos del cuadro de mando, calculados en el momento con consultas a las tablas `bo_*`. Ninguna cifra está escrita a mano. Pide `X-Api-Key`; la sesión del gestor se añade con el login de las pantallas. Qué mide cada campo, cómo se calcula y por qué: `docs/metricas.md`.
 
-Respuesta `200` (las métricas definitivas se cierran en `docs/metricas.md`):
+`days` (opcional, de 1 a 365, 30 por defecto) es el número de días de las series diarias (`orders_per_day` e `integration_per_day`), que acaban hoy y tienen 0 en los días sin datos, y de `sync_delay`. El resto de métricas usa todo el histórico. Las medias y porcentajes sin datos para calcularse van como `null`.
+
+Respuesta `200` (con `days=2` y datos de prueba):
 
 ```json
 {
-  "generated_at": "2026-11-07T12:00:00+01:00",
-  "orders_per_day": [ { "day": "2026-11-05", "orders": 3 }, { "day": "2026-11-06", "orders": 1 } ],
-  "total_amount": 58.40,
-  "orders_by_status": { "pagado": 2, "enviado": 1, "cancelado": 1 },
-  "top_games": [ { "game": "Magic: The Gathering", "units": 4 } ],
-  "top_products": [ { "product_name": "Black Lotus (Unlimited)", "units": 2 } ],
-  "tickets": { "open": 1, "avg_resolution_hours": 17.75 },
-  "integration": { "ok": 10, "error": 2, "duplicado": 1, "pendiente": 1, "errors_by_type": { "payload_incompleto": 1, "pedido_no_existe": 1 } },
-  "proposals": { "total": 3, "aprobado": 2, "rechazado": 1, "pendiente_revision": 0, "ejecutado_simulado": 2 }
+  "generated_at": "2026-11-15T20:30:00+01:00",
+  "days": 2,
+  "orders_per_day": [ { "day": "2026-11-14", "orders": 1 }, { "day": "2026-11-15", "orders": 1 } ],
+  "sales": { "orders": 2, "total_amount": 60.5, "avg_amount": 30.25 },
+  "orders_by_status": { "pendiente_pago": 1, "pagado": 0, "en_preparacion": 0, "enviado": 1, "entregado": 1, "cancelado": 1, "incidencia": 0 },
+  "cancel_rate": 0.25,
+  "top_games": [ { "game": "Magic: The Gathering", "units": 1, "amount": 30 } ],
+  "top_products": [ { "product_name": "Black Lotus", "game": "Magic: The Gathering", "units": 1, "amount": 30 } ],
+  "product_mix": { "sealed_units": 2, "singles_units": 2, "foil_units": 1 },
+  "customers": { "buyers": 1, "repeat_buyers": 1 },
+  "fulfilment": { "paid_to_shipped_hours": 23.99, "paid_to_shipped_orders": 2, "shipped_to_delivered_hours": 48, "shipped_to_delivered_orders": 1 },
+  "integration": { "ok": 2, "error": 2, "duplicado": 1, "pendiente": 0, "errors_by_type": { "payload_incompleto": 1, "reintentos_agotados": 1 } },
+  "integration_by_workflow": { "Pedidos": 3, "Reintentos": 2 },
+  "integration_per_day": [ { "day": "2026-11-14", "ok": 0, "failed": 1 }, { "day": "2026-11-15", "ok": 1, "failed": 1 } ],
+  "sync_delay": { "orders": 4, "median_seconds": 4, "under_1_min": 3, "from_1_to_10_min": 1, "over_10_min": 0 },
+  "tickets": {
+    "total": 2, "open": 1,
+    "by_status": { "abierta": 1, "en_curso": 0, "cerrada": 1 },
+    "by_priority": { "baja": 0, "media": 1, "alta": 1 },
+    "top_reasons": { "Producto dañado": 1, "Duda de envío": 1 },
+    "with_order": 1, "avg_resolution_hours": 24, "customers": 2, "customers_telegram": 1
+  },
+  "proposals": {
+    "total": 3,
+    "by_status": { "pendiente_revision": 1, "aprobado": 0, "rechazado": 1, "ejecutado_simulado": 1 },
+    "approval_rate": 0.5,
+    "avg_confidence": { "all": 0.67, "approved": 0.9, "rejected": 0.4 },
+    "by_case_type": { "consulta_envio": 2, "dano_envio": 1 },
+    "avg_review_minutes": 20
+  }
 }
 ```
 
-Errores: `401`.
+Errores: `401`, `422` si `days` no es un número de 1 a 365.
 
 ---
 
