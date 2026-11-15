@@ -37,7 +37,7 @@ services:
       # Cifra las credenciales guardadas: fija y con copia fuera del servidor
       N8N_ENCRYPTION_KEY: ${N8N_ENCRYPTION_KEY:?falta N8N_ENCRYPTION_KEY en .env}
       # URL pública con la que n8n construye las URLs de los webhooks
-      WEBHOOK_URL: ${N8N_WEBHOOK_URL:?falta N8N_WEBHOOK_URL en .env}
+      N8N_WEBHOOK_URL: ${N8N_WEBHOOK_URL:?falta N8N_WEBHOOK_URL en .env}
       N8N_SECURE_COOKIE: ${N8N_SECURE_COOKIE:-true}
       GENERIC_TIMEZONE: Europe/Madrid
       TZ: Europe/Madrid
