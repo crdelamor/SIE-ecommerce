@@ -687,3 +687,23 @@ Claude Code
 - **Prueba con la clave de Gemini (ticket 11):** el agente usó las tres herramientas y devolvió una propuesta válida, que se guardó en el back-office. Avisó en `risks` de que el pedido figura `pendiente_pago` aunque el cliente dice que le llegó, y de que tiene 8 incidencias anteriores (mis pruebas). El envío a Telegram falló con *can't parse entities*: *Send and Wait* manda siempre en Markdown y los `_` de `dano_envio` lo rompen. Ahora el mensaje se arma en "Preparar propuesta" con esos caracteres escapados.
 - **Telegram en local (tickets 12 a 14):** con el escapado ya no falla el Markdown. Telegram rechaza los botones con `http://localhost:5678` (*Wrong HTTP URL*); en local arranco n8n con `WEBHOOK_URL=http://127.0.0.1.nip.io:5678/`, que apunta al mismo PC. Queda pendiente que el bot de la credencial local encuentre el grupo (*chat not found*).
 - **Prueba completa en local (ticket 16, ejecución 121):** el bot y el chat del grupo estaban bien (la primera vez el bot aún no estaba dentro del grupo). Llegó al grupo el mensaje con la propuesta y los botones; al pulsar Aprobar, la propuesta 6 pasó a `aprobado` (`reviewed_by` `@revisor_pruebas`) y después a `ejecutado_simulado`. Añadí a la guía de despliegue cómo probar los botones en local.
+
+## 2026-11-13 · César (A) · Tarea 2: despliegue de n8n y el back-office en Azure
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** poner en marcha el servidor de la nube con el `docker-compose` del repositorio, HTTPS en los dos subdominios y los tres flujos de n8n publicados.
+- **Partes asistidas por IA:**
+  - Los pasos para crear la máquina virtual en Azure: tamaño disponible en la región, puertos e IP estática.
+  - Los scripts que instalan Docker y Caddy y generan el `.env` del servidor con claves aleatorias que no se imprimen.
+  - La importación de credenciales y flujos por línea de comandos de n8n.
+  - Los cambios de la guía de despliegue.
+- **Errores detectados en la IA:**
+  - Al generar el `.env` desde PowerShell, las comillas no llegaban al servidor y el comando falló. Se cambió por un script copiado al servidor.
+  - El compose usaba la variable `WEBHOOK_URL`, que n8n 2.x da por obsoleta (avisa en el arranque). Ahora es `N8N_WEBHOOK_URL`.
+- **Cambios hechos por mí:**
+  - Creé la máquina en el portal de Azure con mi clave SSH y su frase de paso.
+  - Creé la cuenta de administrador de n8n.
+  - José dio de alta los registros DNS en DonDominio.
+- **Cómo lo validé:**
+  - Desde fuera del servidor, `https://n8n.theblacklotustcg.onl/healthz` da 200 y `https://backoffice.theblacklotustcg.onl/bo-api/health` responde `ok`. Por `http`, Caddy redirige (308).
+  - Los puertos de n8n y del back-office solo escuchan en `127.0.0.1`.
+  - El webhook público da 403 sin secreto. Con el secreto y un evento sin `event_id`, `occurred_at` ni `data.code`, el back-office guarda `error` / `payload_incompleto` con el id de la ejecución.

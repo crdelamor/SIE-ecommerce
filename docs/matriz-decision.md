@@ -94,7 +94,7 @@ El enunciado exige que n8n y el back-office estén desplegados fuera de nuestros
 
 | Plataforma | Qué ofrece | Problema | Decisión |
 |---|---|---|---|
-| **Servidor con los créditos del GitHub Student Developer Pack + `docker-compose`** | Un servidor propio con n8n + PostgreSQL y el back-office + MySQL, cada uno con su volumen (`deploy/docker-compose.yml`) | Hay que mantener el servidor (actualizaciones y copias de seguridad) | **Elegida** |
+| **Máquina virtual de Azure for Students + `docker-compose`** | Un servidor propio (Ubuntu, 2 vCPU y 4 GiB) pagado con el crédito de estudiante, sin tarjeta, con n8n + PostgreSQL y el back-office + MySQL, cada uno con su volumen (`deploy/docker-compose.yml`) | Hay que mantener el servidor (actualizaciones y copias de seguridad) | **Elegida** |
 | Render (plan gratuito) | Imagen oficial `n8nio/n8n` | El servicio se duerme, el disco es efímero y la base de datos PostgreSQL gratuita caduca a los 30 días | Descartada |
 | Railway | Plantilla de n8n con base de datos | Solo una prueba gratuita (30 días o 5 $) | Descartada |
 | DonDominio (hosting de la tienda) | Ya lo tenemos pagado | Solo admite PHP y MySQL: no puede ejecutar n8n (Node.js) y el back-office no sería un sistema separado de la tienda | Descartada |
