@@ -38,11 +38,13 @@ Los flujos exportados en `integration/n8n/workflows/` solo hacen referencia a es
    ```
    La primera vez, http://localhost:5678 pide crear la cuenta de administrador.
 3. Crear las tres credenciales de la tabla anterior (en local se pueden usar valores de prueba).
-4. Importar los flujos y publicar "Pedidos" (con n8n parado, o desde la interfaz con *Import from file*):
+4. Importar los flujos y publicar "Pedidos" e "Incidencias" con n8n parado. Mejor por la línea de comandos que con *Import from file*: así se mantienen los id, y "Pedidos" llama a "Incidencias" por el suyo (`C0incidencias001`):
    ```
    n8n import:workflow --input=integration/n8n/workflows/pedidos.json
    n8n import:workflow --input=integration/n8n/workflows/reintentos.json
+   n8n import:workflow --input=integration/n8n/workflows/incidencias.json
    n8n publish:workflow --id=A0pedidos0000001
+   n8n publish:workflow --id=C0incidencias001
    ```
    n8n activa el webhook unos segundos después de arrancar.
 5. En `api/config.php` de la tienda, sección `integration`: `webhook_url` = `http://localhost:5678/webhook/tienda` y las dos claves.
@@ -76,8 +78,8 @@ Un solo `docker-compose` levanta los cuatro contenedores del servidor: **n8n** c
    ```
    y `sudo systemctl reload caddy`. Hay que crear la cuenta de administrador de n8n (paso 3) en cuanto el proxy funcione: hasta entonces, quien entre primero puede crearla.
 3. Cuenta de administrador de n8n con contraseña fuerte; Celia y José, invitados con rol de miembro (no administradores).
-4. Credenciales con los valores reales (nunca los de local) e importación de los flujos, `errores.json` incluido. Por línea de comandos, con n8n parado (`docker compose stop n8n`) y una carpeta del servidor montada en `/import`: `docker compose run --rm --no-deps -v ~/import:/import:ro --entrypoint sh n8n -c "n8n import:credentials --input=/import/creds.json && n8n import:workflow --input=/import/pedidos.json && ..."`. El fichero de credenciales usa los mismos `id` que los flujos (`A0credWebhook001`, `A0credTienda0001`, `A0credBackoff001`, `A0credTelegram01`), lleva las claves en claro y se borra al terminar. "Errores" avisa por Telegram cuando falla otro flujo: necesita la credencial `Telegram bot` y el `chatId` del grupo en su nodo; los otros dos flujos ya lo tienen asignado como *Error workflow*.
-5. En el nodo **Ajustes** de cada flujo: `tienda_api_url` = `https://www.theblacklotustcg.onl/api`, `bo_url` = `http://backoffice` (nombre del servicio dentro de Docker) y, en "Reintentos", `pedidos_webhook_url` = `http://localhost:5678/webhook/tienda`. Publicar "Pedidos", "Reintentos" y "Errores" (en n8n 2.x un flujo de errores sin publicar no se ejecuta; por línea de comandos, `n8n publish:workflow --id=...` con n8n parado) y arrancar o reiniciar n8n (`docker compose start n8n`).
+4. Credenciales con los valores reales (nunca los de local) e importación de los flujos, `errores.json` incluido. Por línea de comandos, con n8n parado (`docker compose stop n8n`) y una carpeta del servidor montada en `/import`: `docker compose run --rm --no-deps -v ~/import:/import:ro --entrypoint sh n8n -c "n8n import:credentials --input=/import/creds.json && n8n import:workflow --input=/import/pedidos.json && ..."`. El fichero de credenciales usa los mismos `id` que los flujos (`A0credWebhook001`, `A0credTienda0001`, `A0credBackoff001`, `A0credTelegram01`), lleva las claves en claro y se borra al terminar. "Errores" avisa por Telegram cuando falla otro flujo: necesita la credencial `Telegram bot` y el `chatId` del grupo en su nodo; los demás flujos ya lo tienen asignado como *Error workflow*.
+5. En el nodo **Ajustes** de cada flujo (también en "Incidencias"): `tienda_api_url` = `https://www.theblacklotustcg.onl/api`, `bo_url` = `http://backoffice` (nombre del servicio dentro de Docker) y, en "Reintentos", `pedidos_webhook_url` = `http://localhost:5678/webhook/tienda`. Publicar "Pedidos", "Incidencias", "Reintentos" y "Errores" (en n8n 2.x un flujo de errores sin publicar no se ejecuta; por línea de comandos, `n8n publish:workflow --id=...` con n8n parado) y arrancar o reiniciar n8n (`docker compose start n8n`).
 6. En el `config.php` de la tienda en DonDominio: `webhook_url` = `https://n8n.theblacklotustcg.onl/webhook/tienda` y las claves reales.
 7. Comprobación: un pedido en la web publicada y mirar *Executions* en n8n y `GET /bo-api/integration-log?result=ok`.
 

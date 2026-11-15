@@ -160,11 +160,15 @@
     {
       "id": "3f0a1c10-0012-4a00-8000-000000000012",
       "name": "Incidencias (flujo de C)",
-      "type": "n8n-nodes-base.noOp",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
       "position": [900, 720],
-      "notes": "support.requested lo procesa y lo registra el flujo Incidencias de Celia (C). Hasta que exista, aquí no se registra y Reintentos lo excluye de forma explícita.",
-      "parameters": {}
+      "notes": "support.requested lo procesa y lo registra el flujo Incidencias (C). No se espera a que acabe: con la aprobación por Telegram puede tardar horas.",
+      "parameters": {
+        "source": "database",
+        "workflowId": { "__rl": true, "value": "C0incidencias001", "mode": "id" },
+        "options": { "waitForSubWorkflow": false }
+      }
     },
     {
       "id": "3f0a1c10-0013-4a00-8000-000000000013",

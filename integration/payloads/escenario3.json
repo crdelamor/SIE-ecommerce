@@ -1,0 +1,13 @@
+{
+  "event_id": 227,
+  "type": "support.requested",
+  "entity_type": "ticket",
+  "entity_id": 5,
+  "occurred_at": "2026-11-12T09:18:03+01:00",
+  "source": "tienda",
+  "data": {
+    "reason": "dano_envio",
+    "order_code": "PED-000027",
+    "order_linked": true
+  }
+}
