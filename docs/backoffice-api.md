@@ -244,12 +244,12 @@ Errores: `401`, `422`.
 
 ### `GET /bo-api/tickets/shop/{shopTicketId}`
 
-Ticket a partir del número de la incidencia en la tienda. Lo usa el flujo "Telegram": el enlace del cliente lleva el número de la tienda, y para guardar el chat hace falta el id del back-office.
+Ticket a partir del número de la incidencia en la tienda. Lo usan los flujos "Telegram" e "Incidencias". "Telegram" lo necesita porque el enlace del cliente lleva el número de la tienda, y para guardar el chat hace falta el id del back-office. "Incidencias" lo usa para saber si puede mandar la respuesta aprobada por Telegram. Por eso lleva `telegram_chat_id` (`null` si el cliente no lo ha enlazado). Las herramientas del agente nunca lo llaman.
 
 Respuesta `200`:
 
 ```json
-{ "id": 1, "shop_ticket_id": 7, "customer_id": 3, "status": "abierta" }
+{ "id": 1, "shop_ticket_id": 7, "customer_id": 3, "status": "abierta", "telegram_chat_id": null }
 ```
 
 Errores: `401`, `404` (todavía no ha llegado al back-office, o el número no es válido).

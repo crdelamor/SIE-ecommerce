@@ -705,3 +705,14 @@ Claude Code
   - Prueba con el bot de verdad: pulsé el botón de la incidencia 18 e *Iniciar* en Telegram. El `/start` se recogió con `getUpdates` y se pasó a una copia del flujo con disparador manual ("Telegram (prueba local)", solo en mi n8n). Resultado `ok`: el chat quedó guardado en el cliente del ticket 18 y el bot me contestó "Listo...".
   - El mismo `/start` cambiando el número a la incidencia 17 (firma de otra) da `error` / `firma_no_valida`, no guarda el chat y el bot contesta que el enlace no es válido.
   - Después marqué el mensaje como leído en el bot, para que no le llegue al flujo del servidor cuando César lo publique.
+
+## 2026-11-15 · Celia (C) · Tarea 2: respuesta aprobada al cliente por Telegram
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** que al aprobar una propuesta se mande al cliente la respuesta por Telegram si ha enlazado su chat (rama `feature/agente-respuesta`, sale de la del #15).
+- **Partes asistidas por IA:** los tres nodos nuevos de "Incidencias", el cambio del endpoint del back-office y la documentación.
+- **Errores detectados en la IA:** el script que añadía los nodos no los insertó a la primera, porque el fichero tenía saltos de línea de Windows; las conexiones sí se cambiaron. Lo vio la comprobación del flujo (conexiones a nodos que no existían) y se arregló.
+- **Cambios hechos por mí:**
+  - Después de Aprobar: buscar el chat del cliente, mandarle `customer_reply` (con el Markdown escapado) y luego marcar `ejecutado_simulado`. Si el envío falla, la propuesta se queda en `aprobado` y avisa "Errores", que es lo que de verdad ha pasado. Si se rechaza, no se manda nada.
+  - `GET /bo-api/tickets/shop/{shopTicketId}` devuelve también `telegram_chat_id` (aviso a José). Solo lo usan los flujos; las herramientas del agente siguen sin ver el chat.
+- **Cómo lo validé:** `php -l`; el endpoint con los tickets 16, 18 y 999; el aviso con un texto con `_` sale escapado. Prueba real: incidencia 19 de la clienta de prueba con Telegram enlazado → propuesta en el grupo → Aprobar → me llegó "Sobre tu incidencia 19: ..." al chat privado del bot y la propuesta 9 quedó `ejecutado_simulado`.
+- **Revisión de los #34 y #36 de César (15/11):** tras resolver él los conflictos, comprobé que se fusionan con develop sin conflictos y que mantienen lo nuestro (guía con Incidencias, Gemini y chat; `reintentos.json` sin excluir `support.requested`). Aprobados los dos.
