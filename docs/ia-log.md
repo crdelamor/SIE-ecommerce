@@ -633,7 +633,7 @@ Claude Code
   - Primero apuntaba a Gemini 3.8 Flash; al ver la tabla de límites solo tenía 20 peticiones al día, demasiado poco para un agente que hace 4 o 5 llamadas por incidencia.
 - **Cambios hechos por mí:**
   - Elegí **Gemini 3.5 Flash Lite** (`gemini-3.5-flash-lite`), plan gratuito de Google AI Studio: 15 peticiones por minuto, 250K tokens por minuto y 500 peticiones al día (límites vistos en AI Studio el 2026-11-12). Si en las pruebas falla con las herramientas o el JSON, se probará `gemini-3.8-flash` (5 por minuto, 20 al día).
-  - Creé la clave de API `blacklotus-tarea2` en un proyecto de nivel gratuito, sin facturación. La clave solo va en la credencial de n8n.
+  - La clave de API que usamos es la `Default Gemini API Key` del proyecto `Default Gemini Project`, de nivel gratuito y sin facturación. Solo va en las credenciales de n8n. *(Corregido el 15/11: aquí ponía que había creado una clave `blacklotus-tarea2`, pero en AI Studio solo está esta.)*
   - Creé el bot de pruebas `@blacklotus_soporte_bot`. El token solo va en la credencial de n8n, nunca en el repositorio.
 - **Cómo lo validé:**
   - Comprobé en AI Studio el identificador del modelo (Playground) y sus límites (Límite de frecuencia).
