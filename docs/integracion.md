@@ -108,8 +108,9 @@ Cada ejecución acaba en `POST /bo-api/integration-log`, también en la rama de 
 | `backoffice_no_disponible` | pendiente | todos | El back-office no responde o da 5xx. |
 | `pedido_no_existe` | pendiente | Pedidos | El back-office da 404 al cambiar el estado: el pedido aún no ha llegado. |
 | `pedido_no_existe_en_tienda` | error | Pedidos | La tienda da 404 al pedir el pedido. |
+| `reintentos_agotados` | error | Reintentos | Un pendiente sigue sin resolverse tras 12 reintentos (1 hora). |
 | `ticket_no_existe_en_tienda` | error | Incidencias | La tienda da 404 al pedir la incidencia. |
-| `agente_no_disponible` | pendiente | Incidencias | El modelo de IA no responde o se ha pasado del límite gratuito. El ticket ya está creado; falta la propuesta. |
+| `agente_no_disponible` | error | Incidencias | El modelo de IA no responde o se ha pasado del límite gratuito. El ticket ya está creado y falta la propuesta: se repite a mano desde n8n (reenviarlo daría `duplicado` y no volvería a pasar por el agente). |
 | `salida_agente_no_valida` | error | Incidencias | El agente devuelve un JSON que no cumple el apartado 5. No se guarda la propuesta. |
 | `firma_no_valida` | error | Telegram | El enlace de Telegram no lleva una firma válida para ese ticket. No se guarda el chat. |
 
@@ -158,6 +159,26 @@ Los cinco motivos del formulario más dos. El agente puede corregir el motivo qu
 | `devolucion` | El cliente quiere devolver el pedido. |
 | `consulta` | Pregunta sobre el estado del pedido o la tienda, sin problema con el producto. |
 | `otro` | No encaja en ninguno. |
+
+### Cómo está montado en "Incidencias"
+
+Solo pasan al agente los tickets recién creados (`ok`), no los `duplicado`. El registro de integración se hace antes del agente, porque la aprobación puede tardar horas y "Reintentos" no tiene que verlo como un hueco.
+
+- Modelo: Gemini (`gemini-3.5-flash-lite`, temperatura 0,2), credencial `Google Gemini`.
+- Al modelo le llegan el id del ticket, el código del pedido, el motivo, el asunto y el mensaje. No le llegan el email ni el nombre del cliente.
+- Herramientas, todas con la URL fija al ticket, al pedido y al cliente de esta incidencia, para que el agente no pueda mirar los de otra persona:
+
+| Herramienta | Llamada | Qué hace |
+|---|---|---|
+| `consultar_pedido` | `GET /bo-api/orders/{code}` | Estado, líneas e historial del pedido (solo si hay pedido). |
+| `consultar_historial_cliente` | `GET /bo-api/customers/{id}/tickets` | Incidencias anteriores del cliente. El `customer_id` sale de la respuesta de `POST /bo-api/tickets`. |
+| `clasificar_incidencia` | `PATCH /bo-api/tickets/{id}` | Guarda la prioridad. Es lo único que escribe el agente y se puede deshacer. |
+| `registrar_propuesta` | `POST /bo-api/proposals` | No es una herramienta del modelo, sino un nodo del flujo después del parser. Así se guarda una sola vez y exactamente lo que ha validado el parser. |
+
+- La propuesta se manda al grupo de Telegram con *Send and Wait for Response* y botones Aprobar / Rechazar. El flujo espera a que alguien pulse.
+- Aprobar → `aprobado` y después `ejecutado_simulado`: la acción no se hace de verdad. Rechazar → `rechazado`.
+- `reviewed_by`: los botones de *Send and Wait* no dicen quién los ha pulsado, así que se pone el alias de la cuenta de pruebas que revisa, desde **Ajustes** (`revisor`).
+- Si falla el agente, se registra una segunda fila para el mismo evento: `agente_no_disponible` si Gemini no responde, o `salida_agente_no_valida` si la salida no cumple el formato. El ticket queda sin propuesta y se puede repetir a mano desde n8n. Si falla después (guardar la propuesta o Telegram), avisa "Errores".
 
 ## 6. Decisiones de C sobre el contrato del back-office
 

@@ -231,13 +231,13 @@ Obligatorios: `event_id`, `shop_ticket_id`, `customer.name`, `customer.email`, `
 Respuesta `201`:
 
 ```json
-{ "id": 1, "shop_ticket_id": 1, "result": "creado" }
+{ "id": 1, "shop_ticket_id": 1, "customer_id": 3, "result": "creado" }
 ```
 
 Respuesta `200` si el `shop_ticket_id` ya existía:
 
 ```json
-{ "id": 1, "shop_ticket_id": 1, "result": "duplicado" }
+{ "id": 1, "shop_ticket_id": 1, "customer_id": 3, "result": "duplicado" }
 ```
 
 Errores: `401`, `422`.
