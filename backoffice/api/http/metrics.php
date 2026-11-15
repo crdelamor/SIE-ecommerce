@@ -192,15 +192,17 @@ function integrationMetrics(DateTimeImmutable $from): array
         [$from->format('Y-m-d')]
     );
 
-    // Retraso de sincronización: del pedido en la tienda a su alta en el back-office
+    // Retraso de sincronización: del pedido en la tienda a su alta en el back-office.
+    // Solo los pedidos de los últimos `days` días: los anteriores a la integración se pasaron mucho después.
     $delays = metricRows(
         "SELECT COUNT(*) AS orders,
                 SUM(CASE WHEN d < 60 THEN 1 ELSE 0 END) AS under_1_min,
                 SUM(CASE WHEN d >= 60 AND d < 600 THEN 1 ELSE 0 END) AS from_1_to_10_min,
                 SUM(CASE WHEN d >= 600 THEN 1 ELSE 0 END) AS over_10_min
-         FROM (SELECT GREATEST(TIMESTAMPDIFF(SECOND, placed_at, synced_at), 0) AS d FROM bo_orders) t"
+         FROM (SELECT GREATEST(TIMESTAMPDIFF(SECOND, placed_at, synced_at), 0) AS d FROM bo_orders WHERE placed_at >= ?) t",
+        [$from->format('Y-m-d')]
     )[0];
-    $median = medianSyncDelay((int) $delays['orders']);
+    $median = medianSyncDelay((int) $delays['orders'], $from);
 
     return [
         'integration'             => $byResult + ['errors_by_type' => asMap($errorsByType)],
@@ -217,13 +219,14 @@ function integrationMetrics(DateTimeImmutable $from): array
 }
 
 /** Mediana en segundos (MySQL 8 no tiene MEDIAN). Con pocos pedidos basta con leer los valores ordenados. */
-function medianSyncDelay(int $orders): ?int
+function medianSyncDelay(int $orders, DateTimeImmutable $from): ?int
 {
     if ($orders === 0) {
         return null;
     }
     $values = array_map('intval', array_column(metricRows(
-        'SELECT GREATEST(TIMESTAMPDIFF(SECOND, placed_at, synced_at), 0) AS d FROM bo_orders ORDER BY d'
+        'SELECT GREATEST(TIMESTAMPDIFF(SECOND, placed_at, synced_at), 0) AS d FROM bo_orders WHERE placed_at >= ? ORDER BY d',
+        [$from->format('Y-m-d')]
     ), 'd'));
     $middle = intdiv($orders, 2);
 
@@ -240,8 +243,9 @@ function ticketMetrics(): array
         metricRows('SELECT priority AS k, COUNT(*) AS n FROM bo_tickets GROUP BY priority'),
         TICKET_PRIORITIES
     );
+    // reason es el asunto de la tienda, con el pedido detrás ("Daño en el envío · PED-000027"): se agrupa sin él
     $byReason = countsByKey(metricRows(
-        'SELECT reason AS k, COUNT(*) AS n FROM bo_tickets GROUP BY reason ORDER BY n DESC LIMIT 5'
+        "SELECT SUBSTRING_INDEX(reason, ' · ', 1) AS k, COUNT(*) AS n FROM bo_tickets GROUP BY k ORDER BY n DESC LIMIT 5"
     ));
     $resolution = metricValue(
         'SELECT AVG(TIMESTAMPDIFF(SECOND, opened_at, closed_at)) / 3600 FROM bo_tickets WHERE closed_at IS NOT NULL'

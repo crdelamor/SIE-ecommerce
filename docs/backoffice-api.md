@@ -445,7 +445,7 @@ Errores: `401`, `422` si falta `after_id` o no es válido.
 
 Datos del cuadro de mando, calculados en el momento con consultas a las tablas `bo_*`. Ninguna cifra está escrita a mano. Pide `X-Api-Key`; la sesión del gestor se añade con el login de las pantallas. Qué mide cada campo, cómo se calcula y por qué: `docs/metricas.md`.
 
-`days` (opcional, de 1 a 365, 30 por defecto) es el número de días de las series diarias (`orders_per_day` e `integration_per_day`), que acaban hoy y tienen 0 en los días sin datos. El resto de métricas usa todo el histórico. Las medias y porcentajes sin datos para calcularse van como `null`.
+`days` (opcional, de 1 a 365, 30 por defecto) es el número de días de las series diarias (`orders_per_day` e `integration_per_day`), que acaban hoy y tienen 0 en los días sin datos, y de `sync_delay`. El resto de métricas usa todo el histórico. Las medias y porcentajes sin datos para calcularse van como `null`.
 
 Respuesta `200` (con `days=2` y datos de prueba):
 

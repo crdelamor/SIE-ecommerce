@@ -43,9 +43,9 @@ Fuente: Shopify separa el tiempo de preparación (*processing time*) del tiempo 
 | Errores por tipo | `integration.errors_by_type` | `COUNT(*)` de los `error` por `error_type` (tipos de `docs/integracion.md`) | Qué corregir primero: no es lo mismo `payload_incompleto` (fallo de la tienda) que `agente_no_disponible` (límite del modelo). |
 | Ejecuciones por flujo | `integration_by_workflow` | `COUNT(*)` por `workflow` | Cuánto trabajo recae en Reintentos. Si es mucho, el aviso directo de la tienda está fallando. |
 | Ejecuciones por día | `integration_per_day` | Correctas (`ok` + `duplicado`) y fallidas (`error` + `pendiente`) por día | Ver cuándo empezó un problema y si se arregló. |
-| Retraso de sincronización | `sync_delay` | `synced_at − placed_at` de `bo_orders`: mediana y pedidos en menos de 1 minuto, de 1 a 10 y más de 10 | Cuánto tarda un pedido en verse en el back-office. Un pedido que llega en segundos ha ido por el aviso directo; uno de 5 a 7 minutos, por Reintentos. |
+| Retraso de sincronización | `sync_delay` | `synced_at − placed_at` de los pedidos de los últimos `days` días: mediana y pedidos en menos de 1 minuto, de 1 a 10 y más de 10 | Cuánto tarda un pedido en verse en el back-office. Un pedido que llega en segundos ha ido por el aviso directo; uno de 5 a 7 minutos, por Reintentos. |
 
-Para el retraso se usa la mediana y no la media: los pedidos que se recuperaron horas después (por ejemplo, los anteriores a la integración) dispararían la media.
+Para el retraso se usa la mediana y no la media, y solo cuentan los pedidos de los últimos `days` días: los anteriores a la integración se pasaron al back-office días después y dispararían la cifra.
 
 Fuente: Google, *Site Reliability Engineering*, capítulo 6, *Monitoring Distributed Systems* ([sre.google](https://sre.google/sre-book/monitoring-distributed-systems/)). De sus cuatro señales básicas, aquí se miden los errores (ejecuciones fallidas y por tipo), el tráfico (ejecuciones por día y por flujo) y la latencia (retraso de sincronización).
 
@@ -55,7 +55,7 @@ Fuente: Google, *Site Reliability Engineering*, capítulo 6, *Monitoring Distrib
 |---|---|---|---|
 | Incidencias abiertas | `tickets.open` | `abierta` + `en_curso` | Carga pendiente del equipo de soporte. |
 | Por estado y prioridad | `tickets.by_status`, `tickets.by_priority` | `COUNT(*)` por `status` y por `priority` (la pone `clasificar_incidencia`) | Si se acumulan las de prioridad alta. |
-| Motivos más frecuentes | `tickets.top_reasons` | Los 5 `reason` más repetidos | Atacar la causa (embalaje, plazos de envío) en vez de responder caso a caso. |
+| Motivos más frecuentes | `tickets.top_reasons` | Los 5 `reason` más repetidos, sin el código de pedido que lleva detrás (`Daño en el envío · PED-000027` cuenta como `Daño en el envío`) | Atacar la causa (embalaje, plazos de envío) en vez de responder caso a caso. |
 | Con pedido | `tickets.with_order` | Incidencias con `order_code` | Cuántas son de un pedido concreto y cuántas son consultas generales. |
 | Tiempo medio de resolución | `tickets.avg_resolution_hours` | Media de `closed_at − opened_at` de las cerradas | Si el equipo responde a tiempo. |
 | Clientes con Telegram | `tickets.customers_telegram` (sobre `tickets.customers`) | Clientes con incidencias que han enlazado su chat | Si los clientes usan el seguimiento por Telegram. |
