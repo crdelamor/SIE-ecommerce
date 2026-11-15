@@ -31,6 +31,7 @@ export default function SupportPage() {
   const [error, setError] = useState('');
   const [sending, setSending] = useState(false);
   const [ticketId, setTicketId] = useState(null);
+  const [telegramUrl, setTelegramUrl] = useState(null);
   const fieldRefs = useRef({});
   const successRef = useRef(null);
 
@@ -53,6 +54,7 @@ export default function SupportPage() {
     try {
       const result = await sendSupportRequest(form);
       setTicketId(result.ticket_id);
+      setTelegramUrl(result.telegram_url ?? null);
     } catch (err) {
       setError(err.message);
       setFieldErrors(err.fields);
@@ -67,6 +69,7 @@ export default function SupportPage() {
   function startAgain() {
     setForm({ ...emptyForm, order_code: '' });
     setTicketId(null);
+    setTelegramUrl(null);
   }
 
   // Ayudas bajo cada campo (se leen junto al campo gracias a aria-describedby)
@@ -122,6 +125,15 @@ export default function SupportPage() {
             Tu número de incidencia es el <strong>{ticketId}</strong>. Te responderemos en el email que nos has
             indicado.
           </p>
+          {/* Solo si la API ha devuelto el enlace firmado (config.php con telegram_bot) */}
+          {telegramUrl && (
+            <>
+              <p>Si quieres, te avisamos también por Telegram cuando el equipo haya revisado tu caso.</p>
+              <a className="button" href={telegramUrl} target="_blank" rel="noopener noreferrer">
+                Seguir mi incidencia por Telegram
+              </a>
+            </>
+          )}
           <Button variant="secondary" onClick={startAgain}>
             Enviar otra consulta
           </Button>

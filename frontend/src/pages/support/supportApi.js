@@ -19,7 +19,7 @@ function sessionId() {
   }
 }
 
-/** Envía la incidencia. Devuelve { ticket_id, status } o lanza SupportError. */
+/** Envía la incidencia. Devuelve { ticket_id, status, telegram_url } o lanza SupportError. */
 export async function sendSupportRequest(data) {
   let response;
   try {

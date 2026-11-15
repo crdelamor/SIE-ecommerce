@@ -633,7 +633,7 @@ Claude Code
   - Primero apuntaba a Gemini 3.8 Flash; al ver la tabla de límites solo tenía 20 peticiones al día, demasiado poco para un agente que hace 4 o 5 llamadas por incidencia.
 - **Cambios hechos por mí:**
   - Elegí **Gemini 3.5 Flash Lite** (`gemini-3.5-flash-lite`), plan gratuito de Google AI Studio: 15 peticiones por minuto, 250K tokens por minuto y 500 peticiones al día (límites vistos en AI Studio el 2026-11-12). Si en las pruebas falla con las herramientas o el JSON, se probará `gemini-3.8-flash` (5 por minuto, 20 al día).
-  - Creé la clave de API `blacklotus-tarea2` en un proyecto de nivel gratuito, sin facturación. La clave solo va en la credencial de n8n.
+  - La clave de API que usamos es la `Default Gemini API Key` del proyecto `Default Gemini Project`, de nivel gratuito y sin facturación. Solo va en las credenciales de n8n. *(Corregido el 15/11: aquí ponía que había creado una clave `blacklotus-tarea2`, pero en AI Studio solo está esta.)*
   - Creé el bot de pruebas `@blacklotus_soporte_bot`. El token solo va en la credencial de n8n, nunca en el repositorio.
 - **Cómo lo validé:**
   - Comprobé en AI Studio el identificador del modelo (Playground) y sus límites (Límite de frecuencia).
@@ -723,3 +723,21 @@ Claude Code
 - **Cómo lo validé:**
   - Arnés con el código del nodo: 12 vueltas se reenvían, la 13.ª va a «Reintentos agotados», los eventos resueltos se olvidan y el cursor del ramal de huecos no cambia.
   - n8n 2.45.7 en local, con el back-office de `develop` desde cero y dos pendientes reales de la tienda local: el 74, con 12 intentos, queda `error` / `reintentos_agotados` y no se reenvía. El 75 se reenvía y queda `ok` (pedido creado), aunque en la lista va detrás del 74. Los contadores se vacían al resolverse.
+
+## 2026-11-15 · Celia (C) · Tarea 2: seguimiento de la incidencia por Telegram
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** botón "Seguir mi incidencia por Telegram" en la web y flujo "Telegram" de n8n, que guarda el chat del cliente en el back-office (rama `feature/agente-telegram`).
+- **Partes asistidas por IA:** el borrador del flujo, la firma del enlace en `support.php`, el botón de `SupportPage.jsx`, el endpoint nuevo del back-office y la documentación. Los parámetros de los nodos de Telegram se sacaron del propio n8n 2.45.7.
+- **Cambios hechos por mí:**
+  - El enlace lleva una firma (HMAC del número de incidencia con `webhook_secret`), para que nadie enlace su chat a una incidencia ajena cambiando el número. La comprueba la tienda, que es quien la crea: el secreto no sale de `config.php` ni hay que ponerlo en n8n.
+  - El *secret token* que pone n8n en el webhook del bot sale del id del flujo y del nodo, que están en el repositorio. Por eso la protección real es la firma de la tienda.
+  - `GET /bo-api/tickets/shop/{shopTicketId}` en el back-office (aviso a José): el enlace lleva el número de la tienda y para guardar el chat hace falta el id del back-office.
+  - En el registro va el número de incidencia, pero no el chat del cliente. Los mensajes que no son el enlace solo reciben una explicación.
+  - El paso de Telegram en el despliegue va como punto 8 aparte, para no chocar otra vez con los pasos 4 y 5 que cambia César en el #34.
+- **Cómo lo validé:**
+  - `php -l` en los dos PHP. Con `curl`: `POST /api/support` devuelve `telegram_url`; con la firma buena da 200, con la de otra incidencia o vacía da 403, y sin firma (Incidencias) sigue dando 200. `GET /bo-api/tickets/shop/16` da el ticket; 999 o texto dan 404, y sin clave da 401.
+  - Los nodos de código del flujo, con mensajes de ejemplo: `/start` válido en privado, el mismo desde un grupo, texto suelto, `/start` sin código o con una firma mal formada, y cada error de la tienda y del back-office.
+  - En Chrome, con `npm run dev`: al enviar la incidencia 18 sale el botón con el enlace firmado.
+  - Prueba con el bot de verdad: pulsé el botón de la incidencia 18 e *Iniciar* en Telegram. El `/start` se recogió con `getUpdates` y se pasó a una copia del flujo con disparador manual ("Telegram (prueba local)", solo en mi n8n). Resultado `ok`: el chat quedó guardado en el cliente del ticket 18 y el bot me contestó "Listo...".
+  - El mismo `/start` cambiando el número a la incidencia 17 (firma de otra) da `error` / `firma_no_valida`, no guarda el chat y el bot contesta que el enlace no es válido.
+  - Después marqué el mensaje como leído en el bot, para que no le llegue al flujo del servidor cuando César lo publique.
