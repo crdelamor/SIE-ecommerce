@@ -90,6 +90,30 @@ $router->post('/tickets', function (): void {
     jsonResponse(['id' => $ticketId, 'shop_ticket_id' => $body['shop_ticket_id'], 'customer_id' => $customerId, 'result' => 'creado'], 201);
 });
 
+// GET /bo-api/tickets/shop/{shopTicketId} - ticket a partir del número de la tienda (flujos "Telegram" e
+// "Incidencias"). Lleva el chat de Telegram del cliente: solo lo usan los flujos, nunca una herramienta del agente.
+$router->get('/tickets/shop/{shopTicketId}', function (array $params): void {
+    $shopTicketId = $params['shopTicketId'] ?? '';
+    $stmt = db()->prepare(
+        'SELECT t.id, t.shop_ticket_id, t.customer_id, t.status, c.telegram_chat_id
+         FROM bo_tickets t JOIN bo_customers c ON c.id = t.customer_id
+         WHERE t.shop_ticket_id = ?'
+    );
+    $stmt->execute([ctype_digit($shopTicketId) ? (int) $shopTicketId : 0]);
+    $ticket = $stmt->fetch();
+    if (!$ticket) {
+        jsonError('El ticket no existe', 404);
+    }
+
+    jsonResponse([
+        'id'             => (int) $ticket['id'],
+        'shop_ticket_id' => (int) $ticket['shop_ticket_id'],
+        'customer_id'      => (int) $ticket['customer_id'],
+        'status'           => $ticket['status'],
+        'telegram_chat_id' => $ticket['telegram_chat_id'],
+    ]);
+});
+
 // PATCH /bo-api/tickets/{id} - estado, prioridad o chat de Telegram
 $router->patch('/tickets/{id}', function (array $params): void {
     $body = readJsonBody();

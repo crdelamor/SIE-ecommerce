@@ -30,5 +30,6 @@ return [
         'webhook_url'    => '',   // URL de producción del nodo Webhook de n8n (https://...)
         'webhook_secret' => '',   // va en la cabecera X-Webhook-Secret; el mismo valor en n8n
         'api_key'        => '',   // la que manda n8n en X-Api-Key a /api/integration/*
+        'telegram_bot'   => '',   // usuario del bot sin @ (botón "Seguir mi incidencia por Telegram"); vacío = sin botón
     ],
 ];

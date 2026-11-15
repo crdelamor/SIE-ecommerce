@@ -633,7 +633,7 @@ Claude Code
   - Primero apuntaba a Gemini 3.8 Flash; al ver la tabla de límites solo tenía 20 peticiones al día, demasiado poco para un agente que hace 4 o 5 llamadas por incidencia.
 - **Cambios hechos por mí:**
   - Elegí **Gemini 3.5 Flash Lite** (`gemini-3.5-flash-lite`), plan gratuito de Google AI Studio: 15 peticiones por minuto, 250K tokens por minuto y 500 peticiones al día (límites vistos en AI Studio el 2026-11-12). Si en las pruebas falla con las herramientas o el JSON, se probará `gemini-3.8-flash` (5 por minuto, 20 al día).
-  - Creé la clave de API `blacklotus-tarea2` en un proyecto de nivel gratuito, sin facturación. La clave solo va en la credencial de n8n.
+  - La clave de API que usamos es la `Default Gemini API Key` del proyecto `Default Gemini Project`, de nivel gratuito y sin facturación. Solo va en las credenciales de n8n. *(Corregido el 15/11: aquí ponía que había creado una clave `blacklotus-tarea2`, pero en AI Studio solo está esta.)*
   - Creé el bot de pruebas `@blacklotus_soporte_bot`. El token solo va en la credencial de n8n, nunca en el repositorio.
 - **Cómo lo validé:**
   - Comprobé en AI Studio el identificador del modelo (Playground) y sus límites (Límite de frecuencia).
@@ -724,6 +724,36 @@ Claude Code
   - Arnés con el código del nodo: 12 vueltas se reenvían, la 13.ª va a «Reintentos agotados», los eventos resueltos se olvidan y el cursor del ramal de huecos no cambia.
   - n8n 2.45.7 en local, con el back-office de `develop` desde cero y dos pendientes reales de la tienda local: el 74, con 12 intentos, queda `error` / `reintentos_agotados` y no se reenvía. El 75 se reenvía y queda `ok` (pedido creado), aunque en la lista va detrás del 74. Los contadores se vacían al resolverse.
 
+## 2026-11-15 · Celia (C) · Tarea 2: seguimiento de la incidencia por Telegram
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** botón "Seguir mi incidencia por Telegram" en la web y flujo "Telegram" de n8n, que guarda el chat del cliente en el back-office (rama `feature/agente-telegram`).
+- **Partes asistidas por IA:** el borrador del flujo, la firma del enlace en `support.php`, el botón de `SupportPage.jsx`, el endpoint nuevo del back-office y la documentación. Los parámetros de los nodos de Telegram se sacaron del propio n8n 2.45.7.
+- **Cambios hechos por mí:**
+  - El enlace lleva una firma (HMAC del número de incidencia con `webhook_secret`), para que nadie enlace su chat a una incidencia ajena cambiando el número. La comprueba la tienda, que es quien la crea: el secreto no sale de `config.php` ni hay que ponerlo en n8n.
+  - El *secret token* que pone n8n en el webhook del bot sale del id del flujo y del nodo, que están en el repositorio. Por eso la protección real es la firma de la tienda.
+  - `GET /bo-api/tickets/shop/{shopTicketId}` en el back-office (aviso a José): el enlace lleva el número de la tienda y para guardar el chat hace falta el id del back-office.
+  - En el registro va el número de incidencia, pero no el chat del cliente. Los mensajes que no son el enlace solo reciben una explicación.
+  - El paso de Telegram en el despliegue va como punto 8 aparte, para no chocar otra vez con los pasos 4 y 5 que cambia César en el #34.
+- **Cómo lo validé:**
+  - `php -l` en los dos PHP. Con `curl`: `POST /api/support` devuelve `telegram_url`; con la firma buena da 200, con la de otra incidencia o vacía da 403, y sin firma (Incidencias) sigue dando 200. `GET /bo-api/tickets/shop/16` da el ticket; 999 o texto dan 404, y sin clave da 401.
+  - Los nodos de código del flujo, con mensajes de ejemplo: `/start` válido en privado, el mismo desde un grupo, texto suelto, `/start` sin código o con una firma mal formada, y cada error de la tienda y del back-office.
+  - En Chrome, con `npm run dev`: al enviar la incidencia 18 sale el botón con el enlace firmado.
+  - Prueba con el bot de verdad: pulsé el botón de la incidencia 18 e *Iniciar* en Telegram. El `/start` se recogió con `getUpdates` y se pasó a una copia del flujo con disparador manual ("Telegram (prueba local)", solo en mi n8n). Resultado `ok`: el chat quedó guardado en el cliente del ticket 18 y el bot me contestó "Listo...".
+  - El mismo `/start` cambiando el número a la incidencia 17 (firma de otra) da `error` / `firma_no_valida`, no guarda el chat y el bot contesta que el enlace no es válido.
+  - Después marqué el mensaje como leído en el bot, para que no le llegue al flujo del servidor cuando César lo publique.
+
+## 2026-11-15 · Celia (C) · Tarea 2: respuesta aprobada al cliente por Telegram
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** que al aprobar una propuesta se mande al cliente la respuesta por Telegram si ha enlazado su chat (rama `feature/agente-respuesta`, sale de la del #15).
+- **Partes asistidas por IA:** los tres nodos nuevos de "Incidencias", el cambio del endpoint del back-office y la documentación.
+- **Errores detectados en la IA:** el script que añadía los nodos no los insertó a la primera, porque el fichero tenía saltos de línea de Windows; las conexiones sí se cambiaron. Lo vio la comprobación del flujo (conexiones a nodos que no existían) y se arregló.
+- **Cambios hechos por mí:**
+  - Después de Aprobar: buscar el chat del cliente, mandarle `customer_reply` (con el Markdown escapado) y luego marcar `ejecutado_simulado`. Si el envío falla, la propuesta se queda en `aprobado` y avisa "Errores", que es lo que de verdad ha pasado. Si se rechaza, no se manda nada.
+  - `GET /bo-api/tickets/shop/{shopTicketId}` devuelve también `telegram_chat_id` (aviso a José). Solo lo usan los flujos; las herramientas del agente siguen sin ver el chat.
+- **Cómo lo validé:** `php -l`; el endpoint con los tickets 16, 18 y 999; el aviso con un texto con `_` sale escapado. Prueba real: incidencia 19 de la clienta de prueba con Telegram enlazado → propuesta en el grupo → Aprobar → me llegó "Sobre tu incidencia 19: ..." al chat privado del bot y la propuesta 9 quedó `ejecutado_simulado`.
+- **Revisión de los #34 y #36 de César (15/11):** tras resolver él los conflictos, comprobé que se fusionan con develop sin conflictos y que mantienen lo nuestro (guía con Incidencias, Gemini y chat; `reintentos.json` sin excluir `support.requested`). Aprobados los dos.
+- **Conflictos y prueba de los caminos que faltaban (15/11):** el #38 y el #39 solo chocaban con develop en el ia-log; en la rama del #15 se dejan todas las entradas (primero las de César del 13 y 14/11). El #39 no se toca: lo comprobé con `git merge-tree` y, fusionado antes el #38, entra sin conflictos. En n8n local, la incidencia 20 (Laura, con Telegram enlazado) rechazada desde el grupo: propuesta `rechazado` y no se le manda nada. La 21 (cliente sin Telegram) aprobada: pasa de `aprobado` a `ejecutado_simulado` sin el nodo "Avisar al cliente".
+
 ## 2026-11-15 · José (B) · Tarea 2: métricas del cuadro de mando
 - **Herramienta:** Claude Code desde VS Code.
 - **Tarea:** `GET /bo-api/metrics` con las métricas del cuadro de mando y su justificación en `docs/metricas.md` (rama `feature/backoffice-metricas`, PR #40).
@@ -734,11 +764,12 @@ Claude Code
   - La actualización del contrato en `docs/backoffice-api.md`.
 - **Errores detectados en la IA:**
   - Los mapas vacíos (errores por tipo, motivos, tipos de caso) salían en el JSON como `[]` en vez de `{}`. Se corrigió con `asMap()`.
-  - Las pruebas se hicieron en MariaDB y el servidor usa MySQL 8: queda pendiente comprobarlo allí.
+  - Las pruebas en local no detectaron que el MySQL del servidor va en UTC: los datos de prueba tenían `placed_at` y `synced_at` creados con el mismo `NOW()`. César lo detectó al revisar el #40: `synced_at`, `created_at` y `reviewed_at` (`NOW()` y `DEFAULT CURRENT_TIMESTAMP`) salían en UTC y `placed_at` en hora de Madrid, y el retraso de sincronización daba unos −3400 s, escondidos por `GREATEST(…, 0)`.
 - **Cambios hechos por mí:**
   - Elegí hacer un cuadro de mando completo: las 7 métricas del contrato más el retraso de sincronización, la preparación y envío, la mezcla de producto, los clientes que repiten y la supervisión del agente (tasa de aprobación, confianza y tiempo de revisión).
   - Decidí dejar las métricas de navegación (tiempo de visita y visitas sin compra) para un PR aparte, porque necesitan que los datos lleguen por n8n y tocan ficheros de César.
   - Revisé las métricas y las fuentes de `docs/metricas.md` antes de subirlas.
+  - Con la propuesta de César, `db.php` fija la zona horaria de la sesión de MySQL (`SET time_zone` con el desfase de Madrid) y `backoffice/db/fix-hora-utc.sql` corrige una sola vez las filas que ya estaban guardadas en UTC.
 - **Cómo lo validé:**
   - Back-office en local con MariaDB 10.11 (`ONLY_FULL_GROUP_BY` activado) y datos de prueba: con las tablas vacías todas las medias salen `null` y las series con 0; con 4 pedidos, 2 incidencias y 3 propuestas, las cifras coinciden con las calculadas a mano.
   - Sin `X-Api-Key` da 401; con `days=0` o `days=abc`, 422.
