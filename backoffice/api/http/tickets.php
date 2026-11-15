@@ -90,6 +90,24 @@ $router->post('/tickets', function (): void {
     jsonResponse(['id' => $ticketId, 'shop_ticket_id' => $body['shop_ticket_id'], 'customer_id' => $customerId, 'result' => 'creado'], 201);
 });
 
+// GET /bo-api/tickets/shop/{shopTicketId} - ticket a partir del número de la tienda (flujo "Telegram")
+$router->get('/tickets/shop/{shopTicketId}', function (array $params): void {
+    $shopTicketId = $params['shopTicketId'] ?? '';
+    $stmt = db()->prepare('SELECT id, shop_ticket_id, customer_id, status FROM bo_tickets WHERE shop_ticket_id = ?');
+    $stmt->execute([ctype_digit($shopTicketId) ? (int) $shopTicketId : 0]);
+    $ticket = $stmt->fetch();
+    if (!$ticket) {
+        jsonError('El ticket no existe', 404);
+    }
+
+    jsonResponse([
+        'id'             => (int) $ticket['id'],
+        'shop_ticket_id' => (int) $ticket['shop_ticket_id'],
+        'customer_id'    => (int) $ticket['customer_id'],
+        'status'         => $ticket['status'],
+    ]);
+});
+
 // PATCH /bo-api/tickets/{id} - estado, prioridad o chat de Telegram
 $router->patch('/tickets/{id}', function (array $params): void {
     $body = readJsonBody();

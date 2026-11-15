@@ -65,7 +65,7 @@ Todos piden la cabecera `X-Api-Key` con la clave de integración de la tienda (`
 |---|---|---|
 | `GET /api/integration/orders/{code}` | A | Pedido con cliente (nombre y email), líneas con los datos TCG y pagos sin referencia. `404` si no existe. |
 | `GET /api/integration/events?after_id=&limit=` | A | Eventos integrados con id mayor que `after_id`, con el mismo sobre. `400` si falta `after_id` o `limit` no va de 1 a 500. |
-| `GET /api/integration/tickets/{id}` | C | Incidencia para dar de alta el ticket en el back-office. `404` si no existe. |
+| `GET /api/integration/tickets/{id}` | C | Incidencia para dar de alta el ticket en el back-office. `404` si no existe. Con `?firma=` (flujo "Telegram"), `403` si la firma no es la de esa incidencia (apartado 7). |
 
 ### `GET /api/integration/tickets/{id}`
 
@@ -113,6 +113,7 @@ Cada ejecución acaba en `POST /bo-api/integration-log`, también en la rama de 
 | `agente_no_disponible` | error | Incidencias | El modelo de IA no responde o se ha pasado del límite gratuito. El ticket ya está creado y falta la propuesta: se repite a mano desde n8n (reenviarlo daría `duplicado` y no volvería a pasar por el agente). |
 | `salida_agente_no_valida` | error | Incidencias | El agente devuelve un JSON que no cumple el apartado 5. No se guarda la propuesta. |
 | `firma_no_valida` | error | Telegram | El enlace de Telegram no lleva una firma válida para ese ticket. No se guarda el chat. |
+| `ticket_no_existe_en_backoffice` | pendiente | Telegram | El cliente pulsa el enlace antes de que "Incidencias" haya creado el ticket. Se le pide que vuelva a pulsar en un minuto. |
 
 ## 5. Salida del agente de IA
 
@@ -192,3 +193,18 @@ Respuesta a los puntos que me dejó José en el PR #24 y el #27:
 6. `event_id` en el alta del ticket: no hace falta añadirlo a `bo_tickets`. La idempotencia va por `shop_ticket_id` y la trazabilidad del evento queda en `bo_integration_log`.
 7. El ejemplo de `POST /bo-api/proposals` usaba `producto_danado`; con esta lista es `dano_envio`. Hecho: corregido en `docs/backoffice-api.md` en el #32.
 8. `support.requested` llega al webhook de "Pedidos". "Pedidos" se lo pasa al flujo "Incidencias" (nodo *Execute Workflow*, sin esperar a que acabe) y "Incidencias" registra su resultado con `workflow: Incidencias`. Así "Reintentos" ya no lo deja fuera: una incidencia que no llegó o quedó `pendiente` se reenvía por "Pedidos" como el resto.
+
+## 7. Seguimiento por Telegram
+
+El cliente puede enlazar su chat de Telegram con su incidencia para que le avisemos por ahí. Así funciona:
+
+1. Al enviar el formulario, `POST /api/support` devuelve también `telegram_url`: `https://t.me/<bot>?start=<incidencia>-<firma>`. La web lo muestra como el botón "Seguir mi incidencia por Telegram". Si en `config.php` falta `telegram_bot` o `webhook_secret`, llega `null` y no sale el botón.
+2. La firma son los 16 primeros caracteres de `HMAC-SHA256("telegram:<incidencia>", webhook_secret)`. Sin ella, cualquiera podría enlazar su chat a la incidencia de otro cambiando el número.
+3. El cliente pulsa *Iniciar* en el bot y Telegram manda `/start <incidencia>-<firma>` al flujo "Telegram" de n8n.
+4. "Telegram" pregunta a la tienda con `GET /api/integration/tickets/{id}?firma=...`. La firma la comprueba la tienda, que es quien la crea: el secreto no sale de `config.php`.
+5. Busca el ticket con `GET /bo-api/tickets/shop/{shopTicketId}` y guarda el chat con `PATCH /bo-api/tickets/{id}` (`telegram_chat_id`). El back-office lo guarda en el cliente, así que basta con enlazarlo una vez.
+6. Contesta al cliente por Telegram y registra el resultado con `workflow: Telegram`, `event_type: telegram.start` y sin `event_id`. En el registro va el número de incidencia, pero no el chat.
+
+Otros mensajes al bot, o el enlace enviado desde un grupo, solo reciben una explicación y no se registran.
+
+El flujo "Telegram" solo funciona en el servidor. Telegram solo manda los mensajes a un webhook HTTPS, y cada bot tiene un único webhook. En local se prueba recogiendo el `/start` con `getUpdates` y pasándoselo al flujo.

@@ -242,6 +242,18 @@ Respuesta `200` si el `shop_ticket_id` ya existía:
 
 Errores: `401`, `422`.
 
+### `GET /bo-api/tickets/shop/{shopTicketId}`
+
+Ticket a partir del número de la incidencia en la tienda. Lo usa el flujo "Telegram": el enlace del cliente lleva el número de la tienda, y para guardar el chat hace falta el id del back-office.
+
+Respuesta `200`:
+
+```json
+{ "id": 1, "shop_ticket_id": 7, "customer_id": 3, "status": "abierta" }
+```
+
+Errores: `401`, `404` (todavía no ha llegado al back-office, o el número no es válido).
+
 ### `PATCH /bo-api/tickets/{id}`
 
 Cambia el estado, la prioridad o el chat de Telegram del ticket. `{id}` es el id del back-office (`bo_tickets.id`). Lo usan la herramienta `clasificar_incidencia` (prioridad) y el flujo "Telegram" (chat).

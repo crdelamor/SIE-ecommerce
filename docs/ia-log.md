@@ -687,3 +687,21 @@ Claude Code
 - **Prueba con la clave de Gemini (ticket 11):** el agente usó las tres herramientas y devolvió una propuesta válida, que se guardó en el back-office. Avisó en `risks` de que el pedido figura `pendiente_pago` aunque el cliente dice que le llegó, y de que tiene 8 incidencias anteriores (mis pruebas). El envío a Telegram falló con *can't parse entities*: *Send and Wait* manda siempre en Markdown y los `_` de `dano_envio` lo rompen. Ahora el mensaje se arma en "Preparar propuesta" con esos caracteres escapados.
 - **Telegram en local (tickets 12 a 14):** con el escapado ya no falla el Markdown. Telegram rechaza los botones con `http://localhost:5678` (*Wrong HTTP URL*); en local arranco n8n con `WEBHOOK_URL=http://127.0.0.1.nip.io:5678/`, que apunta al mismo PC. Queda pendiente que el bot de la credencial local encuentre el grupo (*chat not found*).
 - **Prueba completa en local (ticket 16, ejecución 121):** el bot y el chat del grupo estaban bien (la primera vez el bot aún no estaba dentro del grupo). Llegó al grupo el mensaje con la propuesta y los botones; al pulsar Aprobar, la propuesta 6 pasó a `aprobado` (`reviewed_by` `@revisor_pruebas`) y después a `ejecutado_simulado`. Añadí a la guía de despliegue cómo probar los botones en local.
+
+## 2026-11-15 · Celia (C) · Tarea 2: seguimiento de la incidencia por Telegram
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** botón "Seguir mi incidencia por Telegram" en la web y flujo "Telegram" de n8n, que guarda el chat del cliente en el back-office (rama `feature/agente-telegram`).
+- **Partes asistidas por IA:** el borrador del flujo, la firma del enlace en `support.php`, el botón de `SupportPage.jsx`, el endpoint nuevo del back-office y la documentación. Los parámetros de los nodos de Telegram se sacaron del propio n8n 2.45.7.
+- **Cambios hechos por mí:**
+  - El enlace lleva una firma (HMAC del número de incidencia con `webhook_secret`), para que nadie enlace su chat a una incidencia ajena cambiando el número. La comprueba la tienda, que es quien la crea: el secreto no sale de `config.php` ni hay que ponerlo en n8n.
+  - El *secret token* que pone n8n en el webhook del bot sale del id del flujo y del nodo, que están en el repositorio. Por eso la protección real es la firma de la tienda.
+  - `GET /bo-api/tickets/shop/{shopTicketId}` en el back-office (aviso a José): el enlace lleva el número de la tienda y para guardar el chat hace falta el id del back-office.
+  - En el registro va el número de incidencia, pero no el chat del cliente. Los mensajes que no son el enlace solo reciben una explicación.
+  - El paso de Telegram en el despliegue va como punto 8 aparte, para no chocar otra vez con los pasos 4 y 5 que cambia César en el #34.
+- **Cómo lo validé:**
+  - `php -l` en los dos PHP. Con `curl`: `POST /api/support` devuelve `telegram_url`; con la firma buena da 200, con la de otra incidencia o vacía da 403, y sin firma (Incidencias) sigue dando 200. `GET /bo-api/tickets/shop/16` da el ticket; 999 o texto dan 404, y sin clave da 401.
+  - Los nodos de código del flujo, con mensajes de ejemplo: `/start` válido en privado, el mismo desde un grupo, texto suelto, `/start` sin código o con una firma mal formada, y cada error de la tienda y del back-office.
+  - En Chrome, con `npm run dev`: al enviar la incidencia 18 sale el botón con el enlace firmado.
+  - Prueba con el bot de verdad: pulsé el botón de la incidencia 18 e *Iniciar* en Telegram. El `/start` se recogió con `getUpdates` y se pasó a una copia del flujo con disparador manual ("Telegram (prueba local)", solo en mi n8n). Resultado `ok`: el chat quedó guardado en el cliente del ticket 18 y el bot me contestó "Listo...".
+  - El mismo `/start` cambiando el número a la incidencia 17 (firma de otra) da `error` / `firma_no_valida`, no guarda el chat y el bot contesta que el enlace no es válido.
+  - Después marqué el mensaje como leído en el bot, para que no le llegue al flujo del servidor cuando César lo publique.

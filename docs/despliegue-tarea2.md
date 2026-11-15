@@ -45,7 +45,7 @@ Los flujos exportados en `integration/n8n/workflows/` solo hacen referencia a es
    n8n publish:workflow --id=C0incidencias001
    ```
    n8n activa el webhook unos segundos después de arrancar.
-5. En `api/config.php` de la tienda, sección `integration`: `webhook_url` = `http://localhost:5678/webhook/tienda` y las dos claves.
+5. En `api/config.php` de la tienda, sección `integration`: `webhook_url` = `http://localhost:5678/webhook/tienda` y las dos claves. Para ver el botón de Telegram, también `telegram_bot`.
 6. Comprobación: hacer un pedido en la tienda local y mirar en n8n (*Executions*) que el flujo "Pedidos" termina en "Registrar resultado", y en el back-office `GET /bo-api/integration-log?result=ok`.
 
 "Reintentos" se puede dejar sin publicar en local y lanzar a mano con su nodo "Ejecutar ahora".
@@ -70,6 +70,11 @@ Un solo `docker-compose` levanta los cuatro contenedores del servidor: **n8n** c
 5. En el nodo **Ajustes** de cada flujo (también en "Incidencias"): `tienda_api_url` = `https://www.theblacklotustcg.onl/api`, `bo_url` = `http://backoffice` (nombre del servicio dentro de Docker) y, en "Reintentos", `pedidos_webhook_url` = `http://localhost:5678/webhook/tienda`. En "Incidencias", además, `telegram_chat_id` (el del grupo, igual que en "Errores") y `revisor` (alias de Telegram de la cuenta de pruebas que aprueba). Publicar "Pedidos", "Incidencias", "Reintentos" y "Errores" (en n8n 2.x un flujo de errores sin publicar no se ejecuta) y reiniciar n8n (`docker compose restart n8n`).
 6. En el `config.php` de la tienda en DonDominio: `webhook_url` = `https://n8n.theblacklotustcg.onl/webhook/tienda` y las claves reales.
 7. Comprobación: un pedido en la web publicada y mirar *Executions* en n8n y `GET /bo-api/integration-log?result=ok`.
+8. Seguimiento por Telegram (C, `docs/integracion.md` apartado 7):
+   - Importar `telegram.json` igual que los demás. En sus **Ajustes** van las mismas URLs que en "Incidencias". Usa la credencial `Telegram bot`.
+   - Publicarlo. Al publicarlo, n8n pone el webhook del bot en `N8N_WEBHOOK_URL`, que tiene que ser HTTPS. Solo se publica en el servidor: cada bot tiene un webhook, y si se publica en otro n8n se lo quita a este.
+   - En el `config.php` de DonDominio, sección `integration`: `'telegram_bot' => 'blacklotus_soporte_bot'`. Sin esa línea la web no enseña el botón.
+   - Comprobación: enviar una incidencia en la web, pulsar "Seguir mi incidencia por Telegram" e *Iniciar* en el bot. Tiene que contestar "Listo..." y el registro tiene que tener `workflow: Telegram`, `ok`.
 
 **Probado en local** (Docker Desktop, 01/11/2026) con puertos 5688 y 8088 y la tienda en el equipo (`tienda_api_url` = `http://host.docker.internal:8001`): pedido y pago → pedido creado y pagado en el back-office del contenedor (`ok` ×3); tras `docker compose down` y `up`, siguen el pedido, los flujos y el webhook.
 
