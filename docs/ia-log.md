@@ -707,3 +707,19 @@ Claude Code
   - Desde fuera del servidor, `https://n8n.theblacklotustcg.onl/healthz` da 200 y `https://backoffice.theblacklotustcg.onl/bo-api/health` responde `ok`. Por `http`, Caddy redirige (308).
   - Los puertos de n8n y del back-office solo escuchan en `127.0.0.1`.
   - El webhook público da 403 sin secreto. Con el secreto y un evento sin `event_id`, `occurred_at` ni `data.code`, el back-office guarda `error` / `payload_incompleto` con el id de la ejecución.
+
+## 2026-11-14 · César (A) · Tarea 2: máximo de reintentos en "Reintentos"
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** que un evento `pendiente` que no se arregla deje de reenviarse. Al conectar la tienda publicada, los dos cambios de estado de PED-000006 se reenviaban cada 5 minutos sin fin (49 veces cada uno en 4 horas). Ese pedido es anterior a la integración y su `order.created` ya no está en la tienda.
+- **Partes asistidas por IA:**
+  - Contar los intentos de cada evento en los datos estáticos del flujo.
+  - El nodo «¿Agotado?» y el registro `error` / `reintentos_agotados` pasadas 12 vueltas (1 hora).
+  - El arnés de prueba del código del nodo.
+- **Errores detectados en la IA:**
+  - El nodo «Sobre» emparejaba cada respuesta de la tienda con su evento por la posición en la lista. Con «¿Agotado?» en medio, esa posición deja de coincidir y un evento bueno se perdía sin reenviarse. Ahora usa `itemMatching`, que sigue la relación entre elementos de n8n.
+- **Cambios hechos por mí:**
+  - Decidí el máximo (1 hora) y que el evento quede en `error` para revisarlo a mano, en vez de borrarlo.
+  - Cerré a mano por la API del back-office, con `reintentos_agotados`, los dos eventos de PED-000006 que ya estaban en el servidor.
+- **Cómo lo validé:**
+  - Arnés con el código del nodo: 12 vueltas se reenvían, la 13.ª va a «Reintentos agotados», los eventos resueltos se olvidan y el cursor del ramal de huecos no cambia.
+  - n8n 2.45.7 en local, con el back-office de `develop` desde cero y dos pendientes reales de la tienda local: el 74, con 12 intentos, queda `error` / `reintentos_agotados` y no se reenvía. El 75 se reenvía y queda `ok` (pedido creado), aunque en la lista va detrás del 74. Los contadores se vacían al resolverse.
