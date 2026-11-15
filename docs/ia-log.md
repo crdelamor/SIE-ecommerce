@@ -723,3 +723,22 @@ Claude Code
 - **Cómo lo validé:**
   - Arnés con el código del nodo: 12 vueltas se reenvían, la 13.ª va a «Reintentos agotados», los eventos resueltos se olvidan y el cursor del ramal de huecos no cambia.
   - n8n 2.45.7 en local, con el back-office de `develop` desde cero y dos pendientes reales de la tienda local: el 74, con 12 intentos, queda `error` / `reintentos_agotados` y no se reenvía. El 75 se reenvía y queda `ok` (pedido creado), aunque en la lista va detrás del 74. Los contadores se vacían al resolverse.
+
+## 2026-11-15 · José (B) · Tarea 2: métricas del cuadro de mando
+- **Herramienta:** Claude Code desde VS Code.
+- **Tarea:** `GET /bo-api/metrics` con las métricas del cuadro de mando y su justificación en `docs/metricas.md` (rama `feature/backoffice-metricas`, PR #40).
+- **Partes asistidas por IA:**
+  - El repaso de las tablas `bo_*` para ver qué métricas se pueden sacar de datos reales.
+  - Las consultas de `backoffice/api/http/metrics.php` (ventas, preparación y envío, integración, soporte y agente).
+  - La búsqueda de fuentes y el borrador de `docs/metricas.md`.
+  - La actualización del contrato en `docs/backoffice-api.md`.
+- **Errores detectados en la IA:**
+  - Los mapas vacíos (errores por tipo, motivos, tipos de caso) salían en el JSON como `[]` en vez de `{}`. Se corrigió con `asMap()`.
+  - Las pruebas se hicieron en MariaDB y el servidor usa MySQL 8: queda pendiente comprobarlo allí.
+- **Cambios hechos por mí:**
+  - Elegí hacer un cuadro de mando completo: las 7 métricas del contrato más el retraso de sincronización, la preparación y envío, la mezcla de producto, los clientes que repiten y la supervisión del agente (tasa de aprobación, confianza y tiempo de revisión).
+  - Decidí dejar las métricas de navegación (tiempo de visita y visitas sin compra) para un PR aparte, porque necesitan que los datos lleguen por n8n y tocan ficheros de César.
+  - Revisé las métricas y las fuentes de `docs/metricas.md` antes de subirlas.
+- **Cómo lo validé:**
+  - Back-office en local con MariaDB 10.11 (`ONLY_FULL_GROUP_BY` activado) y datos de prueba: con las tablas vacías todas las medias salen `null` y las series con 0; con 4 pedidos, 2 incidencias y 3 propuestas, las cifras coinciden con las calculadas a mano.
+  - Sin `X-Api-Key` da 401; con `days=0` o `days=abc`, 422.
