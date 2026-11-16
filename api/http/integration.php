@@ -6,6 +6,7 @@ declare(strict_types=1);
  *
  *   GET /integration/orders/{code}
  *   GET /integration/events?after_id=&limit=
+ *   GET /integration/visits?from=&to=
  */
 
 // lib/integration.php ya lo carga events.php (con IntegrationRepository)
@@ -72,4 +73,23 @@ $router->get('/integration/events', function (): void {
     }
 
     jsonResponse(['events' => (new IntegrationRepository())->findEventsAfter((int) $afterId, (int) $limit)]);
+});
+
+// ?from=2026-11-15&to=2026-11-16  ->  200 { from, to, days: [ { day, visits, visit_seconds, visits_with_cart,
+// visits_with_cart_and_order }, ... ] }. Para el flujo "Analítica": la navegación no sale de la tienda, solo estos totales.
+$router->get('/integration/visits', function (): void {
+    requireIntegrationKey();
+
+    $from = queryParam('from') ?? '';
+    $to = queryParam('to') ?? '';
+    $dates = array_map(fn (string $d) => DateTimeImmutable::createFromFormat('!Y-m-d', $d), [$from, $to]);
+    if (
+        $dates[0] === false || $dates[1] === false
+        || $dates[0]->format('Y-m-d') !== $from || $dates[1]->format('Y-m-d') !== $to
+        || $from > $to || $dates[0]->diff($dates[1])->days > 31
+    ) {
+        jsonError('from y to van en formato AAAA-MM-DD, from no puede ser posterior a to y como mucho 31 días', 400);
+    }
+
+    jsonResponse(['from' => $from, 'to' => $to, 'days' => (new IntegrationRepository())->visitsPerDay($from, $to)]);
 });
