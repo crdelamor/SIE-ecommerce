@@ -773,3 +773,10 @@ Claude Code
 - **Cómo lo validé:**
   - Back-office en local con MariaDB 10.11 (`ONLY_FULL_GROUP_BY` activado) y datos de prueba: con las tablas vacías todas las medias salen `null` y las series con 0; con 4 pedidos, 2 incidencias y 3 propuestas, las cifras coinciden con las calculadas a mano.
   - Sin `X-Api-Key` da 401; con `days=0` o `days=abc`, 422.
+
+## 2026-11-16 · César (A) · Tarea 2: diagrama del flujo de datos de todo el sistema
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** un diagrama con los seis flujos de n8n, la tienda, el back-office y Telegram para la memoria (`docs/diagramas/flujo-datos-sistema.svg` y `.png`). El de `flujo-datos.svg` sigue como detalle de los pedidos.
+- **Partes asistidas por IA:** el SVG (cajas, flechas numeradas y leyenda) y su conversión a PNG con resvg.
+- **Cambios hechos por mí:** decidí qué pasos numerar (del evento al aviso de errores), marcar con A, B y C la parte de cada uno y dejar Analítica como pendiente de publicar.
+- **Cómo lo validé:** revisé el PNG: cada flecha une los sistemas que se llaman de verdad en los flujos exportados y en `docs/integracion.md`.
