@@ -813,7 +813,7 @@ Claude Code
   - Con la IA, en un entorno aparte con MariaDB: `POST /web-metrics` con ayer y hoy → 200; repetirlo con otros valores sustituye el día sin duplicarlo; sin clave 401; lista vacía, fecha imposible, negativos, carrito mayor que visitas o un día repetido → 422 con los campos. `GET /metrics` sin visitas da `null` en las medias; con datos, tiempo medio = `visit_seconds / visits`.
   - En la tienda, `page.viewed` con `/catalogo` se guarda solo con la ruta (aunque llegue otro campo); con query o sin ruta, 400. Con Playwright: portada, catálogo con filtro, ficha y confirmación guardan `/`, `/catalogo`, `/producto/1` y `/pedido`; `/admin` no guarda nada.
   - Bloque "Visitas de la tienda" con Playwright, sin errores en la consola y a 390 px sin desplazamiento horizontal.
-  - Pendiente: la prueba en el servidor cuando César publique "Analítica" (ver los días en el cuadro de mando tras "Ejecutar ahora").
+  - En el servidor, el 17/11 y con "Analítica" ya publicada, entré como gestor en `https://backoffice.theblacklotustcg.onl`. "Visitas de la tienda" sale sin errores y con los 30 días: del 19/10 al 16/11 con 0 visitas y el 17/11 con 1 (actualizado el 17/11/26 a las 21:10). El tiempo medio es 0 s porque la visita tiene un solo evento. "Visitas con carrito" marca 0 % y "De carrito a pedido" sale como "Sin datos", que es lo correcto si no hay visitas con carrito.
 
 ## 2026-11-16 · César (A) · Tarea 2: visitas de la tienda para el cuadro de mando (flujo "Analítica")
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
