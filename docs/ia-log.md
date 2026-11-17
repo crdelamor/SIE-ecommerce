@@ -893,3 +893,10 @@ Claude Code
 - **Cómo lo validé:**
   - En local, con un pedido y una incidencia iguales a los del servidor y usando Playwright: el detalle muestra 21,10 €, +6,83 € y 27,93 €, las incidencias muestran "Devolución" y "Daño en el envío", y el motivo sale como "Otro". Sin errores en la consola y a 390 px sin desplazamiento horizontal.
   - Pendiente: comprobarlo en el servidor cuando César reconstruya el back-office.
+
+## 2026-11-17 · César (A) · Tarea 2: pantallas del gestor en los diagramas y en el servidor
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** desplegar en el servidor las pantallas del back-office del #47 y poner en los diagramas lo que ya tiene el gestor (rama `docs/diagrama-pantallas-gestor`).
+- **Partes asistidas por IA:** el script del despliegue y el cambio de texto de los dos diagramas.
+- **Cambios hechos por mí:** en el diagrama del sistema, el gestor tiene cuadro de mando, pedidos, incidencias y registro de integración. En el de pedidos, "pedidos, registro y cuadro de mando", porque las incidencias no salen en ese diagrama.
+- **Cómo lo validé:** en el servidor, con el repositorio en `5143081` y el back-office reconstruido, `/bo-api/health` y la página de login dan 200, y sin sesión el cuadro de mando, pedidos, incidencias y registro redirigen al login. Los PNG se revisaron después de generarlos.
