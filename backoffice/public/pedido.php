@@ -37,6 +37,11 @@ $stmt = db()->prepare(
 $stmt->execute([$order['id']]);
 $lines = $stmt->fetchAll();
 
+// Las líneas llegan sin IVA. El total de la tienda suma además el IVA y el envío y resta el
+// descuento del cupón, que el back-office no recibe por separado: se muestra la diferencia.
+$linesTotal = array_sum(array_map(fn (array $l): float => (float) $l['line_total'], $lines));
+$extras = round((float) $order['total'] - $linesTotal, 2);
+
 $stmt = db()->prepare(
     'SELECT from_status, to_status, changed_at, event_id
      FROM bo_order_status_log WHERE order_id = ? ORDER BY changed_at, id'
@@ -65,7 +70,7 @@ renderHeader('Pedido ' . $order['code'], 'pedidos', $manager);
             <dl class="facts">
                 <div><dt>Cliente</dt><dd><?= e($order['customer_name']) ?></dd></div>
                 <div><dt>Estado</dt><dd><span class="badge status-<?= e($order['status']) ?>"><?= e(label(ORDER_STATUS_LABELS, $order['status'])) ?></span></dd></div>
-                <div><dt>Total (simulado)</dt><dd><?= e(formatMoney($order['total'])) ?></dd></div>
+                <div><dt>Total con IVA y envío (simulado)</dt><dd><?= e(formatMoney($order['total'])) ?></dd></div>
                 <div><dt>Fecha del pedido</dt><dd><?= e(formatDate($order['placed_at'])) ?></dd></div>
                 <div><dt>Sincronizado</dt><dd><?= e(formatDate($order['synced_at'])) ?></dd></div>
             </dl>
@@ -76,7 +81,7 @@ renderHeader('Pedido ' . $order['code'], 'pedidos', $manager);
             <div class="table-wrap">
                 <table class="data">
                     <thead>
-                        <tr><th>Producto</th><th>Juego</th><th>Edición</th><th>Estado</th><th>Idioma</th><th>Foil</th><th class="num">Cantidad</th><th class="num">Precio</th><th class="num">Importe</th></tr>
+                        <tr><th>Producto</th><th>Juego</th><th>Edición</th><th>Estado</th><th>Idioma</th><th>Foil</th><th class="num">Cantidad</th><th class="num">Precio sin IVA</th><th class="num">Importe sin IVA</th></tr>
                     </thead>
                     <tbody>
                         <?php foreach ($lines as $l): ?>
@@ -93,8 +98,14 @@ renderHeader('Pedido ' . $order['code'], 'pedidos', $manager);
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
+                    <tfoot>
+                        <tr><th colspan="8">Suma de las líneas</th><td class="num"><?= e(formatMoney($linesTotal)) ?></td></tr>
+                        <tr><th colspan="8">IVA, envío y descuento</th><td class="num"><?= e(($extras >= 0 ? '+' : '−') . formatMoney(abs($extras))) ?></td></tr>
+                        <tr><th colspan="8">Total del pedido</th><td class="num"><strong><?= e(formatMoney($order['total'])) ?></strong></td></tr>
+                    </tfoot>
                 </table>
             </div>
+            <p class="muted note">Los precios de las líneas no llevan IVA. El total de la tienda les suma el IVA de cada producto y el envío, y resta el cupón de descuento si lo hay. El back-office no recibe esas partes por separado.</p>
         </section>
 
         <section class="block">

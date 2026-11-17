@@ -82,7 +82,7 @@ renderHeader('Incidencias', 'incidencias', $manager);
                                 <td><a href="incidencia.php?id=<?= (int) $t['id'] ?>"><?= (int) $t['shop_ticket_id'] ?></a></td>
                                 <td><?= e($t['customer_name']) ?></td>
                                 <td><?= e($t['order_code'] ?? '—') ?></td>
-                                <td><?= e($t['reason']) ?></td>
+                                <td><?= e(ticketReason($t['reason'], $t['order_code'])) ?></td>
                                 <td><?= e(ucfirst($t['priority'])) ?></td>
                                 <td><span class="badge ticket-<?= e($t['status']) ?>"><?= e(label(TICKET_STATUS_LABELS, $t['status'])) ?></span></td>
                                 <td>
@@ -90,7 +90,7 @@ renderHeader('Incidencias', 'incidencias', $manager);
                                         <span class="muted">Sin propuesta</span>
                                     <?php else: ?>
                                         <span class="badge proposal-<?= e($t['final_status']) ?>"><?= e(label(PROPOSAL_STATUS_LABELS, $t['final_status'])) ?></span>
-                                        <span class="muted"><?= e($t['case_type']) ?></span>
+                                        <span class="muted"><?= e(label(CASE_TYPE_LABELS, $t['case_type'])) ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td><?= e(formatDate($t['opened_at'])) ?></td>

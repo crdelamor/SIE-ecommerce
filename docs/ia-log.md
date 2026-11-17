@@ -881,6 +881,19 @@ Claude Code
   - Sin errores en la consola, en modo claro y oscuro, y a 390 px sin desplazamiento horizontal: las tablas se desplazan dentro de su caja.
   - Pendiente: probarlo en el servidor cuando César reconstruya el back-office.
 
+## 2026-11-17 · José (B) · Tarea 2: detalles de las pantallas del back-office tras revisarlas en el servidor
+- **Herramienta:** Claude Code (app de Claude).
+- **Tarea:** corregir tres cosas que vi al revisar en producción las pantallas del #47 (rama `fix/backoffice-pantallas-detalles`).
+- **Partes asistidas por IA:**
+  - Detalle del pedido: las líneas suman 21,10 € y el total es 27,93 €. La IA buscó en `PriceCalculator.php` de la tienda de dónde sale la diferencia: las líneas van sin IVA, y el total resta el cupón (2,11 €) y suma el envío (4,95 €) y el IVA (3,99 €). El back-office no recibe esas partes por separado, así que ahora la tabla muestra la suma de las líneas, la diferencia ("IVA, envío y descuento") y el total, con una nota.
+  - Etiquetas de los tipos de caso del agente (`dano_envio` → "Daño en el envío") en la lista y el detalle de incidencias.
+  - El motivo de la incidencia sin el código de pedido que la tienda le añade detrás ("Otro · PED-000018" → "Otro"), igual que en las métricas. Es solo de la pantalla: en la base de datos se guarda igual.
+- **Errores detectados en la IA:** en la primera versión, la nota del pedido llevaba las reglas del envío de la tienda (4,95 €, gratis desde 50 €). Las quité, porque si cambian en la tienda el back-office diría algo falso.
+- **Cambios hechos por mí:** revisé las cinco pantallas en el servidor y detecté los tres problemas. Decidí no tocar la justificación del agente ("corresponde a devolucion"), porque es texto del modelo y tiene que quedar como lo escribió.
+- **Cómo lo validé:**
+  - En local, con un pedido y una incidencia iguales a los del servidor y usando Playwright: el detalle muestra 21,10 €, +6,83 € y 27,93 €, las incidencias muestran "Devolución" y "Daño en el envío", y el motivo sale como "Otro". Sin errores en la consola y a 390 px sin desplazamiento horizontal.
+  - Pendiente: comprobarlo en el servidor cuando César reconstruya el back-office.
+
 ## 2026-11-17 · César (A) · Tarea 2: pantallas del gestor en los diagramas y en el servidor
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
 - **Tarea:** desplegar en el servidor las pantallas del back-office del #47 y poner en los diagramas lo que ya tiene el gestor (rama `docs/diagrama-pantallas-gestor`).
