@@ -6,7 +6,7 @@ Cómo se ponen en marcha n8n (parte A) y el back-office (parte B), en local para
 |---|---|---|
 | Tienda | `php -S localhost:8000` desde la raíz del repositorio (la API queda en `/api`, como en el hosting) | https://www.theblacklotustcg.onl/ (DonDominio) |
 | n8n | http://localhost:5678 | https://n8n.theblacklotustcg.onl |
-| Back-office | `php -S localhost:8080 api/index.php` desde `backoffice/` | https://backoffice.theblacklotustcg.onl |
+| Back-office | `php -S localhost:8080 -t public router.php` desde `backoffice/` (API en `/bo-api`, cuadro de mando en `/`) | https://backoffice.theblacklotustcg.onl |
 
 El servidor es una máquina virtual de Azure (Azure for Students): Ubuntu 24.04, 2 vCPU y 4 GiB (`Standard_B2ls_v2`, Spain Central), IP pública estática y solo los puertos 22, 80 y 443 abiertos.
 
