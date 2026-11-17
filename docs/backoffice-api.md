@@ -445,7 +445,7 @@ Errores: `401`, `422` si falta `after_id` o no es válido.
 
 Datos del cuadro de mando, calculados en el momento con consultas a las tablas `bo_*`. Ninguna cifra está escrita a mano. Pide `X-Api-Key` o la sesión del gestor: si llega la cabecera, manda la cabecera. Qué mide cada campo, cómo se calcula y por qué: `docs/metricas.md`.
 
-`days` (opcional, de 1 a 365, 30 por defecto) es el número de días de las series diarias (`orders_per_day` e `integration_per_day`), que acaban hoy y tienen 0 en los días sin datos, y de `sync_delay`. El resto de métricas usa todo el histórico. Las medias y porcentajes sin datos para calcularse van como `null`.
+`days` (opcional, de 1 a 365, 30 por defecto) es el número de días de las series diarias (`orders_per_day`, `integration_per_day` y `visits_per_day`), que acaban hoy y tienen 0 en los días sin datos, de `sync_delay` y de `web`. El resto de métricas usa todo el histórico. Las medias y porcentajes sin datos para calcularse van como `null`.
 
 Respuesta `200` (con `days=2` y datos de prueba):
 
@@ -480,11 +480,49 @@ Respuesta `200` (con `days=2` y datos de prueba):
     "avg_confidence": { "all": 0.67, "approved": 0.9, "rejected": 0.4 },
     "by_case_type": { "consulta_envio": 2, "dano_envio": 1 },
     "avg_review_minutes": 20
-  }
+  },
+  "web": {
+    "visits": 5, "avg_visit_seconds": 96, "visits_with_cart": 2, "visits_with_cart_and_order": 1,
+    "cart_rate": 0.4, "cart_to_order_rate": 0.5, "updated_at": "2026-11-15T20:10:03+01:00"
+  },
+  "visits_per_day": [
+    { "day": "2026-11-14", "visits": 2, "visits_with_cart": 1, "visits_with_cart_and_order": 0 },
+    { "day": "2026-11-15", "visits": 3, "visits_with_cart": 1, "visits_with_cart_and_order": 1 }
+  ]
 }
 ```
 
+`web.updated_at` es la última vez que "Analítica" mandó datos de algún día del periodo (`null` si no ha llegado ninguno).
+
 Errores: `401`, `422` si `days` no es un número de 1 a 365.
+
+### `POST /bo-api/web-metrics`
+
+Visitas de la tienda por día, para el bloque "Visitas de la tienda" del cuadro de mando. La llama el flujo "Analítica" cada hora (a y 10) con lo que le devuelve `GET /api/integration/visits` para ayer y hoy, tal cual (`docs/integracion.md`, apartado 3). Solo pide `X-Api-Key`.
+
+Cuerpo:
+
+```json
+{
+  "days": [
+    { "day": "2026-11-15", "visits": 0, "visit_seconds": 0, "visits_with_cart": 0, "visits_with_cart_and_order": 0 },
+    { "day": "2026-11-16", "visits": 2, "visit_seconds": 4, "visits_with_cart": 1, "visits_with_cart_and_order": 0 }
+  ]
+}
+```
+
+- Cada día que llega **sustituye** al que había en `bo_web_metrics` (los días que no vienen no se tocan). Por eso repetir una vuelta no duplica nada y la de las 00:10 deja cerrado el día anterior.
+- Entre 1 y 31 días, sin repetir ninguno. Los cuatro contadores son enteros ≥ 0, `visits_with_cart` ≤ `visits` y `visits_with_cart_and_order` ≤ `visits_with_cart`.
+- `visit_seconds` es la suma de lo que duran las visitas, no la media: el tiempo medio de un periodo es `SUM(visit_seconds) / SUM(visits)`.
+- Se guardan todos los días o ninguno (una transacción).
+
+Respuesta `200`:
+
+```json
+{ "days": 2, "result": "guardado" }
+```
+
+Errores: `401`, `422` con los campos que no son válidos (por ejemplo `days[1].visits_with_cart`).
 
 ---
 

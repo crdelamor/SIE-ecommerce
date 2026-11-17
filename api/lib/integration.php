@@ -12,7 +12,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../repositories/IntegrationRepository.php';
 
-// Los de navegación (product.viewed, cart.item_added, checkout.started) se quedan en la tienda
+// Los de navegación (page.viewed, product.viewed, cart.item_added, checkout.started) se quedan en la tienda
 const INTEGRATED_EVENTS = ['order.created', 'payment.simulated', 'order.status_changed', 'support.requested'];
 
 /** Sección 'integration' de config.php; vacía si no está (entonces no se envía nada). */

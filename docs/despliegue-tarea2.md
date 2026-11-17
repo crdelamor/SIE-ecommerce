@@ -102,3 +102,15 @@ Un solo `docker-compose` levanta los cuatro contenedores del servidor: **n8n** c
 ## Parte B · Back-office
 
 *(La completa José.)*
+
+### Tabla de visitas (`bo_web_metrics`)
+
+`schema.sql` solo se ejecuta la primera vez que arranca MySQL, así que en el servidor la tabla nueva se crea a mano, una vez, antes de publicar "Analítica":
+
+```
+cd deploy
+docker compose exec -T backoffice-db mysql -u root -p blacklotus_bo < ../backoffice/db/web-metrics.sql
+docker compose up -d --build backoffice
+```
+
+`web-metrics.sql` usa `CREATE TABLE IF NOT EXISTS`, así que repetirlo no rompe nada. Comprobación: tras "Ejecutar ahora" en "Analítica", el bloque "Visitas de la tienda" del cuadro de mando enseña la hora de la última actualización.

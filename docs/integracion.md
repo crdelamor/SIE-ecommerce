@@ -38,7 +38,7 @@ La tienda guarda el evento con `logEvent()` y, cuando la transacción ya se ha c
 - **Cabecera** `X-Webhook-Secret` con el secreto compartido. Está en `api/config.php` (`integration.webhook_secret`) y en la credencial `Tienda X-Webhook-Secret` de n8n, nunca en el repositorio.
 - **Respuesta del webhook**: n8n responde `200` en cuanto lo recibe (no espera al back-office), así la compra no se retrasa. Con el secreto malo o sin él, `403` y el flujo no se ejecuta.
 - **Límite**: la tienda espera como mucho 2 s. Si n8n no responde, la compra sigue, deja de enviar y el flujo "Reintentos" recupera el evento con `GET /api/integration/events`.
-- Los eventos de navegación (`product.viewed`, `cart.item_added`, `checkout.started`) no se envían: se quedan en la tienda.
+- Los eventos de navegación (`page.viewed`, `product.viewed`, `cart.item_added`, `checkout.started`) no se envían: se quedan en la tienda. `page.viewed` solo lleva la ruta (`{ "path": "/catalogo" }`) y sirve para que las visitas del flujo "Analítica" tengan duración aunque no se añada nada al carrito.
 
 ## 2. Eventos integrados
 
@@ -178,6 +178,7 @@ Solo pasan al agente los tickets recién creados (`ok`), no los `duplicado`. El 
 
 - La propuesta se manda al grupo de Telegram con *Send and Wait for Response* y botones Aprobar / Rechazar. El flujo espera a que alguien pulse.
 - Aprobar → `aprobado` y después `ejecutado_simulado`. La acción (cambio, devolución...) no se hace de verdad, pero si el cliente ha enlazado Telegram (apartado 7) se le manda `customer_reply` por el bot. Si ese envío falla, la propuesta se queda en `aprobado` y avisa "Errores". Rechazar → `rechazado`, sin mensaje al cliente.
+- Después de `ejecutado_simulado`, "Cerrar ticket" pasa el ticket a `cerrada` con `PATCH /bo-api/tickets/{id}` (el id sale de "Buscar chat del cliente") y el back-office guarda `closed_at`, que es de donde sale el tiempo medio de resolución del cuadro de mando. Tras un rechazo no se cierra: la propuesta no valía y la incidencia sigue pendiente para atenderla a mano.
 - `reviewed_by`: los botones de *Send and Wait* no dicen quién los ha pulsado, así que se pone el alias de la cuenta de pruebas que revisa, desde **Ajustes** (`revisor`).
 - Si falla el agente, se registra una segunda fila para el mismo evento: `agente_no_disponible` si Gemini no responde, o `salida_agente_no_valida` si la salida no cumple el formato. El ticket queda sin propuesta y se puede repetir a mano desde n8n. Si falla después (guardar la propuesta o Telegram), avisa "Errores".
 

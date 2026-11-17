@@ -1,8 +1,8 @@
 # Métricas del cuadro de mando
 
-Todas las métricas las calcula `GET /bo-api/metrics` (`backoffice/api/http/metrics.php`) en el momento de la petición, con consultas a las tablas `bo_*` del back-office. Ninguna cifra está escrita a mano y el back-office no lee la base de datos de la tienda: todo lo que cuentan estas consultas ha llegado por n8n.
+Todas las métricas las calcula `GET /bo-api/metrics` (`backoffice/api/http/metrics.php`) en el momento de la petición, con consultas a las tablas `bo_*` del back-office. Ninguna cifra está escrita a mano y el back-office no lee la base de datos de la tienda: todo lo que cuentan estas consultas ha llegado por n8n (las visitas, como totales por día del flujo "Analítica").
 
-La página del cuadro de mando (`https://backoffice.theblacklotustcg.onl/`, con el login del gestor) pide estos datos con la sesión y los dibuja en cinco bloques, en el mismo orden que este documento: cifras destacadas y barras en SVG, sin librerías. Cada gráfico tiene debajo "Ver los datos" con la tabla de valores, y el selector de periodo (7, 30 o 90 días) cambia `days`.
+La página del cuadro de mando (`https://backoffice.theblacklotustcg.onl/`, con el login del gestor) pide estos datos con la sesión y los dibuja en seis bloques, en el mismo orden que este documento: cifras destacadas y barras en SVG, sin librerías. Cada gráfico tiene debajo "Ver los datos" con la tabla de valores, y el selector de periodo (7, 30 o 90 días) cambia `days`.
 
 Criterios comunes:
 
@@ -62,7 +62,7 @@ Fuente: Google, *Site Reliability Engineering*, capítulo 6, *Monitoring Distrib
 | Tiempo medio de resolución | `tickets.avg_resolution_hours` | Media de `closed_at − opened_at` de las cerradas | Si el equipo responde a tiempo. |
 | Clientes con Telegram | `tickets.customers_telegram` (sobre `tickets.customers`) | Clientes con incidencias que han enlazado su chat | Si los clientes usan el seguimiento por Telegram. |
 
-Ahora mismo ningún flujo cierra incidencias, así que `avg_resolution_hours` será `null` hasta que se puedan cerrar desde la pantalla del gestor.
+"Incidencias" cierra el ticket cuando la propuesta del agente se aprueba y se ejecuta (nodo "Cerrar ticket", `docs/integracion.md`). Si se rechaza, sigue abierto para atenderlo a mano: cerrarlo haría que el tiempo de resolución saliera mejor de lo que es.
 
 Fuente: Zendesk mide la resolución como el tiempo entre que se crea y se resuelve el ticket ([Zendesk, *About native Support time duration metrics*](https://support.zendesk.com/hc/en-us/articles/4408834848154)).
 
@@ -77,3 +77,18 @@ Fuente: Zendesk mide la resolución como el tiempo entre que se crea y se resuel
 | Tiempo de revisión | `proposals.avg_review_minutes` | Media de `reviewed_at − created_at` | Cuánto espera el cliente por la parte humana del proceso. |
 
 Fuentes: el Reglamento (UE) 2024/1689 de inteligencia artificial, artículo 14, pide que las personas puedan supervisar el sistema y decidir no usar su resultado ([AI Act Service Desk, artículo 14](https://ai-act-service-desk.ec.europa.eu/en/ai-act/article-14)). La tasa de aprobación y el tiempo de revisión muestran que esa supervisión se hace. La comparación de la confianza se basa en Guo et al., *On Calibration of Modern Neural Networks*, ICML 2017 ([PMLR](https://proceedings.mlr.press/v70/guo17a.html)): la confianza que da un modelo no tiene por qué corresponder con lo que acierta, y hay que comprobarlo con datos.
+
+## 6. Visitas de la tienda
+
+La tienda agrupa sus eventos en visitas (mismo `session_id` anónimo, sin más de 30 minutos entre un evento y el siguiente) y el flujo "Analítica" manda cada hora los totales de ayer y hoy a `POST /bo-api/web-metrics`, que los guarda en `bo_web_metrics`. Al back-office no llegan sesiones, rutas ni datos de clientes. El front registra `page.viewed` (solo la ruta) en cada cambio de página, para que las visitas tengan duración aunque no se añada nada al carrito. Estas métricas usan el periodo elegido.
+
+| Métrica | Campo | Cálculo | Qué decisión permite |
+|---|---|---|---|
+| Visitas por día | `visits_per_day`, `web.visits` | `visits` de `bo_web_metrics` por `day` | Ver si una acción (novedad, campaña, publicación en redes) trae más gente a la tienda. |
+| Tiempo medio de visita | `web.avg_visit_seconds` | `SUM(visit_seconds) / SUM(visits)`, del primer al último evento de cada visita | Si la gente se va enseguida, la portada o el catálogo no enganchan; una visita de un solo evento cuenta 0 s. |
+| Visitas con carrito | `web.cart_rate` | `visits_with_cart / visits` | Si el catálogo y las fichas convencen para añadir algo al carrito. |
+| De carrito a pedido | `web.cart_to_order_rate` | `visits_with_cart_and_order / visits_with_cart` | Si se pierden compras en el checkout (gastos de envío, formulario largo, pago). Junto con la tasa de cancelación del bloque 1, dice dónde se cae la venta. |
+
+Si en el periodo no hay visitas, las medias y porcentajes salen como `null` ("sin datos"). `web.updated_at` dice cuándo llegaron los últimos datos: si es de hace más de una hora, "Analítica" no está funcionando.
+
+Fuentes: Google Analytics da por terminada una sesión tras 30 minutos sin actividad ([Analytics Help, *Session*](https://support.google.com/analytics/answer/12798876)), tiene la duración media de la sesión entre sus métricas ([*Dimensions and metrics*](https://support.google.com/analytics/answer/9191807)) y su informe de compras de ecommerce se basa en los eventos de añadir al carrito y de compra ([*Ecommerce purchases report*](https://support.google.com/analytics/answer/12924131)). Baymard Institute documenta una tasa media de abandono del carrito en torno al 70 % y recoge sus causas en el checkout ([Baymard, *Cart Abandonment Rate Statistics*](https://baymard.com/lists/cart-abandonment-rate)).
