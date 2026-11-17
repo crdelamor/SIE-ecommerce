@@ -496,6 +496,35 @@
       "notes": "La acción (cambio, devolución...) no se hace de verdad: solo se marca. Lo que sí se hace es mandar la respuesta al cliente si ha enlazado Telegram."
     },
     {
+      "id": "5c0a1c10-0033-4c00-8000-000000000033",
+      "name": "Cerrar ticket",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4180,
+        300
+      ],
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $('Ajustes').first().json.bo_url }}/bo-api/tickets/{{ $('Buscar chat del cliente').first().json.id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={ \"status\": \"cerrada\" }",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "A0credBackoff001",
+          "name": "Back-office X-Api-Key"
+        }
+      },
+      "notes": "Solo después de aprobar y ejecutar. Si se rechaza, la incidencia sigue abierta para atenderla a mano y no cuenta en el tiempo de resolución."
+    },
+    {
       "id": "5c0a1c10-0028-4c00-8000-000000000028",
       "name": "Error del agente",
       "type": "n8n-nodes-base.code",
@@ -640,6 +669,7 @@
     "Aprobar propuesta": {"main": [[{"node": "Buscar chat del cliente", "type": "main", "index": 0}]]},
     "Buscar chat del cliente": {"main": [[{"node": "¿Tiene Telegram?", "type": "main", "index": 0}]]},
     "¿Tiene Telegram?": {"main": [[{"node": "Ejecutar (simulado)", "type": "main", "index": 0}], [{"node": "Avisar al cliente", "type": "main", "index": 0}]]},
-    "Avisar al cliente": {"main": [[{"node": "Ejecutar (simulado)", "type": "main", "index": 0}]]}
+    "Avisar al cliente": {"main": [[{"node": "Ejecutar (simulado)", "type": "main", "index": 0}]]},
+    "Ejecutar (simulado)": {"main": [[{"node": "Cerrar ticket", "type": "main", "index": 0}]]}
   }
 }

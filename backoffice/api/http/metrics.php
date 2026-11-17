@@ -312,6 +312,39 @@ function proposalMetrics(): array
     ];
 }
 
+/** Visitas de la tienda en el periodo. Las guarda POST /bo-api/web-metrics (flujo "Analítica"). */
+function webMetrics(DateTimeImmutable $from): array
+{
+    $params = [$from->format('Y-m-d')];
+    $totals = metricRows(
+        'SELECT COALESCE(SUM(visits), 0) AS visits, COALESCE(SUM(visit_seconds), 0) AS seconds,
+                COALESCE(SUM(visits_with_cart), 0) AS cart, COALESCE(SUM(visits_with_cart_and_order), 0) AS cart_order,
+                MAX(updated_at) AS updated_at
+         FROM bo_web_metrics WHERE day >= ?',
+        $params
+    )[0];
+    $perDay = metricRows(
+        'SELECT day, visits, visits_with_cart, visits_with_cart_and_order FROM bo_web_metrics WHERE day >= ?',
+        $params
+    );
+    $visits = (int) $totals['visits'];
+    $cart = (int) $totals['cart'];
+    $cartOrder = (int) $totals['cart_order'];
+
+    return [
+        'web'            => [
+            'visits'                     => $visits,
+            'avg_visit_seconds'          => $visits > 0 ? (int) round($totals['seconds'] / $visits) : null,
+            'visits_with_cart'           => $cart,
+            'visits_with_cart_and_order' => $cartOrder,
+            'cart_rate'                  => $visits > 0 ? round($cart / $visits, 4) : null,
+            'cart_to_order_rate'         => $cart > 0 ? round($cartOrder / $cart, 4) : null,
+            'updated_at'                 => fromDbDate($totals['updated_at']),
+        ],
+        'visits_per_day' => dailySeries($perDay, $from, ['visits', 'visits_with_cart', 'visits_with_cart_and_order']),
+    ];
+}
+
 // GET /bo-api/metrics?days=30 - datos del cuadro de mando. days: días de las series diarias (1 a 365)
 $router->get('/metrics', function (): void {
     $days = filter_var($_GET['days'] ?? 30, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 365]]);
@@ -327,5 +360,6 @@ $router->get('/metrics', function (): void {
         + integrationMetrics($from)
         + ticketMetrics()
         + proposalMetrics()
+        + webMetrics($from)
     );
 });

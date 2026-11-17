@@ -20,6 +20,7 @@ export const TICKET_STATUS_LABELS = {
 
 // Qué significa cada tipo de evento (los del contrato y el de cambio de estado)
 export const EVENT_LABELS = {
+  'page.viewed': 'Página vista',
   'product.viewed': 'Producto visto',
   'cart.item_added': 'Añadido al carrito',
   'checkout.started': 'Checkout iniciado',

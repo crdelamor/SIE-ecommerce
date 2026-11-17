@@ -8,8 +8,11 @@ import CheckoutPage from './pages/checkout/CheckoutPage.jsx';
 import ConfirmationPage from './pages/checkout/ConfirmationPage.jsx';
 import AdminPage from './pages/admin/AdminPage.jsx';
 import SupportPage from './pages/support/SupportPage.jsx';
+import usePageViews from './hooks/usePageViews.js';
 
 export default function App() {
+  usePageViews();
+
   return (
     <Routes>
       <Route element={<Layout />}>

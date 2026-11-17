@@ -37,7 +37,7 @@ $manager = requireManagerPage();
         </div>
     </header>
 
-    <p class="muted note">El periodo cambia las gráficas por día y el retraso de sincronización; el resto de cifras usa todo el histórico. Cómo se calcula cada una: <code>docs/metricas.md</code>.</p>
+    <p class="muted note">El periodo cambia las gráficas por día, el retraso de sincronización y las visitas; el resto de cifras usa todo el histórico. Cómo se calcula cada una: <code>docs/metricas.md</code>.</p>
     <p id="error" class="form-error" role="alert" hidden></p>
 
     <main id="dashboard" aria-busy="true">
@@ -84,6 +84,15 @@ $manager = requireManagerPage();
             <div class="charts">
                 <figure class="chart" data-chart="proposals_by_status"></figure>
                 <figure class="chart" data-chart="by_case_type"></figure>
+            </div>
+        </section>
+
+        <section class="block" aria-labelledby="t-web">
+            <h2 id="t-web">Visitas de la tienda</h2>
+            <div class="kpis" data-kpis="web"></div>
+            <div class="charts">
+                <figure class="chart wide" data-chart="visits_per_day"></figure>
+                <figure class="chart" data-chart="visits_funnel"></figure>
             </div>
         </section>
     </main>
