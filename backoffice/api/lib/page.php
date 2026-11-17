@@ -59,6 +59,17 @@ const PROPOSAL_STATUS_LABELS = [
     'ejecutado_simulado' => 'Ejecutada (simulado)',
 ];
 
+// Tipos de caso del agente (docs/integracion.md)
+const CASE_TYPE_LABELS = [
+    'estado_conservacion' => 'Estado de conservación',
+    'idioma_version'      => 'Idioma o versión',
+    'dano_envio'          => 'Daño en el envío',
+    'falta_producto'      => 'Falta un producto',
+    'devolucion'          => 'Devolución',
+    'consulta'            => 'Consulta',
+    'otro'                => 'Otro',
+];
+
 const LOG_RESULT_LABELS = [
     'ok'        => 'Correcto',
     'error'     => 'Error',
@@ -70,6 +81,17 @@ const LOG_RESULT_LABELS = [
 function label(array $labels, ?string $value): string
 {
     return $value === null ? '—' : ($labels[$value] ?? $value);
+}
+
+/**
+ * Motivo de la incidencia sin el código de pedido que la tienda pone detrás
+ * ("Daño en el envío · PED-000027"), porque el pedido ya sale en su propio campo.
+ */
+function ticketReason(string $reason, ?string $orderCode): string
+{
+    $suffix = ' · ' . $orderCode;
+
+    return $orderCode !== null && str_ends_with($reason, $suffix) ? substr($reason, 0, -strlen($suffix)) : $reason;
 }
 
 function formatDate(?string $value): string

@@ -65,7 +65,7 @@ renderHeader('Incidencia ' . $ticket['shop_ticket_id'], 'incidencias', $manager)
                         <?= e($ticket['order_code'] ?? '—') ?>
                     <?php endif; ?>
                 </dd></div>
-                <div><dt>Motivo</dt><dd><?= e($ticket['reason']) ?></dd></div>
+                <div><dt>Motivo</dt><dd><?= e(ticketReason($ticket['reason'], $ticket['order_code'])) ?></dd></div>
                 <div><dt>Prioridad</dt><dd><?= e(ucfirst($ticket['priority'])) ?></dd></div>
                 <div><dt>Estado</dt><dd><span class="badge ticket-<?= e($ticket['status']) ?>"><?= e(label(TICKET_STATUS_LABELS, $ticket['status'])) ?></span></dd></div>
                 <div><dt>Abierta</dt><dd><?= e(formatDate($ticket['opened_at'])) ?></dd></div>
@@ -80,7 +80,7 @@ renderHeader('Incidencia ' . $ticket['shop_ticket_id'], 'incidencias', $manager)
         <?php foreach ($proposals as $p): ?>
             <section class="block proposal">
                 <header class="proposal-head">
-                    <h3>Propuesta <?= (int) $p['id'] ?> · <?= e($p['case_type']) ?></h3>
+                    <h3>Propuesta <?= (int) $p['id'] ?> · <?= e(label(CASE_TYPE_LABELS, $p['case_type'])) ?></h3>
                     <span class="badge proposal-<?= e($p['final_status']) ?>"><?= e(label(PROPOSAL_STATUS_LABELS, $p['final_status'])) ?></span>
                 </header>
                 <dl class="facts">
