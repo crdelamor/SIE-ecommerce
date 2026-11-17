@@ -196,7 +196,7 @@ Solo pasan al agente los tickets recién creados (`ok`), no los `duplicado`. El 
 | `clasificar_incidencia` | `PATCH /bo-api/tickets/{id}` | Guarda la prioridad. Es lo único que escribe el agente y se puede deshacer. |
 | `registrar_propuesta` | `POST /bo-api/proposals` | No es una herramienta del modelo, sino un nodo del flujo después del parser. Así se guarda una sola vez y exactamente lo que ha validado el parser. |
 
-- La propuesta se manda al grupo de Telegram con *Send and Wait for Response* y botones Aprobar / Rechazar. El flujo espera a que alguien pulse.
+- La propuesta se manda al grupo de Telegram con *Send and Wait for Response* y botones Aprobar / Rechazar. El flujo espera a que alguien pulse. El mensaje empieza con el número de la incidencia en la tienda, el mismo que ve el cliente, y entre paréntesis el id del ticket en el back-office ("Incidencia 5 (ticket 2 del back-office)"): en el servidor no coinciden.
 - Aprobar → `aprobado` y después `ejecutado_simulado`. La acción (cambio, devolución...) no se hace de verdad, pero si el cliente ha enlazado Telegram (apartado 7) se le manda `customer_reply` por el bot. Si ese envío falla, la propuesta se queda en `aprobado` y avisa "Errores". Rechazar → `rechazado`, sin mensaje al cliente.
 - `reviewed_by`: los botones de *Send and Wait* no dicen quién los ha pulsado, así que se pone el alias de la cuenta de pruebas que revisa, desde **Ajustes** (`revisor`).
 - Si falla el agente, se registra una segunda fila para el mismo evento: `agente_no_disponible` si Gemini no responde, o `salida_agente_no_valida` si la salida no cumple el formato. El ticket queda sin propuesta y se puede repetir a mano desde n8n. Si falla después (guardar la propuesta o Telegram), avisa "Errores".

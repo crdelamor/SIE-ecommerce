@@ -808,3 +808,16 @@ Claude Code
   - Arnés de `groupVisits`: 30 minutos justos siguen en la misma visita, 31 abren otra, otra sesión es otra visita y una compra sin carrito en esa visita no cuenta como conversión.
   - Tienda en local: `401` sin clave; `400` sin fechas, con `from` posterior a `to`, con más de 31 días y con el 30 de febrero. Con dos sesiones de prueba (vista de producto y carrito en una, vista en la otra): 2 visitas, 1 con carrito.
   - n8n 2.45.7 en local con "Ejecutar ahora" y un back-office falso: llega `POST /bo-api/web-metrics` con `X-Api-Key` y los `days` de ayer y hoy.
+
+## 2026-11-17 · Celia (C) · Tarea 2: prueba completa en el servidor y número de incidencia en el grupo
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** probar el escenario 3 entero en el servidor, revisar el #41 y el #44 de José y arreglar el número que sale en el grupo (rama `fix/numero-incidencia-grupo`).
+- **Partes asistidas por IA:** las pruebas en local de los dos PR, el cambio del nodo "Preparar propuesta" y la línea de `docs/integracion.md`.
+- **Errores detectados:** en el servidor, la incidencia 5 de la tienda es el ticket 2 del back-office. El grupo veía "Incidencia 2" y al cliente le llegaba "Sobre tu incidencia 5". En local los dos números coincidían y no se había visto. Por eso la IA dio por hecho que la propuesta de la 5 no había llegado al grupo, cuando era la que salía como 2.
+- **Cambios hechos por mí:** en el grupo va el número de la tienda, el mismo que ve el cliente, y entre paréntesis el ticket del back-office. Lo que se guarda en `POST /bo-api/proposals` sigue usando el id del back-office.
+- **Cómo lo validé:**
+  - En el servidor: incidencia 5 desde la web → botón de Telegram → *Iniciar*, y el bot contesta "Listo..." → propuesta en el grupo → Aprobar → me llegó la respuesta por el chat privado del bot.
+  - El código de "Preparar propuesta" con datos de ejemplo (incidencia 5, ticket 2): el grupo ve "Incidencia 5 (ticket 2 del back-office)" y el cliente "Sobre tu incidencia 5".
+- **Revisiones (16 y 17/11):**
+  - #41 (login del gestor): en local, sin sesión redirige al login y `/bo-api/metrics` da 401; sin CSRF o con la contraseña mala no entra; cabeceras de seguridad y cookie `HttpOnly`. Con la contraseña buena entra y carga el cuadro. Aprobado, con la nota de cambiar en el servidor la contraseña de pruebas del gestor.
+  - #44 (visitas, `page.viewed` y "Cerrar ticket"): probado en local junto con develop. `page.viewed` guarda solo la ruta, `web-metrics` valida y sustituye el día, el bloque de visitas sale bien y el PATCH a `cerrada` pone `closed_at`. Aprobado. Avisé de que la base del PR era la rama del #41 y no develop.
