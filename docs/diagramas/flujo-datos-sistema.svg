@@ -74,7 +74,7 @@
 <text class="tagt" x="784" y="415" text-anchor="middle">A</text>
 <rect class="box" x="440" y="462" width="360" height="50" rx="8"/>
 <text class="tb" x="620" y="483" text-anchor="middle">Analítica · cada hora</text>
-<text class="ts" x="620" y="501" text-anchor="middle">visitas por día (pendiente de publicar)</text>
+<text class="ts" x="620" y="501" text-anchor="middle">visitas por día de ayer y hoy</text>
 <rect class="tag" x="774" y="468" width="20" height="18" rx="4"/>
 <text class="tagt" x="784" y="481" text-anchor="middle">A</text>
 <rect class="box" x="440" y="528" width="360" height="50" rx="8"/>

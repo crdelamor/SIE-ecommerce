@@ -852,3 +852,14 @@ Claude Code
 - **Partes asistidas por IA:** el SVG (cajas, flechas numeradas y leyenda) y su conversión a PNG con resvg.
 - **Cambios hechos por mí:** decidí qué pasos numerar (del evento al aviso de errores), marcar con A, B y C la parte de cada uno y dejar Analítica como pendiente de publicar.
 - **Cómo lo validé:** revisé el PNG: cada flecha une los sistemas que se llaman de verdad en los flujos exportados y en `docs/integracion.md`.
+
+## 2026-11-17 · César (A) · Tarea 2: Analítica publicada en el servidor
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** desplegar en el servidor el #42, el #43 y el #44 (tabla `bo_web_metrics`, back-office, "Incidencias" con "Cerrar ticket" y el arreglo de Celia, y "Analítica") y quitar "(pendiente de publicar)" del diagrama del sistema (rama `docs/analitica-publicada`).
+- **Partes asistidas por IA:** los scripts del despliegue y el cambio del texto del diagrama.
+- **Errores detectados:** `n8n execute` dentro del contenedor falla porque el puerto 5679 del *task broker* ya lo usa n8n; se lanza con `N8N_RUNNERS_BROKER_PORT` en otro puerto.
+- **Cambios hechos por mí:** antes de reimportar "Incidencias" se compara con la copia de `~/import` y se guarda una copia; los **Ajustes** de producción (URLs, chat del grupo y revisor) se mantienen.
+- **Cómo lo validé:**
+  - En n8n están publicados los seis flujos y "Analítica" termina en `success`.
+  - `bo_web_metrics` tiene el 16/11 y el 17/11, con la hora de Madrid en `updated_at`.
+  - `/bo-api/health` y la página de login del back-office responden 200.
