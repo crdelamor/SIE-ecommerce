@@ -803,6 +803,7 @@ Claude Code
 - **Errores detectados en la IA:**
   - En `docs/metricas.md` citó una página de ayuda de Google Analytics como "About Analytics sessions" cuando en realidad es "Dimensions and metrics". Se comprobaron los enlaces y se cambió por la página *Session*.
   - La primera versión del hook dejaba de contar una página si se pasaba por `/admin` y se volvía a ella.
+  - En `docs/backoffice-api.md` escribió "cada hora (a y 10)" en vez de "a las y 10". Lo vio César en la revisión del #44 y lo corregí.
 - **Cambios hechos por mí:**
   - Las reglas las fijaron Celia y César: cerrar solo después de "Ejecutar (simulado)" y no tras un rechazo, `page.viewed` sin producto, solo con la ruta y fuera de `INTEGRATED_EVENTS`, y el contrato de `{ "days": [...] }`.
   - Decidí que el front no mande `page.viewed` en `/admin` y que la confirmación se mande como `/pedido`, sin el código del pedido.

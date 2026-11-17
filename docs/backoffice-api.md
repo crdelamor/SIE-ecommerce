@@ -498,7 +498,7 @@ Errores: `401`, `422` si `days` no es un número de 1 a 365.
 
 ### `POST /bo-api/web-metrics`
 
-Visitas de la tienda por día, para el bloque "Visitas de la tienda" del cuadro de mando. La llama el flujo "Analítica" cada hora (a y 10) con lo que le devuelve `GET /api/integration/visits` para ayer y hoy, tal cual (`docs/integracion.md`, apartado 3). Solo pide `X-Api-Key`.
+Visitas de la tienda por día, para el bloque "Visitas de la tienda" del cuadro de mando. La llama el flujo "Analítica" cada hora (a las y 10) con lo que le devuelve `GET /api/integration/visits` para ayer y hoy, tal cual (`docs/integracion.md`, apartado 3). Solo pide `X-Api-Key`.
 
 Cuerpo:
 
