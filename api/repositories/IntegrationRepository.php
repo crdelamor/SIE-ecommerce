@@ -62,7 +62,7 @@ final class IntegrationRepository
         // Un día antes y otro después, para no partir las visitas que cruzan la medianoche
         $stmt = db()->prepare(
             'SELECT session_id, type, created_at FROM events
-             WHERE session_id IS NOT NULL
+             WHERE session_id IS NOT NULL AND session_id <> \'\'
                AND created_at >= DATE_SUB(?, INTERVAL 1 DAY) AND created_at < DATE_ADD(?, INTERVAL 2 DAY)
              ORDER BY session_id, created_at, id'
         );
