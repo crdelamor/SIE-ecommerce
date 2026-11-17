@@ -912,3 +912,13 @@ Claude Code
 - **Cómo lo validé:**
   - Comprobé contra el código lo que dice el README: que las pantallas del gestor solo tienen filtros (formularios GET), los 12 reintentos de "Reintentos", que el cuadro de mando compara la confianza de aprobadas y rechazadas, y quién hizo cada fichero (`git log`).
   - Las tres URL de salud responden `ok`.
+
+## 2026-11-17 · César (A) · Tarea 2: alta de los pedidos en pendiente de pago
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** corregir el historial de estados que vio José en el back-office (rama `fix/pedidos-alta-pendiente`).
+- **Partes asistidas por IA:** el diagnóstico con el registro de integración, el cambio de "Transformar" y el SQL que corrige los datos del servidor.
+- **Errores detectados en la IA:** la primera versión de "Transformar" daba de alta el pedido con el estado que tenía en la tienda al procesar el evento, no con el de creación. Si el `order.created` llegaba tarde (la primera carga del 14/11 y los pedidos que recuperó el ramal de huecos), el historial empezaba en el estado final: PED-000017 salía como "Alta como Cancelado" seguido de "Cancelado → Pagado → Cancelado". En PED-000015 y PED-000016 el alta ya era "pagado", así que el cambio a pagado se descartó como `duplicado` y no quedó en el historial.
+- **Cambios hechos por mí:** lo detectó José revisando las pantallas del gestor. Decidí dar siempre de alta en `pendiente_pago`, porque en la tienda todos los pedidos nacen así (`OrderRepository.php`). Los cambios siguientes llevan el pedido a su estado real y en orden. Con el visto bueno de José, corregí el historial de los cinco pedidos afectados en el servidor, con una copia antes.
+- **Cómo lo validé:**
+  - En el servidor, después del SQL, PED-000014 a PED-000018 empiezan en `pendiente_pago` y siguen en orden hasta su estado actual, que no cambia.
+  - El 15 y el 16 tienen el paso a pagado con los eventos 80 y 88, y no queda ningún alta distinta de `pendiente_pago`.
