@@ -900,3 +900,15 @@ Claude Code
 - **Partes asistidas por IA:** el script del despliegue y el cambio de texto de los dos diagramas.
 - **Cambios hechos por mí:** en el diagrama del sistema, el gestor tiene cuadro de mando, pedidos, incidencias y registro de integración. En el de pedidos, "pedidos, registro y cuadro de mando", porque las incidencias no salen en ese diagrama.
 - **Cómo lo validé:** en el servidor, con el repositorio en `5143081` y el back-office reconstruido, `/bo-api/health` y la página de login dan 200, y sin sesión el cuadro de mando, pedidos, incidencias y registro redirigen al login. Los PNG se revisaron después de generarlos.
+
+## 2026-11-17 · Celia (C) · Tarea 2: README de la Tarea 2
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** poner al día el README para la entrega (rama `docs/readme-tarea2`). Seguía como en la Tarea 1 y el enunciado pide instrucciones de instalación y ejecución, usuarios de prueba y limitaciones conocidas.
+- **Partes asistidas por IA:** la redacción, a partir de `docs/despliegue-tarea2.md`, `docs/integracion.md`, `docs/backoffice-api.md` y `docs/metricas.md`.
+- **Cambios hechos por mí:**
+  - Pedí las URL de los tres sistemas y el bot, el reparto de la Tarea 2, cómo arrancar en local el back-office y n8n, cómo probar los tres escenarios con la web y con los payloads, y las limitaciones de la Tarea 2.
+  - Lo de la Tarea 1 se queda igual.
+  - La contraseña del gestor la pongo yo, no la IA.
+- **Cómo lo validé:**
+  - Comprobé contra el código lo que dice el README: que las pantallas del gestor solo tienen filtros (formularios GET), los 12 reintentos de "Reintentos", que el cuadro de mando compara la confianza de aprobadas y rechazadas, y quién hizo cada fichero (`git log`).
+  - Las tres URL de salud responden `ok`.
