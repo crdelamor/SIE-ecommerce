@@ -97,7 +97,7 @@
 
   <rect class="box" x="920" y="552" width="260" height="56" rx="8"/>
   <text class="tb" x="1050" y="576" text-anchor="middle">Pantallas del gestor</text>
-  <text class="ts" x="1050" y="595" text-anchor="middle">pedidos, registro y cuadro de mando</text>
+  <text class="ts" x="1050" y="595" text-anchor="middle">cuadro de mando</text>
 
   <!-- Flechas internas -->
   <path class="ln" d="M190,191 L190,233"/>

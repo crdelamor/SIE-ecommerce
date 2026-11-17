@@ -845,3 +845,10 @@ Claude Code
 - **Revisiones (16 y 17/11):**
   - #41 (login del gestor): en local, sin sesión redirige al login y `/bo-api/metrics` da 401; sin CSRF o con la contraseña mala no entra; cabeceras de seguridad y cookie `HttpOnly`. Con la contraseña buena entra y carga el cuadro. Aprobado, con la nota de cambiar en el servidor la contraseña de pruebas del gestor.
   - #44 (visitas, `page.viewed` y "Cerrar ticket"): probado en local junto con develop. `page.viewed` guarda solo la ruta, `web-metrics` valida y sustituye el día, el bloque de visitas sale bien y el PATCH a `cerrada` pone `closed_at`. Aprobado. Avisé de que la base del PR era la rama del #41 y no develop.
+
+## 2026-11-16 · César (A) · Tarea 2: diagrama del flujo de datos de todo el sistema
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** un diagrama con los seis flujos de n8n, la tienda, el back-office y Telegram para la memoria (`docs/diagramas/flujo-datos-sistema.svg` y `.png`). El de `flujo-datos.svg` sigue como detalle de los pedidos.
+- **Partes asistidas por IA:** el SVG (cajas, flechas numeradas y leyenda) y su conversión a PNG con resvg.
+- **Cambios hechos por mí:** decidí qué pasos numerar (del evento al aviso de errores), marcar con A, B y C la parte de cada uno y dejar Analítica como pendiente de publicar.
+- **Cómo lo validé:** revisé el PNG: cada flecha une los sistemas que se llaman de verdad en los flujos exportados y en `docs/integracion.md`.
