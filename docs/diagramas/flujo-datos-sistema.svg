@@ -114,6 +114,7 @@
 <path class="ln" d="M440,296 L305,440"/>
 <path class="ln" d="M440,432 L305,468"/>
 <path class="ln" d="M440,498 L305,496"/>
+<path class="ln" d="M440,370 L305,454"/>
 <circle class="num" cx="352" cy="330" r="11"/><text class="numt" x="352" y="334.5" text-anchor="middle">2</text>
 <path class="ln" d="M800,150 L930,150"/>
 <path class="ln" d="M800,250 L930,180"/>
