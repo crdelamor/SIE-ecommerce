@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 /**
- * Solo para local, con el servidor de PHP:  php -S localhost:8080 router.php  (desde backoffice/)
+ * Solo para local, con el servidor de PHP:  php -S localhost:8080 -t public router.php  (desde backoffice/)
  * Hace lo mismo que Apache en el Dockerfile: /bo-api/... va a la API y el resto se sirve desde public/.
  */
 

@@ -863,3 +863,20 @@ Claude Code
   - En n8n están publicados los seis flujos y "Analítica" termina en `success`.
   - `bo_web_metrics` tiene el 16/11 y el 17/11, con la hora de Madrid en `updated_at`.
   - `/bo-api/health` y la página de login del back-office responden 200.
+
+## 2026-11-17 · José (B) · Tarea 2: pantallas de pedidos, incidencias y registro del back-office
+- **Herramienta:** Claude Code (app de Claude).
+- **Tarea:** las pantallas que pide el plan para el gestor, además del cuadro de mando: pedidos (lista y detalle con líneas e historial), incidencias (con la propuesta del agente y la decisión) y registro de integración (rama `feature/backoffice-pantallas`).
+- **Partes asistidas por IA:**
+  - `backoffice/public/pedidos.php`, `pedido.php`, `incidencias.php`, `incidencia.php` y `registro.php`: páginas PHP de solo lectura, con la sesión del gestor, consultas preparadas y filtros por estado, resultado, flujo o evento.
+  - Menú común, cabecera, paginación y etiquetas de los estados en `backoffice/api/lib/page.php`, y sus estilos en `cuadro-mando.css`, con modo oscuro.
+- **Errores detectados en la IA:**
+  - La primera versión buscaba los registros de un pedido solo por `order_code` en el `payload`. En los eventos de pedidos, n8n guarda el `data` del evento, que lleva `code`. Ahora se buscan los dos.
+  - Al probar en local con `php -S ... router.php`, sin `-t public`, el CSS daba 404 y las páginas salían sin estilos. La guía de despliegue ya usaba `-t public`, pero el comentario de `router.php` no. Se ha corregido el comentario.
+- **Cambios hechos por mí:**
+  - Decidí hacerlas de solo lectura: los cambios de estado y las decisiones sobre las propuestas siguen llegando por n8n y por Telegram, y así el gestor no puede saltarse la revisión humana.
+  - En las incidencias se muestra el número de la tienda, el mismo que ve el cliente, como en el arreglo de Celia para el grupo.
+- **Cómo lo validé:**
+  - En local con MariaDB y datos de prueba, usando Playwright: sin sesión, todas redirigen al login; con sesión, responden 200 y los filtros devuelven las filas esperadas; un pedido o una incidencia que no existen dan 404 con un aviso.
+  - Sin errores en la consola, en modo claro y oscuro, y a 390 px sin desplazamiento horizontal: las tablas se desplazan dentro de su caja.
+  - Pendiente: probarlo en el servidor cuando César reconstruya el back-office.
