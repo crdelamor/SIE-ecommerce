@@ -17,6 +17,7 @@ $manager = requireManagerPage();
 </head>
 <body>
     <p class="prototype">Prototipo académico - sin actividad comercial real</p>
+    <?php renderNav('cuadro', $manager); ?>
     <header class="topbar">
         <div>
             <h1>Cuadro de mando</h1>
@@ -29,11 +30,6 @@ $manager = requireManagerPage();
                 <option value="30" selected>Últimos 30 días</option>
                 <option value="90">Últimos 90 días</option>
             </select>
-            <span class="muted"><?= e($manager['email']) ?></span>
-            <form method="post" action="logout.php">
-                <input type="hidden" name="csrf" value="<?= e(csrfToken()) ?>">
-                <button type="submit" class="secondary">Salir</button>
-            </form>
         </div>
     </header>
 
