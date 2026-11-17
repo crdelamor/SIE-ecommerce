@@ -2,6 +2,8 @@
 
 Todas las métricas las calcula `GET /bo-api/metrics` (`backoffice/api/http/metrics.php`) en el momento de la petición, con consultas a las tablas `bo_*` del back-office. Ninguna cifra está escrita a mano y el back-office no lee la base de datos de la tienda: todo lo que cuentan estas consultas ha llegado por n8n.
 
+La página del cuadro de mando (`https://backoffice.theblacklotustcg.onl/`, con el login del gestor) pide estos datos con la sesión y los dibuja en cinco bloques, en el mismo orden que este documento: cifras destacadas y barras en SVG, sin librerías. Cada gráfico tiene debajo "Ver los datos" con la tabla de valores, y el selector de periodo (7, 30 o 90 días) cambia `days`.
+
 Criterios comunes:
 
 - **Venta**: pedido en `pagado`, `en_preparacion`, `enviado`, `entregado` o `incidencia`. Los `pendiente_pago` todavía no se han pagado y los `cancelado` no cuentan como ingreso. `orders_by_status` sí cuenta todos.
