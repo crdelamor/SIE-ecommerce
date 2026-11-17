@@ -97,9 +97,10 @@
 <text class="code" x="1060" y="396" text-anchor="middle">bo_integration_log</text>
 <text class="code" x="1060" y="414" text-anchor="middle">bo_web_metrics · bo_users</text>
 <path class="ln" d="M1060,440 V480"/>
-<rect class="box" x="930" y="480" width="260" height="70" rx="8"/>
-<text class="tb" x="1060" y="511" text-anchor="middle">Gestor · login propio</text>
-<text class="ts" x="1060" y="529" text-anchor="middle">cuadro de mando</text>
+<rect class="box" x="930" y="480" width="260" height="84" rx="8"/>
+<text class="tb" x="1060" y="509" text-anchor="middle">Gestor · login propio</text>
+<text class="ts" x="1060" y="527" text-anchor="middle">cuadro de mando, pedidos,</text>
+<text class="ts" x="1060" y="545" text-anchor="middle">incidencias y registro de integración</text>
 <rect class="tag" x="1164" y="486" width="20" height="18" rx="4"/>
 <text class="tagt" x="1174" y="499" text-anchor="middle">B</text>
 <rect class="box" x="55" y="705" width="250" height="60" rx="8"/>
