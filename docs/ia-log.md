@@ -791,7 +791,6 @@ Claude Code
   - En local con MariaDB y datos de prueba (38 pedidos en 29 días, 141 ejecuciones, 10 incidencias y 10 propuestas), con Playwright: contraseña mala → mensaje de error; buena → cuadro de mando con todos los bloques; periodo de 7 días → 7 columnas; salir → vuelve al login y `/bo-api/metrics` sin clave da 401. Sin errores en la consola, en modo claro, oscuro y a 390 px de ancho sin desplazamiento horizontal.
   - Con la clave, `/metrics` sigue respondiendo igual para n8n; con una clave mala da 401 aunque haya sesión.
 
-<<<<<<< HEAD
 ## 2026-11-17 · José (B) · Tarea 2: visitas de la tienda en el cuadro de mando y cierre de incidencias
 - **Herramienta:** Claude Code (app de Claude, con acceso a la carpeta del repositorio).
 - **Tarea:** recibir en el back-office las visitas que manda el flujo "Analítica" (#42 de César), enseñarlas en el cuadro de mando, registrar `page.viewed` en la tienda y cerrar el ticket cuando se ejecuta la propuesta del agente (rama `feature/metricas-web`).
@@ -815,7 +814,7 @@ Claude Code
   - En la tienda, `page.viewed` con `/catalogo` se guarda solo con la ruta (aunque llegue otro campo); con query o sin ruta, 400. Con Playwright: portada, catálogo con filtro, ficha y confirmación guardan `/`, `/catalogo`, `/producto/1` y `/pedido`; `/admin` no guarda nada.
   - Bloque "Visitas de la tienda" con Playwright, sin errores en la consola y a 390 px sin desplazamiento horizontal.
   - Pendiente: la prueba en el servidor cuando César publique "Analítica" (ver los días en el cuadro de mando tras "Ejecutar ahora").
-=======
+
 ## 2026-11-16 · César (A) · Tarea 2: visitas de la tienda para el cuadro de mando (flujo "Analítica")
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
 - **Tarea:** que el cuadro de mando de José tenga el tiempo medio de visita, el % de visitas que añaden al carrito y el % de esas que compran. Los datos están en `events` de la tienda y llegan al back-office por n8n: `GET /api/integration/visits` y el flujo "Analítica" (rama `feature/integracion-visitas`).
@@ -846,4 +845,3 @@ Claude Code
 - **Revisiones (16 y 17/11):**
   - #41 (login del gestor): en local, sin sesión redirige al login y `/bo-api/metrics` da 401; sin CSRF o con la contraseña mala no entra; cabeceras de seguridad y cookie `HttpOnly`. Con la contraseña buena entra y carga el cuadro. Aprobado, con la nota de cambiar en el servidor la contraseña de pruebas del gestor.
   - #44 (visitas, `page.viewed` y "Cerrar ticket"): probado en local junto con develop. `page.viewed` guarda solo la ruta, `web-metrics` valida y sustituye el día, el bloque de visitas sale bien y el PATCH a `cerrada` pone `closed_at`. Aprobado. Avisé de que la base del PR era la rama del #41 y no develop.
->>>>>>> origin/develop
