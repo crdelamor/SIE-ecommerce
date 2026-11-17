@@ -773,3 +773,20 @@ Claude Code
 - **Cómo lo validé:**
   - Back-office en local con MariaDB 10.11 (`ONLY_FULL_GROUP_BY` activado) y datos de prueba: con las tablas vacías todas las medias salen `null` y las series con 0; con 4 pedidos, 2 incidencias y 3 propuestas, las cifras coinciden con las calculadas a mano.
   - Sin `X-Api-Key` da 401; con `days=0` o `days=abc`, 422.
+
+## 2026-11-16 · José (B) · Tarea 2: página del cuadro de mando y login del gestor
+- **Herramienta:** Claude Code desde VS Code.
+- **Tarea:** login del gestor (`bo_users`, `password_hash` y sesión) y página del cuadro de mando del back-office con los datos de `GET /bo-api/metrics` (rama `feature/backoffice-cuadro-mando`).
+- **Partes asistidas por IA:**
+  - `backoffice/api/lib/session.php` (sesión, caducidad tras 2 horas sin actividad, token de los formularios) y `requireApiKeyOrManager()` para que `/metrics` acepte la sesión.
+  - `public/login.php`, `public/logout.php` y `public/index.php`.
+  - `cuadro-mando.js` y `cuadro-mando.css`: cifras y barras en SVG sin librerías, tooltip, tabla "Ver los datos" en cada gráfico y modo oscuro.
+  - `router.php` para probarlo en local con `php -S`.
+- **Errores detectados en la IA:**
+  - Las barras horizontales se dibujaban con un ancho fijo y, en las columnas estrechas, el texto se encogía hasta ser ilegible. Ahora se dibujan al ancho real de la columna y se redibujan al cambiar el tamaño de la ventana.
+- **Cambios hechos por mí:**
+  - Pedí un cuadro de mando completo con todas las métricas del #40.
+  - Decidí dejar el bloque de navegación web (tiempo de visita y conversión del carrito) para cuando César y Celia confirmen cómo llegan esos datos por n8n.
+- **Cómo lo validé:**
+  - En local con MariaDB y datos de prueba (38 pedidos en 29 días, 141 ejecuciones, 10 incidencias y 10 propuestas), con Playwright: contraseña mala → mensaje de error; buena → cuadro de mando con todos los bloques; periodo de 7 días → 7 columnas; salir → vuelve al login y `/bo-api/metrics` sin clave da 401. Sin errores en la consola, en modo claro, oscuro y a 390 px de ancho sin desplazamiento horizontal.
+  - Con la clave, `/metrics` sigue respondiendo igual para n8n; con una clave mala da 401 aunque haya sesión.
