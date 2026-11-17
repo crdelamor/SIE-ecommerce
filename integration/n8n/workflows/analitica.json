@@ -1,0 +1,103 @@
+{
+  "id": "A0analitica00001",
+  "name": "Analítica",
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Madrid",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true,
+    "errorWorkflow": "A0errores0000001"
+  },
+  "nodes": [
+    {
+      "id": "5a1b2c30-0001-4b00-8000-000000000001",
+      "name": "Cada hora",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 300],
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "hours", "hoursInterval": 1, "triggerAtMinute": 10 }]
+        }
+      }
+    },
+    {
+      "id": "5a1b2c30-0002-4b00-8000-000000000002",
+      "name": "Ejecutar ahora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 480],
+      "parameters": {}
+    },
+    {
+      "id": "5a1b2c30-0003-4b00-8000-000000000003",
+      "name": "Ajustes",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [220, 300],
+      "notes": "URLs de la API de la tienda y del back-office. Cambiarlas aquí al desplegar.",
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            { "id": "v1", "name": "tienda_api_url", "value": "http://localhost:8000/api", "type": "string" },
+            { "id": "v2", "name": "bo_url", "value": "http://localhost:8080", "type": "string" }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "5a1b2c30-0004-4b00-8000-000000000004",
+      "name": "Visitas de la tienda",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [440, 300],
+      "notes": "Ayer y hoy: la vuelta de las 00:10 completa las visitas del día anterior.",
+      "parameters": {
+        "url": "={{ $('Ajustes').first().json.tienda_api_url }}/integration/visits",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "from", "value": "={{ $now.minus({ days: 1 }).toFormat('yyyy-MM-dd') }}" },
+            { "name": "to", "value": "={{ $now.toFormat('yyyy-MM-dd') }}" }
+          ]
+        },
+        "options": { "timeout": 10000 }
+      },
+      "credentials": {
+        "httpHeaderAuth": { "id": "A0credTienda0001", "name": "Tienda X-Api-Key" }
+      }
+    },
+    {
+      "id": "5a1b2c30-0005-4b00-8000-000000000005",
+      "name": "Guardar en el back-office",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 300],
+      "notes": "El back-office sustituye los datos de cada día: repetir la vuelta no duplica nada.",
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $('Ajustes').first().json.bo_url }}/bo-api/web-metrics",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ days: $json.days }) }}",
+        "options": { "timeout": 10000 }
+      },
+      "credentials": {
+        "httpHeaderAuth": { "id": "A0credBackoff001", "name": "Back-office X-Api-Key" }
+      }
+    }
+  ],
+  "connections": {
+    "Cada hora": { "main": [[{ "node": "Ajustes", "type": "main", "index": 0 }]] },
+    "Ejecutar ahora": { "main": [[{ "node": "Ajustes", "type": "main", "index": 0 }]] },
+    "Ajustes": { "main": [[{ "node": "Visitas de la tienda", "type": "main", "index": 0 }]] },
+    "Visitas de la tienda": { "main": [[{ "node": "Guardar en el back-office", "type": "main", "index": 0 }]] }
+  }
+}

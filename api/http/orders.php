@@ -44,6 +44,7 @@ function readCoupon(array $body): ?string
 const BROWSER_EVENTS = [
     'cart.item_added'  => 'product',
     'checkout.started' => null,
+    'page.viewed'      => null,
 ];
 
 // POST /events  { "type": "cart.item_added", "entity_id": 3, "payload": { "quantity": 1 } }
@@ -67,6 +68,14 @@ $router->post('/events', function (): void {
     $payload = $body['payload'] ?? [];
     if (!is_array($payload) || strlen(json_encode($payload)) > 1000) {
         jsonError('Datos del evento no válidos', 400);
+    }
+    // De una página vista solo se guarda la ruta, sin query ni nada más que mande el navegador
+    if ($type === 'page.viewed') {
+        $path = $payload['path'] ?? null;
+        if (!is_string($path) || !preg_match('~^/[a-z0-9/_-]{0,100}$~', $path)) {
+            jsonError('La ruta de la página no es válida', 400);
+        }
+        $payload = ['path' => $path];
     }
 
     logEvent($type, $entityType, $entityId, $payload);

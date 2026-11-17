@@ -87,6 +87,7 @@ Un solo `docker-compose` levanta los cuatro contenedores del servidor: **n8n** c
    - Publicarlo. Al publicarlo, n8n pone el webhook del bot en `N8N_WEBHOOK_URL`, que tiene que ser HTTPS. Solo se publica en el servidor: cada bot tiene un webhook, y si se publica en otro n8n se lo quita a este.
    - En el `config.php` de DonDominio, sección `integration`: `'telegram_bot' => 'blacklotus_soporte_bot'`. Sin esa línea la web no enseña el botón.
    - Comprobación: enviar una incidencia en la web, pulsar "Seguir mi incidencia por Telegram" e *Iniciar* en el bot. Tiene que contestar "Listo..." y el registro tiene que tener `workflow: Telegram`, `ok`.
+9. Analítica (A, `docs/integracion.md` apartado 3): importar `analitica.json` con las mismas URLs en **Ajustes** y publicarlo (`--id=A0analitica00001`) cuando el back-office tenga `POST /bo-api/web-metrics`; antes, cada vuelta fallaría y avisaría "Errores". Comprobación: "Ejecutar ahora" y ver los días en el back-office.
 
 **Probado en local** (Docker Desktop, 01/11/2026) con puertos 5688 y 8088 y la tienda en el equipo (`tienda_api_url` = `http://host.docker.internal:8001`): pedido y pago → pedido creado y pagado en el back-office del contenedor (`ok` ×3); tras `docker compose down` y `up`, siguen el pedido, los flujos y el webhook.
 
@@ -102,3 +103,15 @@ Un solo `docker-compose` levanta los cuatro contenedores del servidor: **n8n** c
 ## Parte B · Back-office
 
 *(La completa José.)*
+
+### Tabla de visitas (`bo_web_metrics`)
+
+`schema.sql` solo se ejecuta la primera vez que arranca MySQL, así que en el servidor la tabla nueva se crea a mano, una vez, antes de publicar "Analítica":
+
+```
+cd deploy
+docker compose exec -T backoffice-db mysql -u root -p blacklotus_bo < ../backoffice/db/web-metrics.sql
+docker compose up -d --build backoffice
+```
+
+`web-metrics.sql` usa `CREATE TABLE IF NOT EXISTS`, así que repetirlo no rompe nada. Comprobación: tras "Ejecutar ahora" en "Analítica", el bloque "Visitas de la tienda" del cuadro de mando enseña la hora de la última actualización.

@@ -38,7 +38,7 @@ La tienda guarda el evento con `logEvent()` y, cuando la transacción ya se ha c
 - **Cabecera** `X-Webhook-Secret` con el secreto compartido. Está en `api/config.php` (`integration.webhook_secret`) y en la credencial `Tienda X-Webhook-Secret` de n8n, nunca en el repositorio.
 - **Respuesta del webhook**: n8n responde `200` en cuanto lo recibe (no espera al back-office), así la compra no se retrasa. Con el secreto malo o sin él, `403` y el flujo no se ejecuta.
 - **Límite**: la tienda espera como mucho 2 s. Si n8n no responde, la compra sigue, deja de enviar y el flujo "Reintentos" recupera el evento con `GET /api/integration/events`.
-- Los eventos de navegación (`product.viewed`, `cart.item_added`, `checkout.started`) no se envían: se quedan en la tienda.
+- Los eventos de navegación (`page.viewed`, `product.viewed`, `cart.item_added`, `checkout.started`) no se envían: se quedan en la tienda. `page.viewed` solo lleva la ruta (`{ "path": "/catalogo" }`) y sirve para que las visitas del flujo "Analítica" tengan duración aunque no se añada nada al carrito.
 
 ## 2. Eventos integrados
 
@@ -66,6 +66,26 @@ Todos piden la cabecera `X-Api-Key` con la clave de integración de la tienda (`
 | `GET /api/integration/orders/{code}` | A | Pedido con cliente (nombre y email), líneas con los datos TCG y pagos sin referencia. `404` si no existe. |
 | `GET /api/integration/events?after_id=&limit=` | A | Eventos integrados con id mayor que `after_id`, con el mismo sobre. `400` si falta `after_id` o `limit` no va de 1 a 500. |
 | `GET /api/integration/tickets/{id}` | C | Incidencia para dar de alta el ticket en el back-office. `404` si no existe. Con `?firma=` (flujo "Telegram"), `403` si la firma no es la de esa incidencia (apartado 7). |
+| `GET /api/integration/visits?from=&to=` | A | Totales de visitas por día, para el flujo "Analítica". `400` si las fechas no van en `AAAA-MM-DD`, `from` es posterior a `to` o hay más de 31 días. |
+
+### `GET /api/integration/visits?from=&to=`
+
+```json
+{
+  "from": "2026-11-15",
+  "to": "2026-11-16",
+  "days": [
+    { "day": "2026-11-15", "visits": 0, "visit_seconds": 0, "visits_with_cart": 0, "visits_with_cart_and_order": 0 },
+    { "day": "2026-11-16", "visits": 2, "visit_seconds": 4, "visits_with_cart": 1, "visits_with_cart_and_order": 0 }
+  ]
+}
+```
+
+- Una **visita** son los eventos con el mismo `session_id` (el identificador anónimo que manda el front en `X-Session-Id`) sin más de 30 minutos entre uno y el siguiente, como en Google Analytics. Cuenta en el día de su primer evento.
+- `visit_seconds` es la suma de lo que duran las visitas, del primer evento al último (una visita de un solo evento dura 0). Se manda la suma y no la media para que el back-office pueda juntar varios días: tiempo medio = `visit_seconds / visits`.
+- `visits_with_cart`: visitas con algún `cart.item_added`. `visits_with_cart_and_order`: de esas, las que tienen también `order.created`. Una compra con el carrito llenado en una visita anterior no cuenta como conversión de la visita.
+- Solo totales: ni sesiones, ni productos, ni datos de clientes. Los eventos de navegación no salen de la tienda.
+- "Analítica" pide cada hora (a y 10) ayer y hoy y se lo pasa al back-office con `POST /bo-api/web-metrics` y el cuerpo `{ "days": [...] }` tal cual. El back-office (B) sustituye los datos de cada día, así que repetir una vuelta no duplica nada. Los fallos los avisa "Errores"; no deja una fila por vuelta en el registro de integración, que es por evento.
 
 ### `GET /api/integration/tickets/{id}`
 
@@ -176,8 +196,9 @@ Solo pasan al agente los tickets recién creados (`ok`), no los `duplicado`. El 
 | `clasificar_incidencia` | `PATCH /bo-api/tickets/{id}` | Guarda la prioridad. Es lo único que escribe el agente y se puede deshacer. |
 | `registrar_propuesta` | `POST /bo-api/proposals` | No es una herramienta del modelo, sino un nodo del flujo después del parser. Así se guarda una sola vez y exactamente lo que ha validado el parser. |
 
-- La propuesta se manda al grupo de Telegram con *Send and Wait for Response* y botones Aprobar / Rechazar. El flujo espera a que alguien pulse.
+- La propuesta se manda al grupo de Telegram con *Send and Wait for Response* y botones Aprobar / Rechazar. El flujo espera a que alguien pulse. El mensaje empieza con el número de la incidencia en la tienda, el mismo que ve el cliente, y entre paréntesis el id del ticket en el back-office ("Incidencia 5 (ticket 2 del back-office)"): en el servidor no coinciden.
 - Aprobar → `aprobado` y después `ejecutado_simulado`. La acción (cambio, devolución...) no se hace de verdad, pero si el cliente ha enlazado Telegram (apartado 7) se le manda `customer_reply` por el bot. Si ese envío falla, la propuesta se queda en `aprobado` y avisa "Errores". Rechazar → `rechazado`, sin mensaje al cliente.
+- Después de `ejecutado_simulado`, "Cerrar ticket" pasa el ticket a `cerrada` con `PATCH /bo-api/tickets/{id}` (el id sale de "Buscar chat del cliente") y el back-office guarda `closed_at`, que es de donde sale el tiempo medio de resolución del cuadro de mando. Tras un rechazo no se cierra: la propuesta no valía y la incidencia sigue pendiente para atenderla a mano.
 - `reviewed_by`: los botones de *Send and Wait* no dicen quién los ha pulsado, así que se pone el alias de la cuenta de pruebas que revisa, desde **Ajustes** (`revisor`).
 - Si falla el agente, se registra una segunda fila para el mismo evento: `agente_no_disponible` si Gemini no responde, o `salida_agente_no_valida` si la salida no cumple el formato. El ticket queda sin propuesta y se puede repetir a mano desde n8n. Si falla después (guardar la propuesta o Telegram), avisa "Errores".
 

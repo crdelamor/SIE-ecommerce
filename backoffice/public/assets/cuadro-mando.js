@@ -322,6 +322,25 @@ function render(m) {
     ]);
     horizontalBars(chart('proposals_by_status'), 'Propuestas por estado', entries(p.by_status, PROPOSAL_LABELS));
     horizontalBars(chart('by_case_type'), 'Propuestas por tipo de caso', entries(p.by_case_type));
+
+    // Visitas de la tienda (flujo "Analítica", cada hora)
+    const w = m.web;
+    const updated = w.updated_at
+        ? `Actualizado ${new Date(w.updated_at).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' })}`
+        : 'Todavía no ha llegado ningún dato';
+    renderKpis('web', [
+        { label: 'Visitas', value: fmtNumber(w.visits), hint: updated },
+        { label: 'Tiempo medio de visita', value: fmtSeconds(w.avg_visit_seconds), hint: 'Del primer al último evento' },
+        { label: 'Visitas con carrito', value: fmtPercent(w.cart_rate), hint: `${fmtNumber(w.visits_with_cart)} visitas` },
+        { label: 'De carrito a pedido', value: fmtPercent(w.cart_to_order_rate), hint: `${fmtNumber(w.visits_with_cart_and_order)} visitas` },
+    ]);
+    dailyColumns(chart('visits_per_day'), `Visitas por día (últimos ${m.days} días)`, m.visits_per_day,
+        [{ key: 'visits', name: 'Visitas', className: 'series' }]);
+    horizontalBars(chart('visits_funnel'), 'Embudo de las visitas', [
+        { label: 'Visitas', value: w.visits },
+        { label: 'Con carrito', value: w.visits_with_cart },
+        { label: 'Con carrito y pedido', value: w.visits_with_cart_and_order },
+    ]);
 }
 
 async function load() {

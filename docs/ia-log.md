@@ -791,6 +791,61 @@ Claude Code
   - En local con MariaDB y datos de prueba (38 pedidos en 29 días, 141 ejecuciones, 10 incidencias y 10 propuestas), con Playwright: contraseña mala → mensaje de error; buena → cuadro de mando con todos los bloques; periodo de 7 días → 7 columnas; salir → vuelve al login y `/bo-api/metrics` sin clave da 401. Sin errores en la consola, en modo claro, oscuro y a 390 px de ancho sin desplazamiento horizontal.
   - Con la clave, `/metrics` sigue respondiendo igual para n8n; con una clave mala da 401 aunque haya sesión.
 
+## 2026-11-17 · José (B) · Tarea 2: visitas de la tienda en el cuadro de mando y cierre de incidencias
+- **Herramienta:** Claude Code (app de Claude, con acceso a la carpeta del repositorio).
+- **Tarea:** recibir en el back-office las visitas que manda el flujo "Analítica" (#42 de César), enseñarlas en el cuadro de mando, registrar `page.viewed` en la tienda y cerrar el ticket cuando se ejecuta la propuesta del agente (rama `feature/metricas-web`).
+- **Partes asistidas por IA:**
+  - `POST /bo-api/web-metrics` (`backoffice/api/http/web_metrics.php`): validación de los días y sustitución de cada día con `INSERT ... ON DUPLICATE KEY UPDATE` en una transacción.
+  - Tabla `bo_web_metrics` en `schema.sql` y `backoffice/db/web-metrics.sql` para crearla en el servidor sin borrar nada.
+  - Bloque `web` y `visits_per_day` en `GET /bo-api/metrics` y bloque "Visitas de la tienda" en la página del cuadro de mando.
+  - `page.viewed` en `BROWSER_EVENTS` (`api/http/orders.php`), el hook `usePageViews` del front y el nodo "Cerrar ticket" de `incidencias.json`.
+  - Documentación: `docs/backoffice-api.md`, `docs/metricas.md` (apartado 6), `docs/integracion.md` y `docs/despliegue-tarea2.md`.
+- **Errores detectados en la IA:**
+  - En `docs/metricas.md` citó una página de ayuda de Google Analytics como "About Analytics sessions" cuando en realidad es "Dimensions and metrics". Se comprobaron los enlaces y se cambió por la página *Session*.
+  - La primera versión del hook dejaba de contar una página si se pasaba por `/admin` y se volvía a ella.
+  - En `docs/backoffice-api.md` escribió "cada hora (a y 10)" en vez de "a las y 10". Lo vio César en la revisión del #44 y lo corregí.
+- **Cambios hechos por mí:**
+  - Las reglas las fijaron Celia y César: cerrar solo después de "Ejecutar (simulado)" y no tras un rechazo, `page.viewed` sin producto, solo con la ruta y fuera de `INTEGRATED_EVENTS`, y el contrato de `{ "days": [...] }`.
+  - Decidí que el front no mande `page.viewed` en `/admin` y que la confirmación se mande como `/pedido`, sin el código del pedido.
+  - Revisé esta entrada del diario antes del commit.
+  - Creé la rama `feature/metricas-web` sobre `feature/backoffice-cuadro-mando`, para encadenar el PR al #41, e hice el commit y el push desde VS Code.
+- **Cómo lo validé:**
+  - Con la IA, en un entorno aparte con MariaDB: `POST /web-metrics` con ayer y hoy → 200; repetirlo con otros valores sustituye el día sin duplicarlo; sin clave 401; lista vacía, fecha imposible, negativos, carrito mayor que visitas o un día repetido → 422 con los campos. `GET /metrics` sin visitas da `null` en las medias; con datos, tiempo medio = `visit_seconds / visits`.
+  - En la tienda, `page.viewed` con `/catalogo` se guarda solo con la ruta (aunque llegue otro campo); con query o sin ruta, 400. Con Playwright: portada, catálogo con filtro, ficha y confirmación guardan `/`, `/catalogo`, `/producto/1` y `/pedido`; `/admin` no guarda nada.
+  - Bloque "Visitas de la tienda" con Playwright, sin errores en la consola y a 390 px sin desplazamiento horizontal.
+  - Pendiente: la prueba en el servidor cuando César publique "Analítica" (ver los días en el cuadro de mando tras "Ejecutar ahora").
+
+## 2026-11-16 · César (A) · Tarea 2: visitas de la tienda para el cuadro de mando (flujo "Analítica")
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** que el cuadro de mando de José tenga el tiempo medio de visita, el % de visitas que añaden al carrito y el % de esas que compran. Los datos están en `events` de la tienda y llegan al back-office por n8n: `GET /api/integration/visits` y el flujo "Analítica" (rama `feature/integracion-visitas`).
+- **Partes asistidas por IA:**
+  - La agrupación de los eventos en visitas (`IntegrationRepository::groupVisits`) y el endpoint con sus validaciones.
+  - El flujo `analitica.json` y su documentación en `docs/integracion.md`.
+  - El arnés de prueba de la agrupación.
+- **Errores detectados en la IA:**
+  - El endpoint del embudo de la rama `feature/integracion-embudo` contaba sesiones con `COUNT(DISTINCT session_id)`, pero el front guarda ese identificador en `localStorage` y no caduca: un mismo navegador sería una sola "visita" para siempre. Por eso las visitas se cortan tras 30 minutos sin actividad y el embudo no se ha subido.
+- **Cambios hechos por mí:**
+  - Decidí mandar la suma de segundos y no la media, para que el back-office pueda juntar varios días sin sesgo.
+  - Decidí que "Analítica" pida ayer y hoy en cada vuelta (la de las 00:10 completa el día anterior) y que el back-office sustituya cada día, para que repetir una vuelta no duplique.
+  - Los eventos de navegación no salen de la tienda: solo totales por día, sin sesiones ni datos de clientes.
+- **Cómo lo validé:**
+  - Arnés de `groupVisits`: 30 minutos justos siguen en la misma visita, 31 abren otra, otra sesión es otra visita y una compra sin carrito en esa visita no cuenta como conversión.
+  - Tienda en local: `401` sin clave; `400` sin fechas, con `from` posterior a `to`, con más de 31 días y con el 30 de febrero. Con dos sesiones de prueba (vista de producto y carrito en una, vista en la otra): 2 visitas, 1 con carrito.
+  - n8n 2.45.7 en local con "Ejecutar ahora" y un back-office falso: llega `POST /bo-api/web-metrics` con `X-Api-Key` y los `days` de ayer y hoy.
+
+## 2026-11-17 · Celia (C) · Tarea 2: prueba completa en el servidor y número de incidencia en el grupo
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** probar el escenario 3 entero en el servidor, revisar el #41 y el #44 de José y arreglar el número que sale en el grupo (rama `fix/numero-incidencia-grupo`).
+- **Partes asistidas por IA:** las pruebas en local de los dos PR, el cambio del nodo "Preparar propuesta" y la línea de `docs/integracion.md`.
+- **Errores detectados:** en el servidor, la incidencia 5 de la tienda es el ticket 2 del back-office. El grupo veía "Incidencia 2" y al cliente le llegaba "Sobre tu incidencia 5". En local los dos números coincidían y no se había visto. Por eso la IA dio por hecho que la propuesta de la 5 no había llegado al grupo, cuando era la que salía como 2.
+- **Cambios hechos por mí:** en el grupo va el número de la tienda, el mismo que ve el cliente, y entre paréntesis el ticket del back-office. Lo que se guarda en `POST /bo-api/proposals` sigue usando el id del back-office.
+- **Cómo lo validé:**
+  - En el servidor: incidencia 5 desde la web → botón de Telegram → *Iniciar*, y el bot contesta "Listo..." → propuesta en el grupo → Aprobar → me llegó la respuesta por el chat privado del bot.
+  - El código de "Preparar propuesta" con datos de ejemplo (incidencia 5, ticket 2): el grupo ve "Incidencia 5 (ticket 2 del back-office)" y el cliente "Sobre tu incidencia 5".
+- **Revisiones (16 y 17/11):**
+  - #41 (login del gestor): en local, sin sesión redirige al login y `/bo-api/metrics` da 401; sin CSRF o con la contraseña mala no entra; cabeceras de seguridad y cookie `HttpOnly`. Con la contraseña buena entra y carga el cuadro. Aprobado, con la nota de cambiar en el servidor la contraseña de pruebas del gestor.
+  - #44 (visitas, `page.viewed` y "Cerrar ticket"): probado en local junto con develop. `page.viewed` guarda solo la ruta, `web-metrics` valida y sustituye el día, el bloque de visitas sale bien y el PATCH a `cerrada` pone `closed_at`. Aprobado. Avisé de que la base del PR era la rama del #41 y no develop.
+
 ## 2026-11-16 · César (A) · Tarea 2: diagrama del flujo de datos de todo el sistema
 - **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
 - **Tarea:** un diagrama con los seis flujos de n8n, la tienda, el back-office y Telegram para la memoria (`docs/diagramas/flujo-datos-sistema.svg` y `.png`). El de `flujo-datos.svg` sigue como detalle de los pedidos.
