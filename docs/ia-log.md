@@ -790,3 +790,21 @@ Claude Code
 - **Cómo lo validé:**
   - En local con MariaDB y datos de prueba (38 pedidos en 29 días, 141 ejecuciones, 10 incidencias y 10 propuestas), con Playwright: contraseña mala → mensaje de error; buena → cuadro de mando con todos los bloques; periodo de 7 días → 7 columnas; salir → vuelve al login y `/bo-api/metrics` sin clave da 401. Sin errores en la consola, en modo claro, oscuro y a 390 px de ancho sin desplazamiento horizontal.
   - Con la clave, `/metrics` sigue respondiendo igual para n8n; con una clave mala da 401 aunque haya sesión.
+
+## 2026-11-16 · César (A) · Tarea 2: visitas de la tienda para el cuadro de mando (flujo "Analítica")
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** que el cuadro de mando de José tenga el tiempo medio de visita, el % de visitas que añaden al carrito y el % de esas que compran. Los datos están en `events` de la tienda y llegan al back-office por n8n: `GET /api/integration/visits` y el flujo "Analítica" (rama `feature/integracion-visitas`).
+- **Partes asistidas por IA:**
+  - La agrupación de los eventos en visitas (`IntegrationRepository::groupVisits`) y el endpoint con sus validaciones.
+  - El flujo `analitica.json` y su documentación en `docs/integracion.md`.
+  - El arnés de prueba de la agrupación.
+- **Errores detectados en la IA:**
+  - El endpoint del embudo de la rama `feature/integracion-embudo` contaba sesiones con `COUNT(DISTINCT session_id)`, pero el front guarda ese identificador en `localStorage` y no caduca: un mismo navegador sería una sola "visita" para siempre. Por eso las visitas se cortan tras 30 minutos sin actividad y el embudo no se ha subido.
+- **Cambios hechos por mí:**
+  - Decidí mandar la suma de segundos y no la media, para que el back-office pueda juntar varios días sin sesgo.
+  - Decidí que "Analítica" pida ayer y hoy en cada vuelta (la de las 00:10 completa el día anterior) y que el back-office sustituya cada día, para que repetir una vuelta no duplique.
+  - Los eventos de navegación no salen de la tienda: solo totales por día, sin sesiones ni datos de clientes.
+- **Cómo lo validé:**
+  - Arnés de `groupVisits`: 30 minutos justos siguen en la misma visita, 31 abren otra, otra sesión es otra visita y una compra sin carrito en esa visita no cuenta como conversión.
+  - Tienda en local: `401` sin clave; `400` sin fechas, con `from` posterior a `to`, con más de 31 días y con el 30 de febrero. Con dos sesiones de prueba (vista de producto y carrito en una, vista en la otra): 2 visitas, 1 con carrito.
+  - n8n 2.45.7 en local con "Ejecutar ahora" y un back-office falso: llega `POST /bo-api/web-metrics` con `X-Api-Key` y los `days` de ayer y hoy.
