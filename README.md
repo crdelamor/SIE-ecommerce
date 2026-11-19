@@ -134,7 +134,7 @@ En las dos bases de datos solo se guarda el hash (`password_hash()` de PHP), nun
 
 Tarjetas de prueba del pago simulado: `4242 4242 4242 4242` se aprueba y `4000 0000 0000 0002` se rechaza. Cupón de descuento: `BIENVENIDA10`.
 
-## Probar los tres escenarios
+## Probar los escenarios
 
 En la web publicada:
 
@@ -145,7 +145,8 @@ En la web publicada:
    2. Pulsa "Seguir mi incidencia por Telegram" y después *Iniciar* en el bot. Tiene que contestar "Listo...".
    3. El agente consulta el pedido y el historial del cliente, clasifica la incidencia y manda su propuesta al grupo de Telegram del equipo.
    4. Si se aprueba, el cliente recibe la respuesta por el bot y la incidencia se cierra. Si se rechaza, no se le manda nada.
-
+4. **Caso de error.** En *Registro*, el filtro "Error" muestra las ejecuciones fallidas con su tipo (por ejemplo, `payload_incompleto`, que se provoca con `incompleto.json`), y el filtro por evento muestra los reintentos del mismo evento.
+5. **Cuadro de mando.** Las métricas se calculan en el momento a partir de las tablas del back-office. Qué mide cada una y por qué: [`docs/metricas.md`](docs/metricas.md).
    La propuesta y la decisión quedan en el detalle de la incidencia del back-office.
 
 Para probar el webhook sin la tienda, están los payloads de [`integration/payloads/`](integration/payloads/): `escenario1.json`, `escenario2.json`, `escenario3.json` e `incompleto.json`, este último sin `data.code` para ver la rama de error. Se mandan con `POST` al webhook de n8n (`/webhook/tienda`) con la cabecera `X-Webhook-Secret`. Sin el secreto, n8n responde 403.
@@ -176,6 +177,7 @@ Si el envío falla, el pedido sigue pagado y el error queda en el log de PHP. Lo
 El hosting (plan Básico) solo admite web estática y PHP, sin Node.js. Por eso el front se compila en local y se sube ya construido. La guía paso a paso, con los datos reales del hosting y la lista de comprobaciones, está en [`docs/despliegue.md`](docs/despliegue.md). Resumen:
 
 1. **Base de datos.** En el panel del hosting crea una base de datos y su usuario. En phpMyAdmin importa `db/schema.sql` y después `db/seed.sql`. En este hosting el servidor de base de datos es `bbdd.theblacklotustcg.onl` (no `localhost`) y el motor es MariaDB.
+   `fix-hora-utc.sql` es una corrección que se ejecutó una sola vez en el servidor (fechas guardadas en UTC antes de que `db.php` fijara la hora de Madrid). En una instalación nueva no hace falta.
 2. **Compilar el front.** Desde `frontend/`: `npm run build`. Genera `frontend/dist/`.
 3. **Subir los ficheros.** La carpeta raíz de la web es **`/public/`** (no `public_html/`).
    - El contenido de `frontend/dist/` va a `/public/`, incluido `.htaccess`.
@@ -247,3 +249,6 @@ Los pasos completos están en [`docs/despliegue-tarea2.md`](docs/despliegue-tare
 - **Visitas.** Los eventos de navegación no salen de la tienda: "Analítica" solo manda al back-office los totales por día, cada hora.
 - **Un solo servidor.** n8n y el back-office están en la misma máquina virtual, sin copia de seguridad automática. Las copias se hacen a mano (ver `docs/despliegue-tarea2.md`).
 - **Pantallas del gestor.** Son de consulta: el gestor no puede cambiar pedidos ni incidencias desde el back-office.
+- **Login del gestor.** Hay un solo usuario gestor y el login no limita los intentos fallidos.
+- **Retraso de las visitas.** Como "Analítica" pasa los totales cada hora, el cuadro de mando puede ir hasta una hora por detrás. Solo cuentan las visitas con eventos de sesión.
+- **Evidencia del "antes".** El back-office del servidor ya tenía datos cuando se hicieron las capturas, así que el "antes" es una instalación limpia del mismo código en el mismo servidor.
