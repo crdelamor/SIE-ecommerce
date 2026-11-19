@@ -922,3 +922,14 @@ Claude Code
 - **Cómo lo validé:**
   - En el servidor, después del SQL, PED-000014 a PED-000018 empiezan en `pendiente_pago` y siguen en orden hasta su estado actual, que no cambia.
   - El 15 y el 16 tienen el paso a pagado con los eventos 80 y 88, y no queda ningún alta distinta de `pendiente_pago`.
+
+## 2026-11-19 · César (A) · Tarea 2: README, idempotencia y flujo "Errores"
+- **Herramienta:** Claude Code (Claude Opus 5.5) desde VS Code.
+- **Tarea:** repasar el README antes de grabar el vídeo y completar lo que faltaba de la parte A.
+- **Partes asistidas por IA:** la revisión del README y la redacción de los cambios.
+- **Errores detectados en la IA:** ninguno en estos cambios. Al revisar, la IA encontró dos textos que venían de la Tarea 1 y ya no valían: vaciar `events` antes del vídeo y el ejemplo de pasar un pedido pagado a enviado.
+- **Cambios hechos por mí:** decidí qué se añadía. En el escenario 2, cómo se evitan los duplicados y el ejemplo correcto (de pagado a en preparación). Debajo de los payloads, qué hace "Errores". En el README y en `docs/despliegue.md`, el aviso de no vaciar `events`.
+- **Cómo lo validé:**
+  - La respuesta `duplicado` sale de `backoffice/api/http/orders.php` (por código del pedido y por `event_id`).
+  - El mensaje de "Errores" lleva el flujo, el paso y la causa, como en `integration/n8n/workflows/errores.json`.
+  - `pagado → enviado` no es una transición válida en `OrderStatusService`.

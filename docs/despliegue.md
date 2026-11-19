@@ -101,7 +101,7 @@ Al aprobarse un pago, la API puede enviar por SMTP un correo que es una **factur
 
 ## 8. Antes de grabar el vídeo
 
-En phpMyAdmin, pestaña *SQL*, ejecuta `TRUNCATE TABLE events;`. Así el visor de eventos de la administración enseña solo la compra del vídeo y no las pruebas anteriores.
+En la Tarea 1 se vaciaba la tabla con `TRUNCATE TABLE events;` para que el visor de eventos enseñara solo la compra del vídeo. **Desde la Tarea 2 no se debe hacer:** "Reintentos" sigue los eventos por su `event_id` y el back-office lo usa para no duplicarlos. Si se reiniciaran los id, los eventos nuevos se tomarían por repetidos. Para la demostración basta con filtrar el visor por tipo o fijarse en los eventos más recientes.
 
 ## 9. Lista de comprobación tras cada despliegue
 

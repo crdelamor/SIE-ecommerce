@@ -139,7 +139,7 @@ Tarjetas de prueba del pago simulado: `4242 4242 4242 4242` se aprueba y `4000 0
 En la web publicada:
 
 1. **Pedido integrado.** Haz una compra con la tarjeta que se aprueba. En el back-office aparece el pedido en *Pedidos*, con cliente, líneas, importe, estado y fecha, y en *Registro* sale la ejecución de n8n.
-2. **Cambio de estado.** En la administración de la tienda, cambia el estado del pedido (por ejemplo, a enviado). El back-office lo pone en el historial del pedido. Si el back-office no está disponible, el evento queda `pendiente` y "Reintentos" lo vuelve a mandar cada 5 minutos.
+2. **Cambio de estado.** En la administración de la tienda, cambia el estado del pedido (por ejemplo, de pagado a en preparación). El back-office lo pone en el historial del pedido. Si el back-office no está disponible, el evento queda `pendiente` y "Reintentos" lo vuelve a mandar cada 5 minutos. Si un evento llega dos veces, el back-office lo reconoce (por el código del pedido o el `event_id`) y no lo duplica: en *Registro* sale como `duplicado`.
 3. **Incidencia con Telegram.**
    1. En *Soporte*, envía una incidencia con el código y el email de un pedido.
    2. Pulsa "Seguir mi incidencia por Telegram" y después *Iniciar* en el bot. Tiene que contestar "Listo...".
@@ -149,6 +149,8 @@ En la web publicada:
    La propuesta y la decisión quedan en el detalle de la incidencia del back-office.
 
 Para probar el webhook sin la tienda, están los payloads de [`integration/payloads/`](integration/payloads/): `escenario1.json`, `escenario2.json`, `escenario3.json` e `incompleto.json`, este último sin `data.code` para ver la rama de error. Se mandan con `POST` al webhook de n8n (`/webhook/tienda`) con la cabecera `X-Webhook-Secret`. Sin el secreto, n8n responde 403.
+
+Si un flujo falla del todo (por ejemplo, un nodo da un error que no estaba previsto), el flujo "Errores" avisa al grupo de Telegram del equipo con el flujo, el paso que ha fallado y la causa.
 
 ## Correo de confirmación (opcional)
 
@@ -194,7 +196,7 @@ El hosting (plan Básico) solo admite web estática y PHP, sin Node.js. Por eso 
    - el login de administrador.
 
    `/api/config.php` debe dar 403.
-7. **Antes de grabar el vídeo.** Ejecuta `TRUNCATE TABLE events;` en phpMyAdmin para que el visor de eventos solo enseñe la demostración.
+7. **No vaciar `events`.** Desde la Tarea 2 no se debe ejecutar `TRUNCATE TABLE events;`: "Reintentos" sigue los eventos por su `event_id` y el back-office lo usa para no duplicarlos. Si se reiniciaran los id, los eventos nuevos se tomarían por repetidos.
 
 ### n8n y back-office en Azure
 
